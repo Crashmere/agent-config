@@ -29,22 +29,29 @@ Maintain the user's personal skills as source-controlled assets in the private G
 ## Workflow
 
 1. Inspect repository status, current `AGENTS.md`, `README.md`, existing skills, and relevant links before editing. Pull with fast-forward only when the local branch is clean and behind its remote.
-2. Apply the instruction-placement rules above to decide whether the requested behavior belongs in a skill and whether `AGENTS.md` needs a short always-on boundary or routing rule.
-3. Explain the placement decision briefly before making material structural changes.
-4. Use the available `skill-creator` for every new skill and for substantial skill restructuring. Initialize new skills directly under `~/agent-config/skills`.
-5. Write the smallest complete skill:
+2. Before adding content or creating a skill, briefly scan the names and descriptions of existing repository skills and other available skills. Read the full body only for the few skills whose purpose may overlap.
+3. Choose the smallest coherent ownership model:
+   - extend an existing skill when the new behavior belongs to its primary responsibility;
+   - reference an existing skill when it already owns a reusable capability, adding only the integration or specialization needed by the current skill;
+   - create a new skill only when the behavior has a distinct trigger and responsibility;
+   - avoid duplicating commands, workflows, or policy already maintained elsewhere.
+4. Keep skill boundaries explicit. Each skill should have one clear primary responsibility, with cross-skill dependencies named in its description or body when they affect invocation or execution.
+5. Apply the instruction-placement rules above to decide whether the requested behavior belongs in a skill and whether `AGENTS.md` needs a short always-on boundary or routing rule.
+6. Explain the placement and reuse decision briefly before making material structural changes.
+7. Use the available `skill-creator` for every new skill and for substantial skill restructuring. Initialize new skills directly under `~/agent-config/skills`.
+8. Write the smallest complete skill:
    - use a lowercase hyphenated folder name matching the frontmatter `name`;
    - put triggering contexts in the frontmatter `description`;
    - keep operational instructions in imperative form;
    - include `agents/openai.yaml`;
    - add `scripts/`, `references/`, or `assets/` only when they provide real reusable value;
    - remove all generated placeholders and unused files.
-6. Update `README.md` in the same change whenever a skill is added, renamed, removed, or materially changes purpose. Keep entries ordered consistently with the existing list.
-7. If stable routing is needed, add only a concise routing or safety rule to `AGENTS.md`; do not duplicate the full skill workflow there.
-8. Validate only the changed skill and the behavior directly affected by the change. Prefer the smallest risk-proportionate checks, such as the `skill-creator` validator, a focused script invocation, `git diff --check`, and targeted scans for placeholders or secrets. Expand validation only when shared infrastructure, cross-skill behavior, or a high-risk change justifies it. Do not rerun unrelated end-to-end workflows by default.
-9. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
-10. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
-11. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
+9. Update `README.md` in the same change whenever a skill is added, renamed, removed, or materially changes purpose. Keep entries ordered consistently with the existing list.
+10. If stable routing is needed, add only a concise routing or safety rule to `AGENTS.md`; do not duplicate the full skill workflow there.
+11. Validate only the changed skill and the behavior directly affected by the change. Prefer the smallest risk-proportionate checks, such as the `skill-creator` validator, a focused script invocation, `git diff --check`, and targeted scans for placeholders or secrets. Expand validation only when shared infrastructure, cross-skill behavior, or a high-risk change justifies it. Do not rerun unrelated end-to-end workflows by default.
+12. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
+13. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
+14. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
 
 ## Continuous maintenance
 
