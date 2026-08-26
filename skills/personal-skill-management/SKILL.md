@@ -46,12 +46,19 @@ Maintain the user's personal skills as source-controlled assets in the private G
    - include `agents/openai.yaml`;
    - add `scripts/`, `references/`, or `assets/` only when they provide real reusable value;
    - remove all generated placeholders and unused files.
-9. Update `README.md` in the same change whenever a skill is added, renamed, removed, or materially changes purpose. Keep entries ordered consistently with the existing list.
-10. If stable routing is needed, add only a concise routing or safety rule to `AGENTS.md`; do not duplicate the full skill workflow there.
-11. Validate only the changed skill and the behavior directly affected by the change. Prefer the smallest risk-proportionate checks, such as the `skill-creator` validator, a focused script invocation, `git diff --check`, and targeted scans for placeholders or secrets. Expand validation only when shared infrastructure, cross-skill behavior, or a high-risk change justifies it. Do not rerun unrelated end-to-end workflows by default.
-12. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
-13. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
-14. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
+9. Organize content for progressive disclosure so less important or more specialized material consumes context only when needed:
+   - keep the `description` limited to purpose and triggering conditions because it is always visible to the runtime;
+   - keep `SKILL.md` focused on the core decision logic, primary workflow, navigation, and safety boundaries needed whenever the skill triggers;
+   - move infrequent, platform-specific, provider-specific, advanced, or narrowly scoped procedures into directly referenced files under `references/`;
+   - move repeated deterministic operations into `scripts/`, and output-only templates or media into `assets/`;
+   - state clearly in `SKILL.md` when each optional resource should be read or run, and avoid deep reference chains;
+   - do not split short content merely to create more files; lower a section only when doing so materially reduces routine context without obscuring the main workflow.
+10. Update `README.md` in the same change whenever a skill is added, renamed, removed, or materially changes purpose. Keep entries ordered consistently with the existing list.
+11. If stable routing is needed, add only a concise routing or safety rule to `AGENTS.md`; do not duplicate the full skill workflow there.
+12. Validate only the changed skill and the behavior directly affected by the change. Prefer the smallest risk-proportionate checks, such as the `skill-creator` validator, a focused script invocation, `git diff --check`, and targeted scans for placeholders or secrets. Expand validation only when shared infrastructure, cross-skill behavior, or a high-risk change justifies it. Do not rerun unrelated end-to-end workflows by default.
+13. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
+14. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
+15. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
 
 ## Continuous maintenance
 
