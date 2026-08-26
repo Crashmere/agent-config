@@ -1,6 +1,6 @@
 ---
 name: personal-skill-management
-description: Organize agent instructions and create, update, validate, deploy, document, and version the user's personally maintained skills in the Crashmere/agent-config GitHub repository. Use when adding, reviewing, simplifying, or reorganizing AGENTS.md files; deciding whether behavior belongs in AGENTS.md or a skill; resolving duplicate or conflicting instructions; creating, extracting, renaming, or maintaining a personal skill; updating the repository inventory; or keeping local agent clients and the repository synchronized.
+description: Organize agent instructions and create, update, validate, deploy, document, and continuously improve the user's personally maintained skills in the Crashmere/agent-config GitHub repository. Use when adding, reviewing, simplifying, or reorganizing AGENTS.md files; deciding whether behavior belongs in AGENTS.md or a skill; resolving duplicate or conflicting instructions; creating, extracting, renaming, or maintaining a personal skill; correcting a skill or bundled script after its workflow or command fails in real use; updating the repository inventory; or keeping local agent clients and the repository synchronized.
 ---
 
 # Personal Skill Management
@@ -45,6 +45,17 @@ Maintain the user's personal skills as source-controlled assets in the private G
 9. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
 10. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
 11. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
+
+## Continuous maintenance
+
+When a repository-owned skill or one of its bundled scripts is incomplete, incorrect, outdated, or fails during real use:
+
+1. Complete the user's immediate task with a verified solution when possible; do not stop at a workaround without understanding why the documented workflow failed.
+2. Compare the failure and working solution with the current skill instructions, commands, scripts, assumptions, and trigger description.
+3. Decide whether the issue is a reusable defect in the skill or a one-off environmental condition. Update the repository only when the correction generalizes or the environment-specific condition needs to be documented.
+4. Make the smallest appropriate correction. Update related scripts, metadata, routing, and the README description only when their behavior or purpose changed.
+5. Re-run the corrected command or workflow when safe, validate the changed skill and scripts, inspect the diff, and commit and push the maintenance update.
+6. Report both the original cause and the durable repository correction.
 
 ## Boundaries
 
