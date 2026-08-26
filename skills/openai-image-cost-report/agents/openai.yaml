@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenAI Image Cost Report"
+  short_description: "Generate images and report API cost"
+  default_prompt: "Use $openai-image-cost-report to generate or edit an image with my local OPENAI_API_KEY and include the cost in your reply."

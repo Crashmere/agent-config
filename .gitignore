@@ -1,0 +1,29 @@
+# Local overrides and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.pem
+*.key
+
+# Runtime state must never be synchronized
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+history.jsonl
+sessions/
+memories/
+plugins/cache/
+.tmp/
+tmp/
+shell_snapshots/
+installation_id
+argv.json
+
+# Local tooling
+.DS_Store
+.venv/
+__pycache__/
+*.pyc

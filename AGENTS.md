@@ -1,4 +1,4 @@
-# Global Codex Instructions
+# Global Agent Instructions
 
 ## Python environment policy
 
