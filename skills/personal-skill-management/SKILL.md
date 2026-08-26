@@ -1,6 +1,6 @@
 ---
 name: personal-skill-management
-description: Organize agent instructions and create, update, validate, deploy, document, and continuously improve the user's personally maintained skills in the Crashmere/agent-config GitHub repository. Use when adding, reviewing, simplifying, or reorganizing AGENTS.md files; deciding whether behavior belongs in AGENTS.md or a skill; resolving duplicate or conflicting instructions; creating, extracting, renaming, or maintaining a personal skill; correcting a skill or bundled script after its workflow or command fails in real use; updating the repository inventory; or keeping local agent clients and the repository synchronized.
+description: Organize agent instructions and create, update, validate, deploy, document, and continuously improve the user's personally maintained skills in the Crashmere/agent-config GitHub repository. Use when adding, reviewing, simplifying, or reorganizing AGENTS.md files; deciding whether behavior belongs in AGENTS.md or a skill; resolving duplicate or conflicting instructions; creating, extracting, renaming, or maintaining a personal skill; investigating a required skill that cannot be found or loaded; correcting a skill or bundled script after its workflow or command fails in real use; updating the repository inventory; or keeping local agent clients and the repository synchronized.
 ---
 
 # Personal Skill Management
@@ -63,6 +63,20 @@ When a repository-owned skill or one of its bundled scripts is incomplete, incor
 4. Make the smallest appropriate correction. Update related scripts, metadata, routing, and the README description only when their behavior or purpose changed.
 5. Re-run only the corrected command or smallest affected workflow when safe, then validate the changed skill or script and inspect the diff. Do not repeat an entire expensive workflow unless the change affects it broadly or focused validation cannot establish confidence.
 6. Report both the original cause and the durable repository correction.
+
+## Missing skills
+
+If a required or explicitly referenced skill cannot be found or loaded:
+
+1. Stop the workflow that depends on the missing skill. Do not silently replace its instructions with an improvised process or continue with destructive or state-changing actions.
+2. Perform a quick, read-only source check using the skill name and surrounding context:
+   - inspect the skills currently exposed by the runtime;
+   - check this repository for a personally maintained skill;
+   - check the expected user, project, system, and plugin skill locations that are relevant to the active client;
+   - inspect lockfiles, plugin metadata, repository documentation, or known upstream sources when they can identify the installer or owner.
+3. Do not perform a broad filesystem or network search when the likely locations and metadata are sufficient.
+4. Report the missing skill, where it was expected, which likely sources were checked, the most likely source or cause, and what is required to restore it.
+5. Wait for the user's direction before installing, relinking, replacing, or removing anything. Resume the original workflow only after the required skill is available or the user explicitly authorizes an alternative.
 
 ## Boundaries
 
