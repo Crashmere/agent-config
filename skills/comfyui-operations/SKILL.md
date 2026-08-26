@@ -27,7 +27,7 @@ Read [references/platforms.md](references/platforms.md) before installing or cre
 
 1. Prefer the official ComfyUI repository or official distribution appropriate to the platform. Record the installation method so updates remain coherent.
 2. Invoke `$python-environment` to inspect or create the project-local environment, select the interpreter and dependency workflow, install ComfyUI dependencies, choose a compatible PyTorch build for the required accelerator, and verify imports plus backend availability. Do not duplicate those procedures here.
-3. Start ComfyUI once in the foreground and verify startup logs, `/system_stats`, the browser UI, and a minimal generation before adding background startup.
+3. Start ComfyUI once in the foreground and verify startup logs, `/system_stats`, and the browser UI before adding background startup. Treat this as runtime acceptance only. Do not claim generation acceptance until an appropriate model is installed and a minimal generation has produced a visually inspected output.
 4. Place each model in its correct category under `models/`. For checkpoints, inspect file size and safetensors metadata when corruption or architecture is uncertain. Never infer model architecture from the filename alone.
 5. Before moving or deleting a downloaded model, resolve exact paths, check free space and collisions, and verify the destination byte length or SHA-256. Move instead of hard-linking when the user wants the original removed and a single independent file.
 6. Run a minimal end-to-end smoke test through checkpoint loading, text encoding, latent creation, sampling, VAE decoding, and image saving. Visually inspect the result; task success alone does not establish image correctness.
@@ -39,6 +39,7 @@ Read [references/platforms.md](references/platforms.md) before installing or cre
 - Treat Internet exposure, router port forwarding, tunnels, and third-party overlay networks as separate security decisions requiring explicit authorization.
 - Make start and stop operations idempotent. Refuse to create a second listener when the configured port is already occupied.
 - Redirect background stdout and stderr to logs, retain an easy foreground debugging path, and verify the listener plus `/system_stats` after starting.
+- Do not accept a detached launcher merely because its readiness poll succeeded. Verify that the listener remains alive after the invoking shell or automation command exits. If the execution host reaps child processes, use a platform-owned process such as a macOS Terminal window, LaunchAgent, Scheduled Task, or user systemd service.
 - On desktop systems, a launcher may start the service, wait for readiness, and open the local URL. A stop launcher should target the exact ComfyUI listener or recorded process, not every Python process.
 - Make persistence platform-native: a Scheduled Task on Windows, a LaunchAgent on macOS, or a user systemd service on Linux. Do not create persistence until a foreground launch is healthy.
 
@@ -64,7 +65,7 @@ Follow this order:
 
 ## Verify and report
 
-- Verify the process, port, API, model discovery, one complete generation, saved output, and browser access appropriate to the requested scope.
+- Verify the process, port, API, model discovery, one complete generation, saved output, and browser access appropriate to the requested scope. If no compatible model was requested or available, explicitly report runtime/UI acceptance as complete and model discovery/generation/visual acceptance as unverified.
 - For stability changes, generate several images while alternating prompts or model inputs; inspect every output, not only the final status.
 - Report installation location, environment, model locations, startup method and arguments, access URL, workflow changes, tests performed, and any unverified platform-specific area.
 - If a reusable command or bundled script from this skill fails during real use, finish the immediate task and update the repository-owned skill through `$personal-skill-management`.
