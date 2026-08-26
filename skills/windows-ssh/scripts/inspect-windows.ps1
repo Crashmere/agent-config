@@ -10,8 +10,18 @@ $principal = [Security.Principal.WindowsPrincipal]::new($identity)
 $isAdministrator = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $os = Get-CimInstance Win32_OperatingSystem
 $sshService = Get-Service sshd -ErrorAction SilentlyContinue
+$sshServiceDetails = Get-CimInstance Win32_Service -Filter "Name='sshd'" -ErrorAction SilentlyContinue
+$sshCommand = Get-Command sshd.exe -ErrorAction SilentlyContinue
 $sshFeature = Get-WindowsCapability -Online -Name 'OpenSSH.Server*' -ErrorAction SilentlyContinue |
     Select-Object -First 1
+$sshCommandPath = if ($sshCommand) { $sshCommand.Source } else { $null }
+$sshInstallationSource = if ($sshFeature -and $sshFeature.State.ToString() -eq 'Installed') {
+    'windows_capability'
+} elseif ($sshCommandPath) {
+    'standalone_or_other'
+} else {
+    $null
+}
 $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
     Where-Object LocalPort -eq 22 |
     Select-Object LocalAddress, LocalPort, OwningProcess)
@@ -39,6 +49,9 @@ $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinu
     }
     openssh_server = [ordered]@{
         capability_state = if ($sshFeature) { $sshFeature.State.ToString() } else { $null }
+        installation_source = $sshInstallationSource
+        command_path = $sshCommandPath
+        service_path = if ($sshServiceDetails) { $sshServiceDetails.PathName } else { $null }
         service_status = if ($sshService) { $sshService.Status.ToString() } else { $null }
         service_start_type = if ($sshService) { $sshService.StartType.ToString() } else { $null }
         listeners = $listeners

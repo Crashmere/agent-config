@@ -2,6 +2,8 @@
 
 Use these commands on the Windows computer in an elevated PowerShell session when SSH is not already configured. Inspect current state first and skip changes that are already satisfied.
 
+Check the `sshd` service and executable path as well as the Windows capability. A separately installed OpenSSH server can be running from a path such as `C:\Program Files\OpenSSH\sshd.exe` while `OpenSSH.Server~~~~0.0.1.0` reports `NotPresent`; do not reinstall or replace a working server based on capability state alone.
+
 ## Install and start the server
 
 ```powershell
