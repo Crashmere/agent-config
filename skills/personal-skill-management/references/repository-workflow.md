@@ -5,7 +5,7 @@ Read this reference when a change requires repository documentation, validation,
 ## Prepare and document
 
 1. Inspect Git status, the current branch and remote, `AGENTS.md`, `README.md`, affected skills, and relevant local links. Pull with fast-forward only when the working tree is clean and the branch is behind its remote.
-2. Update `README.md` when a skill is added, renamed, removed, or materially changes purpose. Keep the existing concise Chinese inventory and link each entry to `./skills/<skill-name>/SKILL.md`.
+2. Update `README.md` when a skill is added, renamed, removed, or materially changes purpose. Keep the existing concise Chinese inventory, link each entry only to `./skills/<skill-name>/SKILL.md`, and do not list bundled references, scripts, tests, or metadata files.
 3. Update nearby `AGENTS.md` wording only when a stable routing or safety boundary is required.
 
 ## Validate proportionately
