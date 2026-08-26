@@ -41,7 +41,7 @@ Maintain the user's personal skills as source-controlled assets in the private G
    - remove all generated placeholders and unused files.
 6. Update `README.md` in the same change whenever a skill is added, renamed, removed, or materially changes purpose. Keep entries ordered consistently with the existing list.
 7. If stable routing is needed, add only a concise routing or safety rule to `AGENTS.md`; do not duplicate the full skill workflow there.
-8. Validate every changed skill with the validator supplied by `skill-creator`. If its Python dependencies are unavailable globally, run it in an isolated `uv` environment rather than installing globally. Run `git diff --check` and scan for leftover placeholders and obvious secrets.
+8. Validate only the changed skill and the behavior directly affected by the change. Prefer the smallest risk-proportionate checks, such as the `skill-creator` validator, a focused script invocation, `git diff --check`, and targeted scans for placeholders or secrets. Expand validation only when shared infrastructure, cross-skill behavior, or a high-risk change justifies it. Do not rerun unrelated end-to-end workflows by default.
 9. Make the repository-owned skill discoverable in the user's active agent clients by following the existing local linking pattern. Before creating a link, verify that the target is absent or already points to the repository; never overwrite an unrelated target. At minimum, verify Trae and Codex can resolve `SKILL.md`.
 10. Review the final diff, commit a focused change, and push the current branch to the configured GitHub remote when the user's request includes completing or maintaining this repository. Verify that local HEAD and the remote branch match.
 11. Report the skill path, documentation and routing changes, validation result, commit hash, push result, and any action the user still needs to take.
@@ -54,13 +54,14 @@ When a repository-owned skill or one of its bundled scripts is incomplete, incor
 2. Compare the failure and working solution with the current skill instructions, commands, scripts, assumptions, and trigger description.
 3. Decide whether the issue is a reusable defect in the skill or a one-off environmental condition. Update the repository only when the correction generalizes or the environment-specific condition needs to be documented.
 4. Make the smallest appropriate correction. Update related scripts, metadata, routing, and the README description only when their behavior or purpose changed.
-5. Re-run the corrected command or workflow when safe, validate the changed skill and scripts, inspect the diff, and commit and push the maintenance update.
+5. Re-run only the corrected command or smallest affected workflow when safe, then validate the changed skill or script and inspect the diff. Do not repeat an entire expensive workflow unless the change affects it broadly or focused validation cannot establish confidence.
 6. Report both the original cause and the durable repository correction.
 
 ## Boundaries
 
 - Manage only skills owned by the user in this repository. Leave installer-managed, plugin-provided, system, and third-party skills outside it unless the user explicitly chooses to fork one.
 - Do not overwrite unrelated instructions, broaden a rule beyond the user's requested scope, or treat product-specific loading behavior as universal.
+- Do not install missing dependencies, recreate unavailable environments, or introduce repository changes solely to run optional broad validation. Use an available focused check and disclose any meaningful unverified area instead.
 - Never commit secrets, API keys, authentication material, sessions, memories, logs, databases, plugin caches, or machine-specific runtime state.
 - Do not add repository-management files merely for hypothetical future use. Add only files required by the current skill and the concise README inventory.
 - Do not claim that a skill contains the original conversation. It preserves the durable decisions and workflow needed by a future AI; transient conversation context remains outside the repository.
