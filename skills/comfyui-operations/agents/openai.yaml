@@ -1,0 +1,4 @@
+interface:
+  display_name: "ComfyUI Operations"
+  short_description: "Install, operate, and troubleshoot ComfyUI safely"
+  default_prompt: "Use $comfyui-operations to install, operate, or troubleshoot this ComfyUI environment."
