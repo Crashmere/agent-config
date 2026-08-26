@@ -7,15 +7,7 @@
 
 ## Instruction management
 
-When the user asks to add, update, or reorganize global agent instructions:
-
-- First consider whether the requested behavior belongs in `AGENTS.md` or should be implemented as a skill.
-- Prefer `AGENTS.md` for always-on behavioral policies, safety rules, workflow preferences, environment constraints, and broad collaboration norms.
-- Prefer a skill for specialized, task-specific workflows, reusable domain procedures, tool integrations, templates, or instructions that should only be loaded when relevant.
-- Briefly explain the placement decision before editing.
-- Before adding new content to `AGENTS.md`, consider how it fits with the existing instructions.
-- If the requested change conflicts with existing instructions, stop and ask the user how to resolve the conflict before editing.
-- When appropriate, update nearby existing wording so the file stays coherent rather than simply appending disconnected rules.
+- Use the `instruction-management` skill when adding, updating, reorganizing, or deciding the placement of agent instructions and skills.
 
 ## Software installation policy
 
