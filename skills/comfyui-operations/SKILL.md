@@ -1,37 +1,36 @@
 ---
 name: comfyui-operations
-description: Install, configure, operate, maintain, and troubleshoot ComfyUI on Windows, macOS, or Linux, locally or on a user-authorized remote machine. Use when TraeCode needs to inspect GPU and Python compatibility, install or update ComfyUI, create an isolated environment, deploy checkpoints or other models, configure background startup and access, manage workflows and outputs, call the ComfyUI API, or diagnose noise, mosaic, black images, missing images, stale caches, model architecture mismatches, VAE problems, or repeated-generation instability. Combine with windows-ssh when the target is a remote Windows PC.
+description: Install, configure, operate, maintain, and troubleshoot ComfyUI on Windows, macOS, or Linux, locally or on a user-authorized remote machine. Use when TraeCode needs to install or update ComfyUI, deploy checkpoints or other models, configure background startup and access, manage workflows and outputs, call the ComfyUI API, or diagnose noise, mosaic, black images, missing images, stale caches, model architecture mismatches, VAE problems, accelerator compatibility, or repeated-generation instability. Use python-environment for all Python interpreter, virtual-environment, dependency, PyTorch package, and import troubleshooting work; combine with windows-ssh when the target is a remote Windows PC.
 ---
 
 # ComfyUI Operations
 
-Operate ComfyUI as an application stack: source checkout, isolated Python environment, accelerator runtime, models, workflows, service process, and browser/API client. Keep host addresses, credentials, copyrighted models, user prompts, and generated images outside this skill.
+Operate ComfyUI as an application stack: source checkout, accelerator integration, models, workflows, service process, and browser/API client. Delegate the Python environment layer to `$python-environment`. Keep host addresses, credentials, copyrighted models, user prompts, and generated images outside this skill.
 
 ## Route by execution context
 
 - For a remote Windows target, use `$windows-ssh` for connection, command transport, file transfer, quoting, and encoding. Use this skill for ComfyUI-specific decisions.
 - For local Windows, macOS, or Linux, run commands directly using the platform's native shell.
 - Use `$software-installation` when installing system-wide prerequisites such as Git, Python, GPU drivers, package managers, or launch services.
-- Use `$python-environment` for Python environment or dependency decisions. Keep ComfyUI dependencies isolated in its project environment.
+- Always use `$python-environment` when the task inspects, creates, selects, changes, or repairs a Python interpreter, virtual environment, dependency set, PyTorch installation, package import, or dependency manifest. Give it the ComfyUI root and required accelerator backend, then use its selected interpreter for ComfyUI commands.
 
 Read [references/platforms.md](references/platforms.md) before installing or creating persistent launch behavior. Read [references/troubleshooting.md](references/troubleshooting.md) when generation, preview, model loading, or repeated runs behave incorrectly.
 
 ## Inspect before changing
 
 1. Identify the operating system, architecture, GPU/backend, driver/runtime, available RAM, free disk space, and whether ComfyUI already exists.
-2. Inspect the installation type, Git status and revision, Python interpreter, virtual environment, PyTorch version, ComfyUI version, startup arguments, listening address, port, models, custom nodes, workflows, logs, and current processes.
-3. Preserve unrelated user changes. Do not update ComfyUI, Python, PyTorch, frontend packages, or custom nodes merely because a newer version exists.
+2. Inspect the installation type, Git status and revision, ComfyUI version, startup arguments, listening address, port, models, custom nodes, workflows, logs, and current processes. If Python or PyTorch facts are needed, obtain them through `$python-environment`.
+3. Preserve unrelated user changes. Do not update ComfyUI, its Python environment, frontend packages, or custom nodes merely because a newer version exists.
 4. If the task is diagnosis, inspect and explain first. Change configuration only when the user asks for a fix or the request clearly includes repair.
 
 ## Install and deploy
 
 1. Prefer the official ComfyUI repository or official distribution appropriate to the platform. Record the installation method so updates remain coherent.
-2. Create or reuse an isolated project environment. Match PyTorch and the accelerator backend to the actual hardware and platform; verify the backend from Python rather than assuming the installation command succeeded.
-3. Install the declared ComfyUI dependencies without mutating an unrelated Python environment.
-4. Start ComfyUI once in the foreground and verify startup logs, `/system_stats`, the browser UI, and a minimal generation before adding background startup.
-5. Place each model in its correct category under `models/`. For checkpoints, inspect file size and safetensors metadata when corruption or architecture is uncertain. Never infer model architecture from the filename alone.
-6. Before moving or deleting a downloaded model, resolve exact paths, check free space and collisions, and verify the destination byte length or SHA-256. Move instead of hard-linking when the user wants the original removed and a single independent file.
-7. Run a minimal end-to-end smoke test through checkpoint loading, text encoding, latent creation, sampling, VAE decoding, and image saving. Visually inspect the result; task success alone does not establish image correctness.
+2. Invoke `$python-environment` to inspect or create the project-local environment, select the interpreter and dependency workflow, install ComfyUI dependencies, choose a compatible PyTorch build for the required accelerator, and verify imports plus backend availability. Do not duplicate those procedures here.
+3. Start ComfyUI once in the foreground and verify startup logs, `/system_stats`, the browser UI, and a minimal generation before adding background startup.
+4. Place each model in its correct category under `models/`. For checkpoints, inspect file size and safetensors metadata when corruption or architecture is uncertain. Never infer model architecture from the filename alone.
+5. Before moving or deleting a downloaded model, resolve exact paths, check free space and collisions, and verify the destination byte length or SHA-256. Move instead of hard-linking when the user wants the original removed and a single independent file.
+6. Run a minimal end-to-end smoke test through checkpoint loading, text encoding, latent creation, sampling, VAE decoding, and image saving. Visually inspect the result; task success alone does not establish image correctness.
 
 ## Configure service access
 
