@@ -25,6 +25,5 @@ When the user asks to add, update, or reorganize global agent instructions:
 
 ## General workflow
 
-- Prefer safe, project-local changes.
-- Do not modify unrelated files.
-- Before running destructive commands, explain the command and ask for confirmation.
+- Keep changes safe, scoped, and relevant to the task.
+- Explain destructive actions and ask for confirmation before running them.
