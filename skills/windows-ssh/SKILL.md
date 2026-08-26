@@ -1,9 +1,9 @@
 ---
-name: manage-windows-over-ssh
+name: windows-ssh
 description: Connect to, inspect, and operate remote Windows computers safely over OpenSSH from macOS or Linux. Use when TraeCode needs to discover or reach a Windows host, prepare or verify Windows OpenSSH, configure public-key authentication, run CMD or PowerShell commands remotely, transfer files, diagnose SSH connectivity or encoding problems, or make Windows-side remote access persistent. This skill handles the transport and remote-execution layer; use a domain skill as well for software installation, Python, ComfyUI, or other application-specific work.
 ---
 
-# Manage Windows over SSH
+# Windows SSH
 
 Treat SSH as the transport layer for a user-authorized Windows computer. Keep host-specific addresses, usernames, keys, and secrets outside this skill.
 
