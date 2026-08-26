@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python Environment"
+  short_description: "Manage isolated Python environments and dependencies"
+  default_prompt: "Use $python-environment to prepare and verify a safe Python environment for this task."
