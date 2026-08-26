@@ -1,0 +1,4 @@
+interface:
+  display_name: "Personal Skill Management"
+  short_description: "Maintain personal skills in the agent-config repository"
+  default_prompt: "Use $personal-skill-management to create or update a personal skill and maintain the agent-config repository."

@@ -8,6 +8,7 @@
 ## Instruction management
 
 - Use the `instruction-management` skill when adding, updating, reorganizing, or deciding the placement of agent instructions and skills.
+- Use the `personal-skill-management` skill when creating or maintaining the user's own skills and their `agent-config` GitHub repository.
 
 ## Software installation policy
 
