@@ -51,13 +51,34 @@ Install the key from an elevated PowerShell session and restrict the ACL:
 
 ```powershell
 $keyFile = 'C:\ProgramData\ssh\administrators_authorized_keys'
+$publicKey = '<PUBLIC KEY>'.Trim()
 New-Item -ItemType Directory -Path (Split-Path $keyFile) -Force | Out-Null
-Add-Content -Path $keyFile -Value '<PUBLIC KEY>'
-icacls.exe $keyFile /inheritance:r
-icacls.exe $keyFile /grant 'SYSTEM:F' 'Administrators:F'
+if (-not (Test-Path -LiteralPath $keyFile)) {
+    New-Item -ItemType File -Path $keyFile | Out-Null
+}
+$existingKeys = @(Get-Content -LiteralPath $keyFile -ErrorAction Stop)
+if ($existingKeys -cnotcontains $publicKey) {
+    Add-Content -LiteralPath $keyFile -Value $publicKey -Encoding ascii
+}
+
+$system = [Security.Principal.SecurityIdentifier]::new('S-1-5-18')
+$administrators = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
+$acl = [Security.AccessControl.FileSecurity]::new()
+$acl.SetAccessRuleProtection($true, $false)
+$acl.SetOwner($administrators)
+foreach ($sid in @($system, $administrators)) {
+    $rule = [Security.AccessControl.FileSystemAccessRule]::new(
+        $sid,
+        [Security.AccessControl.FileSystemRights]::FullControl,
+        [Security.AccessControl.AccessControlType]::Allow
+    )
+    $acl.AddAccessRule($rule)
+}
+Set-Acl -LiteralPath $keyFile -AclObject $acl
+icacls.exe $keyFile
 ```
 
-Never place a private key on the remote Windows host. Avoid duplicating the same public key on repeated runs.
+The SID-based ACL is language-independent and replaces inherited or unrelated explicit access with Full Control for SYSTEM and the built-in Administrators group. Never place a private key on the remote Windows host.
 
 ## Verify before ending the current session
 

@@ -19,8 +19,8 @@ The non-square prices being lower than square prices are intentional for `gpt-im
 
 ## Exactness policy
 
-- Report `exact` only when the response contains enough modality-separated input usage and output usage to price the full request.
-- Report `partial` when output usage can be priced but input usage cannot.
+- Report `exact` only when the response contains modality-separated total input usage, cached-input usage, and output usage sufficient to price the full request.
+- Report `partial` when output usage can be priced but complete input or cache usage cannot. Do not assume that all input tokens are uncached.
 - Report `estimate` when the helper falls back to the published output-only table. Input text and edit-image tokens remain excluded.
 - Report `unknown` for unsupported models, automatic quality, non-table sizes without usable usage, or any case lacking an applicable rate.
 - Never reuse this snapshot for a different model. Check current official documentation and update the model-specific logic first.

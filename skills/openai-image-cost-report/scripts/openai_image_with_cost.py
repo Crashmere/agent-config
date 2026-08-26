@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import argparse
 import base64
+import binascii
 import json
 import os
 import sys
+import tempfile
 import time
 from contextlib import ExitStack
 from datetime import datetime, timezone
@@ -16,7 +18,9 @@ PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing#image-generatio
 MODEL_TOKEN_RATES = {
     "gpt-image-2": {
         "text_input": 5.0 / 1_000_000,
+        "text_input_cached": 1.25 / 1_000_000,
         "image_input": 8.0 / 1_000_000,
+        "image_input_cached": 2.0 / 1_000_000,
         "image_output": 30.0 / 1_000_000,
     }
 }
@@ -57,6 +61,11 @@ def parse_args() -> argparse.Namespace:
         subparser.add_argument("--out", required=True)
         subparser.add_argument("--n", type=positive_int, default=1)
         subparser.add_argument("--report-json")
+        subparser.add_argument(
+            "--overwrite",
+            action="store_true",
+            help="replace existing image and report files (disabled by default)",
+        )
         subparser.add_argument("--dry-run", action="store_true")
 
     generate = subparsers.add_parser("generate", help="Generate a new image")
@@ -121,20 +130,69 @@ def build_output_paths(out_value: str, count: int, output_format: str) -> list[P
     return [out_path.with_name(f"{stem}-{index}{suffix}") for index in range(1, count + 1)]
 
 
-def save_images(data_items: list[Any], output_paths: list[Path]) -> list[str]:
+def ensure_distinct_targets(paths: list[Path]) -> None:
+    resolved = [path.resolve() for path in paths]
+    if len(set(resolved)) != len(resolved):
+        raise ValueError("image and report output paths must be distinct")
+
+
+def refuse_existing(paths: list[Path], overwrite: bool) -> None:
+    if overwrite:
+        return
+    existing = [str(path) for path in paths if path.exists() or path.is_symlink()]
+    if existing:
+        raise FileExistsError("refusing to overwrite existing path(s): " + ", ".join(existing))
+
+
+def atomic_write_bytes(path: Path, data: bytes, overwrite: bool) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as output_file:
+            output_file.write(data)
+            output_file.flush()
+            os.fsync(output_file.fileno())
+        if overwrite:
+            os.replace(temporary_path, path)
+        else:
+            os.link(temporary_path, path)
+            temporary_path.unlink()
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def atomic_write_json(path: Path, value: dict[str, Any], overwrite: bool) -> None:
+    atomic_write_bytes(
+        path,
+        (json.dumps(value, indent=2) + "\n").encode("utf-8"),
+        overwrite,
+    )
+
+
+def save_images(
+    data_items: list[Any], output_paths: list[Path], overwrite: bool
+) -> list[str]:
     if len(data_items) != len(output_paths):
         raise RuntimeError(
             f"Image response returned {len(data_items)} item(s); "
             f"expected {len(output_paths)}."
         )
-    saved_paths: list[str] = []
+    decoded_images: list[bytes] = []
     for item, output_path in zip(data_items, output_paths):
         record = to_plain(item)
         image_base64 = record.get("b64_json")
         if not image_base64:
             raise RuntimeError("Image response did not include b64_json output.")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_bytes(base64.b64decode(image_base64))
+        try:
+            decoded_images.append(base64.b64decode(image_base64, validate=True))
+        except (ValueError, binascii.Error) as error:
+            raise RuntimeError("Image response included invalid base64 data.") from error
+
+    saved_paths: list[str] = []
+    for image_bytes, output_path in zip(decoded_images, output_paths):
+        atomic_write_bytes(output_path, image_bytes, overwrite)
         saved_paths.append(str(output_path.resolve()))
     return saved_paths
 
@@ -157,6 +215,16 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
         "image_tokens",
         "image",
     )
+    cached_text_tokens = pick_number(
+        input_details,
+        "cached_text_tokens",
+        "input_cached_text_tokens",
+    )
+    cached_image_tokens = pick_number(
+        input_details,
+        "cached_image_tokens",
+        "input_cached_image_tokens",
+    )
     output_image_tokens = pick_number(
         output_details,
         "output_image_tokens",
@@ -177,11 +245,20 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
         rates is not None
         and input_text_tokens is not None
         and input_image_tokens is not None
+        and cached_text_tokens is not None
+        and cached_image_tokens is not None
         and exact_output_cost is not None
     ):
+        if not (
+            0 <= cached_text_tokens <= input_text_tokens
+            and 0 <= cached_image_tokens <= input_image_tokens
+        ):
+            raise ValueError("cached input token counts must be within total input counts")
         exact_total_cost = (
-            input_text_tokens * rates["text_input"]
-            + input_image_tokens * rates["image_input"]
+            (input_text_tokens - cached_text_tokens) * rates["text_input"]
+            + cached_text_tokens * rates["text_input_cached"]
+            + (input_image_tokens - cached_image_tokens) * rates["image_input"]
+            + cached_image_tokens * rates["image_input_cached"]
             + exact_output_cost
         )
 
@@ -211,7 +288,10 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
 
     notes: list[str] = []
     if basis == "partial":
-        notes.append("Exact output cost confirmed from API usage; total request cost was not fully exposed.")
+        notes.append(
+            "Exact output cost confirmed from API usage; full input cache details "
+            "were not exposed, so total request cost is not exact."
+        )
     elif basis == "estimate":
         notes.append(
             "Output-only estimate from the published gpt-image-2 price table; "
@@ -240,7 +320,9 @@ def report_path_for(args: argparse.Namespace, output_paths: list[Path]) -> Path:
         return Path(args.report_json)
     if len(output_paths) == 1:
         return output_paths[0].with_suffix(output_paths[0].suffix + ".cost.json")
-    return output_paths[0].parent / "request-cost.json"
+    first_output = output_paths[0]
+    stem = first_output.stem.rsplit("-", 1)[0]
+    return first_output.with_name(f"{stem}.cost.json")
 
 
 def request_payload(args: argparse.Namespace) -> dict[str, Any]:
@@ -277,6 +359,13 @@ def main() -> None:
     except ValueError as error:
         raise SystemExit(str(error)) from error
     payload = request_payload(args)
+    report_path = report_path_for(args, output_paths)
+    all_targets = [*output_paths, report_path]
+    try:
+        ensure_distinct_targets(all_targets)
+        refuse_existing(all_targets, args.overwrite)
+    except (ValueError, FileExistsError) as error:
+        raise SystemExit(str(error)) from error
 
     if args.dry_run:
         per_image_output_cost = (
@@ -318,9 +407,7 @@ def main() -> None:
             "created_at": datetime.now(timezone.utc).isoformat(),
             "elapsed_seconds": 0.0,
         }
-        report_path = report_path_for(args, output_paths)
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        atomic_write_json(report_path, summary, args.overwrite)
         print_summary(summary)
         return
 
@@ -360,7 +447,7 @@ def main() -> None:
                 n=args.n,
             )
 
-    saved_paths = save_images(to_plain(response.data), output_paths)
+    saved_paths = save_images(to_plain(response.data), output_paths, args.overwrite)
     elapsed = round(time.time() - started, 3)
     cost = summarize_cost(args, response)
 
@@ -374,9 +461,7 @@ def main() -> None:
         "elapsed_seconds": elapsed,
     }
 
-    report_path = report_path_for(args, output_paths)
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    atomic_write_json(report_path, summary, args.overwrite)
     print_summary(summary)
 
 

@@ -8,8 +8,10 @@ Prefer a per-command override. For users in mainland China, try the HTTPS Tsingh
 
 ```bash
 uv pip install --default-index https://pypi.tuna.tsinghua.edu.cn/simple <package>
-pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple <package>
+.venv/bin/python -m pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple <package>
 ```
+
+On Windows, use `.venv\Scripts\python.exe -m pip install` with the same `--index-url`. Replace `.venv` with the selected environment path when the project uses another location.
 
 Apply the same `uv` option to `uv sync` or `uv run` when that command performs dependency resolution. If the installed `uv` version does not recognize `--default-index`, inspect `uv <command> --help` and use its documented index option rather than guessing.
 
@@ -17,7 +19,7 @@ For a task containing several commands, use a task-scoped environment variable i
 
 ```bash
 UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple uv sync
-PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple pip install <package>
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple .venv/bin/python -m pip install <package>
 ```
 
 Do not write a persistent global `pip`, `uv`, Poetry, or Conda configuration unless the user asks for it. If persistence is requested, inspect existing configuration, explain the scope, preserve authenticated or private sources, and verify the resulting effective configuration.
