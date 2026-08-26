@@ -1,6 +1,6 @@
 ---
 name: python-environment
-description: Manage isolated Python environments and dependencies safely. Use whenever a task requires running or testing Python code with third-party packages, creating or selecting a virtual environment, installing or changing Python dependencies, choosing among uv, pip, Poetry, or other project tooling, or troubleshooting interpreter and package issues.
+description: Manage isolated Python environments and dependencies safely. Use whenever a task requires running or testing Python code with third-party packages, creating or selecting a virtual environment, installing or changing Python dependencies, choosing among uv, pip, Poetry, or other project tooling, or troubleshooting interpreter, package, import, native extension, DLL, or Windows Python security-blocking issues.
 ---
 
 # Python Environment
@@ -14,6 +14,8 @@ description: Manage isolated Python environments and dependencies safely. Use wh
 5. Decide whether a dependency is part of the project or only needed for a temporary experiment. Update project dependency files only when the dependency belongs to the project or the user requests it.
 6. Run Python and package commands through the selected environment explicitly.
 7. Verify the interpreter path, required imports, and the command or test that motivated the environment change.
+
+On Windows, read [references/windows-native-imports.md](references/windows-native-imports.md) when a package is installed but importing a `.pyd` or dependent DLL fails, or when the error may come from ABI, architecture, native runtime, Mark-of-the-Web, application control, or antivirus enforcement. Diagnose the class of failure before reinstalling the package.
 
 ## Default commands
 
