@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Windows over SSH"
+  short_description: "Connect to and operate remote Windows PCs safely"
+  default_prompt: "Use $manage-windows-over-ssh to connect to and safely operate a remote Windows PC."
