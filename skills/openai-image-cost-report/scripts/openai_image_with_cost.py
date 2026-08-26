@@ -11,13 +11,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from openai import OpenAI
-
-TEXT_INPUT_RATE = 5.0 / 1_000_000
-TEXT_INPUT_CACHED_RATE = 1.25 / 1_000_000
-IMAGE_INPUT_RATE = 8.0 / 1_000_000
-IMAGE_INPUT_CACHED_RATE = 2.0 / 1_000_000
-IMAGE_OUTPUT_RATE = 30.0 / 1_000_000
+PRICING_AS_OF = "2026-08-26"
+PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing#image-generation"
+MODEL_TOKEN_RATES = {
+    "gpt-image-2": {
+        "text_input": 5.0 / 1_000_000,
+        "image_input": 8.0 / 1_000_000,
+        "image_output": 30.0 / 1_000_000,
+    }
+}
 
 OUTPUT_COST_TABLE = {
     ("low", "1024x1024"): 0.006,
@@ -53,7 +55,7 @@ def parse_args() -> argparse.Namespace:
             choices=["png", "jpeg", "webp"],
         )
         subparser.add_argument("--out", required=True)
-        subparser.add_argument("--n", type=int, default=1)
+        subparser.add_argument("--n", type=positive_int, default=1)
         subparser.add_argument("--report-json")
         subparser.add_argument("--dry-run", action="store_true")
 
@@ -93,16 +95,38 @@ def pick_number(mapping: dict[str, Any], *keys: str) -> float | None:
     return None
 
 
-def build_output_paths(out_value: str, count: int) -> list[Path]:
+def positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
+def build_output_paths(out_value: str, count: int, output_format: str) -> list[Path]:
     out_path = Path(out_value)
+    allowed_suffixes = {"png": {".png"}, "jpeg": {".jpg", ".jpeg"}, "webp": {".webp"}}
+    if not out_path.suffix:
+        suffix = ".jpg" if output_format == "jpeg" else f".{output_format}"
+        out_path = out_path.with_suffix(suffix)
+    elif out_path.suffix.lower() not in allowed_suffixes[output_format]:
+        expected = ", ".join(sorted(allowed_suffixes[output_format]))
+        raise ValueError(
+            f"Output path suffix {out_path.suffix!r} does not match "
+            f"--output-format {output_format}; expected {expected}."
+        )
     if count == 1:
         return [out_path]
     stem = out_path.stem
-    suffix = out_path.suffix or ".png"
+    suffix = out_path.suffix
     return [out_path.with_name(f"{stem}-{index}{suffix}") for index in range(1, count + 1)]
 
 
 def save_images(data_items: list[Any], output_paths: list[Path]) -> list[str]:
+    if len(data_items) != len(output_paths):
+        raise RuntimeError(
+            f"Image response returned {len(data_items)} item(s); "
+            f"expected {len(output_paths)}."
+        )
     saved_paths: list[str] = []
     for item, output_path in zip(data_items, output_paths):
         record = to_plain(item)
@@ -127,23 +151,11 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
         "text_tokens",
         "text",
     )
-    input_cached_text_tokens = pick_number(
-        input_details,
-        "input_cached_text_tokens",
-        "cached_text_tokens",
-        "cached_text",
-    )
     input_image_tokens = pick_number(
         input_details,
         "input_image_tokens",
         "image_tokens",
         "image",
-    )
-    input_cached_image_tokens = pick_number(
-        input_details,
-        "input_cached_image_tokens",
-        "cached_image_tokens",
-        "cached_image",
     )
     output_image_tokens = pick_number(
         output_details,
@@ -155,26 +167,34 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
     if output_image_tokens is None:
         output_image_tokens = pick_number(usage, "output_tokens")
 
+    rates = MODEL_TOKEN_RATES.get(args.model)
     exact_output_cost = None
-    if output_image_tokens is not None:
-        exact_output_cost = output_image_tokens * IMAGE_OUTPUT_RATE
+    if rates is not None and output_image_tokens is not None:
+        exact_output_cost = output_image_tokens * rates["image_output"]
 
     exact_total_cost = None
     if (
-        input_text_tokens is not None
-        or input_cached_text_tokens is not None
-        or input_image_tokens is not None
-        or input_cached_image_tokens is not None
-    ) and exact_output_cost is not None:
+        rates is not None
+        and input_text_tokens is not None
+        and input_image_tokens is not None
+        and exact_output_cost is not None
+    ):
         exact_total_cost = (
-            (input_text_tokens or 0.0) * TEXT_INPUT_RATE
-            + (input_cached_text_tokens or 0.0) * TEXT_INPUT_CACHED_RATE
-            + (input_image_tokens or 0.0) * IMAGE_INPUT_RATE
-            + (input_cached_image_tokens or 0.0) * IMAGE_INPUT_CACHED_RATE
+            input_text_tokens * rates["text_input"]
+            + input_image_tokens * rates["image_input"]
             + exact_output_cost
         )
 
-    table_output_cost = OUTPUT_COST_TABLE.get((args.quality, args.size))
+    per_image_output_cost = (
+        OUTPUT_COST_TABLE.get((args.quality, args.size))
+        if args.model == "gpt-image-2"
+        else None
+    )
+    table_output_cost = (
+        per_image_output_cost * args.n
+        if per_image_output_cost is not None
+        else None
+    )
 
     if exact_total_cost is not None:
         basis = "exact"
@@ -193,9 +213,14 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
     if basis == "partial":
         notes.append("Exact output cost confirmed from API usage; total request cost was not fully exposed.")
     elif basis == "estimate":
-        notes.append("Cost came from the published gpt-image-2 output-image price table.")
+        notes.append(
+            "Output-only estimate from the published gpt-image-2 price table; "
+            "input tokens are not included."
+        )
     elif basis == "unknown":
-        notes.append("No usable usage details or standard output price match were available.")
+        notes.append(
+            "No supported model rate, usable usage details, or standard output price match was available."
+        )
 
     return {
         "basis": basis,
@@ -203,6 +228,8 @@ def summarize_cost(args: argparse.Namespace, response: Any) -> dict[str, Any]:
         "exact_total_cost_usd": round(exact_total_cost, 6) if exact_total_cost is not None else None,
         "exact_output_cost_usd": round(exact_output_cost, 6) if exact_output_cost is not None else None,
         "table_output_cost_usd": round(table_output_cost, 6) if table_output_cost is not None else None,
+        "pricing_as_of": PRICING_AS_OF,
+        "pricing_source": PRICING_SOURCE,
         "usage": usage,
         "notes": notes,
     }
@@ -245,27 +272,48 @@ def print_summary(summary: dict[str, Any]) -> None:
 
 def main() -> None:
     args = parse_args()
-    ensure_api_key()
-
-    output_paths = build_output_paths(args.out, args.n)
+    try:
+        output_paths = build_output_paths(args.out, args.n, args.output_format)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
     payload = request_payload(args)
 
     if args.dry_run:
+        per_image_output_cost = (
+            OUTPUT_COST_TABLE.get((args.quality, args.size))
+            if args.model == "gpt-image-2"
+            else None
+        )
+        table_output_cost = (
+            per_image_output_cost * args.n
+            if per_image_output_cost is not None
+            else None
+        )
         summary = {
             "mode": args.mode,
             "model": args.model,
             "saved_paths": [str(path.resolve()) for path in output_paths],
             "request": payload,
             "cost": {
-                "basis": "estimate"
-                if OUTPUT_COST_TABLE.get((args.quality, args.size)) is not None
-                else "unknown",
-                "display_cost_usd": OUTPUT_COST_TABLE.get((args.quality, args.size)),
+                "basis": "estimate" if table_output_cost is not None else "unknown",
+                "display_cost_usd": table_output_cost,
                 "exact_total_cost_usd": None,
                 "exact_output_cost_usd": None,
-                "table_output_cost_usd": OUTPUT_COST_TABLE.get((args.quality, args.size)),
+                "table_output_cost_usd": table_output_cost,
+                "pricing_as_of": PRICING_AS_OF,
+                "pricing_source": PRICING_SOURCE,
                 "usage": {},
-                "notes": ["Dry run only. No API call was made."],
+                "notes": (
+                    [
+                        "Dry run only. No API call was made.",
+                        "Estimate covers output images only; input tokens are not included.",
+                    ]
+                    if table_output_cost is not None
+                    else [
+                        "Dry run only. No API call was made.",
+                        "No static estimate is available for this model, size, or quality.",
+                    ]
+                ),
             },
             "created_at": datetime.now(timezone.utc).isoformat(),
             "elapsed_seconds": 0.0,
@@ -275,6 +323,17 @@ def main() -> None:
         report_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         print_summary(summary)
         return
+
+    ensure_api_key()
+    try:
+        from openai import OpenAI
+    except ImportError as error:
+        print(
+            "The 'openai' package is required for live API calls. "
+            "Install it in an isolated environment.",
+            file=sys.stderr,
+        )
+        raise SystemExit(3) from error
 
     started = time.time()
     client = OpenAI()

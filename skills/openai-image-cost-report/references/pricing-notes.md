@@ -1,29 +1,30 @@
-# Pricing Notes
+# Pricing notes
 
-Use these pricing notes when reporting the cost of `gpt-image-2` image jobs.
+Read this reference before modifying the helper's rates, using another model, or interpreting incomplete usage. Prices are snapshots, not permanent facts.
 
-## Current assumptions
+## Current `gpt-image-2` snapshot
 
-- Prefer `gpt-image-2`.
-- Prefer standard sizes with published output-image prices:
-  - `1024x1024`
-  - `1024x1536`
-  - `1536x1024`
-- Standard output-image prices used by the helper script:
-  - `low`: `1024x1024=$0.006`, `1024x1536=$0.005`, `1536x1024=$0.005`
-  - `medium`: `1024x1024=$0.053`, `1024x1536=$0.041`, `1536x1024=$0.041`
-  - `high`: `1024x1024=$0.211`, `1024x1536=$0.165`, `1536x1024=$0.165`
+Verified against the official OpenAI [pricing page](https://developers.openai.com/api/docs/pricing#image-generation) and [image generation guide](https://developers.openai.com/api/docs/guides/image-generation#calculating-costs) on 2026-08-26.
+
+- Token prices per one million tokens: text input `$5.00`, cached text input `$1.25`, image input `$8.00`, cached image input `$2.00`, and image output `$30.00`.
+- Published output-only prices per image:
+
+| Quality | 1024x1024 | 1024x1536 | 1536x1024 |
+| --- | ---: | ---: | ---: |
+| Low | $0.006 | $0.005 | $0.005 |
+| Medium | $0.053 | $0.041 | $0.041 |
+| High | $0.211 | $0.165 | $0.165 |
+
+The non-square prices being lower than square prices are intentional for `gpt-image-2`; output token counts do not scale monotonically with pixel area. The helper uses this table only for the three listed sizes and multiplies it by `--n`.
 
 ## Exactness policy
 
-- If the API response includes modality-separated usage details, compute and report the exact total.
-- If the API response includes only output token usage, report the exact output cost and mark the result as `partial`.
-- If the response lacks usable usage details, fall back to the published output-image price table and mark the result as `estimate`.
+- Report `exact` only when the response contains enough modality-separated input usage and output usage to price the full request.
+- Report `partial` when output usage can be priced but input usage cannot.
+- Report `estimate` when the helper falls back to the published output-only table. Input text and edit-image tokens remain excluded.
+- Report `unknown` for unsupported models, automatic quality, non-table sizes without usable usage, or any case lacking an applicable rate.
+- Never reuse this snapshot for a different model. Check current official documentation and update the model-specific logic first.
 
-## User-facing language
+## Maintenance
 
-Use `exact` only when the total request cost is fully derived from returned usage.
-
-Use `partial` when only part of the bill is confirmed, for example the output-image portion.
-
-Use `estimate` when the number comes from the published `gpt-image-2` output table rather than request-specific usage details.
+When official prices or API usage fields change, update the constants, this dated snapshot, and focused synthetic tests together. Do not make a paid request solely to refresh pricing metadata.

@@ -1,102 +1,32 @@
 ---
 name: openai-image-cost-report
-description: Generate or edit images with the local OpenAI API key, using `gpt-image-2` by default, and report per-call cost information after each image job. Use when the user wants Codex to check local `OPENAI_API_KEY`, call the OpenAI Image API directly instead of the built-in image tool, save the generated image locally, and include a cost summary in the reply.
+description: Generate or edit images through the OpenAI Image API with the user's local API key, save the results, and report the cost basis for every request. Use when the user explicitly wants direct OpenAI API image generation or editing, local output files, or per-call cost reporting instead of the built-in image tool.
 ---
 
 # OpenAI Image Cost Report
 
-Use this skill when the user wants an OpenAI-API-based image workflow with explicit cost reporting. Prefer this skill over ad hoc shell commands so the key check, model selection, file output, and cost summary are handled consistently.
+Use the bundled script for reproducible Image API requests and cost reports. Default to `gpt-image-2` unless the user names another model.
 
 ## Workflow
 
-1. Verify `OPENAI_API_KEY` is available in the current shell before doing anything else.
-2. Prefer `gpt-image-2` unless the user explicitly requests another GPT Image model.
-3. Prefer the helper script at `scripts/openai_image_with_cost.py` for both generation and editing.
-4. Save outputs into the current workspace or the path explicitly requested by the user.
-5. After each successful image call, read the script's cost summary and include it in the reply.
+1. Confirm the requested prompt, operation (`generate` or `edit`), output path, size, quality, and image count. Use `1024x1024`, `1024x1536`, or `1536x1024` unless the user needs another supported `gpt-image-2` resolution.
+2. Use `python-environment` to select an isolated interpreter and provide the `openai` package. Do not install it globally or prescribe a platform-specific environment path here.
+3. Run `scripts/openai_image_with_cost.py --help` when command options are needed. Use `--dry-run` to validate parameters and obtain an output-only estimate without an API key, the `openai` package, or an API call.
+4. Before a live request, check that `OPENAI_API_KEY` exists without printing its value. If missing, stop and ask the user to set it locally; never ask them to paste it into chat.
+5. Run the helper for the live request. Preserve the generated image files and adjacent JSON cost report. Do not expose the key or raw authentication material in commands, logs, or replies.
+6. Report the model, operation, saved paths, displayed USD cost, and basis. Clearly label output-only or unavailable totals.
 
-## Key Handling
+## Defaults and cost semantics
 
-Check the environment variable from the active shell:
+- Use `high` for final assets and `medium` or `low` for drafts when the user has not specified quality.
+- Treat `exact` as a full request cost calculated from API-returned input and output usage.
+- Treat `partial` as a request-specific output cost that excludes some inputs.
+- Treat `estimate` as the published output-image price for the selected standard size, quality, and count; it excludes input text and edit-image tokens.
+- Treat `unknown` as no supported calculation. Never apply `gpt-image-2` rates to another model.
+- Read [references/pricing-notes.md](references/pricing-notes.md) before changing pricing logic, using non-default models, or interpreting incomplete usage. Verify current official OpenAI pricing when accuracy matters because rates can change.
 
-```powershell
-if ($env:OPENAI_API_KEY) { "SET" } else { "MISSING" }
-```
+## Boundaries
 
-If missing, stop and ask the user to set it locally. Do not ask the user to paste the key into chat.
-
-## Environment
-
-If Python execution is needed, follow project-local environment rules:
-
-1. Find the project root when working inside a repo.
-2. Reuse a local `.venv` if present; otherwise create one with `uv venv .venv`.
-3. Install only the minimum dependency needed for this workflow:
-
-```powershell
-uv pip install --python .venv\Scripts\python.exe openai
-```
-
-The helper script itself uses only the `openai` package plus the Python standard library.
-
-## Default Choices
-
-Prefer standard `gpt-image-2` sizes that have published per-image output prices, because they make cost reporting cleaner:
-
-- `1024x1024` for square assets
-- `1024x1536` for portrait assets
-- `1536x1024` for landscape assets
-
-Use `high` quality only when the user wants a final asset; use `medium` or `low` for drafts.
-
-## Commands
-
-Generate a new image:
-
-```powershell
-.venv\Scripts\python.exe C:\Users\Administrator\.codex\skills\openai-image-cost-report\scripts\openai_image_with_cost.py generate `
-  --prompt "A pale blue babydoll dress product mockup" `
-  --size 1024x1536 `
-  --quality high `
-  --out output\imagegen\dress.png
-```
-
-Edit one or more reference images:
-
-```powershell
-.venv\Scripts\python.exe C:\Users\Administrator\.codex\skills\openai-image-cost-report\scripts\openai_image_with_cost.py edit `
-  --prompt "Change only the dress fabric and keep the model and scene unchanged." `
-  --image 1.jpg `
-  --image 2.jpg `
-  --size 1024x1536 `
-  --quality high `
-  --out output\imagegen\dress-edit.png
-```
-
-Use `--dry-run` first when you want to preview the resolved request and the likely output-image price without making an API call.
-
-## Cost Reporting Rules
-
-Always include a short cost block in the user-facing reply after each successful call.
-
-Preferred format:
-
-```text
-Model: gpt-image-2
-Mode: generate|edit
-Saved: <path>
-Cost: $X.XXXX
-Basis: exact|partial|estimate
-```
-
-Interpret the helper script's report as follows:
-
-- `exact`: the API response exposed enough usage detail to compute the full request cost.
-- `partial`: the script could confirm only part of the cost, usually the output-image cost.
-- `estimate`: the script used the published per-image output table because the API response did not expose enough usage detail.
-
-If the report is `partial` or `estimate`, say so explicitly instead of pretending the number is exact.
-
-## References
-
-Read `references/pricing-notes.md` when you need the current pricing assumptions or the rationale behind `exact` vs `estimate`.
+- Use the Image API for a direct one-request generation or edit workflow. Do not silently substitute the Responses API, whose total cost can also include the mainline model.
+- Do not make a billable API call merely to validate the skill or helper. Use dry-run and synthetic usage data unless the user requested an image job.
+- If the API succeeds but local saving or reporting fails, retain available response details, explain the failure, and correct the helper through `personal-skill-management`.
