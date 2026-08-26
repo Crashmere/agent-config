@@ -1,4 +1,0 @@
-interface:
-  display_name: "Instruction Management"
-  short_description: "Organize agent instructions and skills coherently"
-  default_prompt: "Use $instruction-management to organize these agent instructions and decide where they belong."
