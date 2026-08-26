@@ -24,7 +24,10 @@ description: Choose, install, upgrade, remove, and troubleshoot software using a
 
 ## Removal and cleanup
 
-- On macOS, use the available `mole` skill and its supported capabilities for complete software removal, storage analysis, cache cleanup, old-project cleanup, installer cleanup, and related disk-space work. Follow its preview and confirmation requirements before destructive execution.
+- On macOS, evaluate removal per application. Identify how it was installed and inspect its current official uninstall documentation before choosing a method.
+- When the vendor provides a complete, maintained uninstaller, uninstall script, or documented removal procedure, use that as the primary method. Use the available `mole` skill only as a supplement when useful for previewing or removing leftovers.
+- When no adequate official removal process exists, use Mole for complete application removal when it supports the target. Do not assume Mole is always preferable merely because it is available.
+- Use the available `mole` skill for storage analysis, cache cleanup, old-project cleanup, installer cleanup, and related disk-space work. Follow its preview and confirmation requirements before destructive execution.
 - Do not substitute raw deletion commands for a Mole workflow merely to bypass its safety checks.
 - Do not invoke Mole for straightforward deletion when the user has explicitly identified the exact file or directory to remove and no broader discovery, cleanup, or application-uninstall behavior is needed. Handle that as a normal filesystem operation with the applicable destructive-action safeguards.
 - If Mole is unavailable or does not support the requested target, explain the limitation and use the safest appropriate native or vendor-supported method.

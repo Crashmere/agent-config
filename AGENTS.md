@@ -13,7 +13,7 @@
 
 - Prefer official or first-party software sources.
 - Use the `software-installation` skill for software installation, upgrade, removal, or installation troubleshooting.
-- On macOS, use the `mole` skill for software removal or storage cleanup, except for straightforward deletion of explicitly identified files or directories.
+- On macOS, assess each software removal individually: prefer a complete official uninstall process when available and use the `mole` skill as a supplement; otherwise use Mole when appropriate. Use Mole for storage cleanup, except for straightforward deletion of explicitly identified files or directories.
 - When the user explicitly requests installation, complete it and verify the result unless a material risk or unresolved choice requires confirmation.
 
 ## General workflow
