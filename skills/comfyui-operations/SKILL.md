@@ -31,7 +31,7 @@ Read [references/platforms.md](references/platforms.md) before installing or cre
 4. Place each model in its correct category under `models/`. For checkpoints, inspect file size and safetensors metadata when corruption or architecture is uncertain. Never infer model architecture from the filename alone.
 5. Before moving or deleting a downloaded model, resolve exact paths, check free space and collisions, and verify the destination byte length or SHA-256. Move instead of hard-linking when the user wants the original removed and a single independent file.
 6. Run a minimal end-to-end smoke test through checkpoint loading, text encoding, latent creation, sampling, VAE decoding, and image saving. Visually inspect the result; task success alone does not establish image correctness.
-7. After the first verified success, preserve a known-good baseline according to [references/baselines.md](references/baselines.md). Keep the baseline outside the skill repository and exclude credentials, private prompts, and unnecessary large model copies.
+7. For an installation that will be maintained, before upgrades, or when the user requests formal acceptance, preserve a known-good baseline according to [references/baselines.md](references/baselines.md). A temporary trial does not require a full baseline. Keep it outside the skill repository and exclude credentials, private prompts, and unnecessary large model copies.
 
 ## Configure service access
 
@@ -47,7 +47,7 @@ Read [references/platforms.md](references/platforms.md) before installing or cre
 - Preserve user workflows under the configured user directory and back them up before structural edits. Do not rewrite a workflow while merely diagnosing it.
 - Treat generated PNG metadata as executable evidence. Use `scripts/inspect_workflow.py` on workflow JSON or ComfyUI PNG files to extract nodes, links, model, prompts, latent dimensions, and sampler settings.
 - Compare the last known-good output with the first bad output. Change one variable at a time and replay the known-good graph before blaming prompt content.
-- Use `scripts/run_prompt.py` for controlled API runs. Pass `--require-execution` when the test must prove that a sampler or other generation node actually ran. Use `--require-node <id>` for workflows whose critical node is not recognized automatically. Change the seed or another real upstream input when fresh execution is required; changing only the filename prefix may leave upstream nodes cached.
+- Use `scripts/run_prompt.py` for controlled API runs. Pass `--require-execution` when the test must prove that at least one recognized sampler in the returned output graph actually ran. Use `--require-node <id>` for workflows whose critical node is not recognized automatically; it enables execution verification by itself, and every repeated explicit node must run. Change the seed or another real upstream input when fresh execution is required; changing only the filename prefix may leave upstream nodes cached. Downloads preserve safe server subfolders and refuse overwrite unless `--overwrite` is explicit.
 - Treat `input/`, `output/`, `temp/`, logs, model directories, and user data differently. Output and temporary files may be cleanable, while models and workflows require explicit scope and care.
 
 ## Diagnose image failures

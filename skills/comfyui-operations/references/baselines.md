@@ -1,6 +1,6 @@
 # Known-good baselines
 
-Create a baseline after the first visually correct end-to-end generation and before upgrades or risky configuration changes. Use it to distinguish installation/runtime regressions from changes in a user's active workflow.
+Create a baseline for installations that will be maintained, before upgrades or risky configuration changes, or when the user requests formal acceptance. A temporary trial does not require the full bundle. Use a baseline to distinguish installation/runtime regressions from changes in a user's active workflow.
 
 ## Baseline contents
 
@@ -24,7 +24,7 @@ Keep credentials, host secrets, private prompts, and unrelated generated images 
 ## Establish the baseline
 
 1. Use a minimal workflow that covers checkpoint loading, CLIP encoding, latent creation, sampling, VAE decoding, and image saving. Avoid optional custom nodes unless they are part of the capability being accepted.
-2. Submit it through `scripts/run_prompt.py --require-execution`. A successful HTTP response or saved image is insufficient if the critical generation nodes were cached.
+2. Submit it through `scripts/run_prompt.py --require-execution`. This requires at least one recognized sampler in the returned output dependency graph to have execution evidence. For an unrecognized or specifically critical node, pass `--require-node <id>`; every explicit node must exist, contribute to a returned output, and have execution evidence. A successful HTTP response or saved image alone is insufficient.
 3. Confirm the expected accelerator and model in the server logs and `/system_stats`.
 4. Open the output and inspect it visually for semantic structure, not merely valid PNG dimensions.
 5. Copy the exact submitted API prompt and accepted PNG into the bundle. Record the environment and model facts without embedding machine credentials.

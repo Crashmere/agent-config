@@ -76,7 +76,7 @@ Confirm all of these:
 
 Force a fresh run by changing the seed or another true upstream input. Use `randomize` for unrelated images or `increment` for reproducible sequences. Restart the service when the exact fixed seed and graph must be recomputed after its output was deleted.
 
-For API validation, use `scripts/run_prompt.py --require-execution`. A zero exit status then means the output is readable and the required generation nodes were not reported as cached.
+For API validation, use `scripts/run_prompt.py --require-execution`. A zero exit status then means the output is readable and at least one recognized sampler in its returned dependency graph has execution evidence. Use `--require-node <id>` when a critical node is not recognized automatically; each explicit node must exist, contribute to a returned output, and have execution evidence.
 
 ## Model files
 
