@@ -1,4 +1,4 @@
 interface:
   display_name: "Software Installation"
-  short_description: "Choose, install, and verify software safely"
-  default_prompt: "Use $software-installation to select the best installation method and install this software safely."
+  short_description: "Install, remove, and verify software safely"
+  default_prompt: "Use $software-installation to choose a safe method for installing, removing, or troubleshooting this software."

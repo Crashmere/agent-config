@@ -1,6 +1,6 @@
 ---
 name: software-installation
-description: Choose, install, upgrade, remove, and troubleshoot software using an appropriate trusted distribution channel. Use when the user asks to install or update a CLI, desktop application, package manager, runtime, system component, or developer tool; compare installation methods; resolve PATH or duplicate-installation problems; or verify an installation.
+description: Choose, install, upgrade, remove, and troubleshoot software using an appropriate trusted distribution channel, using the available Mole skill for macOS software removal and storage cleanup when applicable. Use when the user asks to install, update, or uninstall a CLI, desktop application, package manager, runtime, system component, or developer tool; clean up storage; compare installation methods; resolve PATH or duplicate-installation problems; or verify an installation.
 ---
 
 # Software Installation
@@ -21,6 +21,13 @@ description: Choose, install, upgrade, remove, and troubleshoot software using a
 - On Windows, consider Winget, Scoop, and the vendor installer. Prefer Scoop for portable CLI tools; prefer Winget or the vendor installer for substantial GUI applications, drivers, and services.
 - On Linux, follow the distribution's package manager when versions are suitable; otherwise use the vendor's documented repository or installer.
 - For language-specific developer tools, prefer a project-local installation when practical. Use a global installation only when the tool is intentionally machine-wide.
+
+## Removal and cleanup
+
+- On macOS, use the available `mole` skill and its supported capabilities for complete software removal, storage analysis, cache cleanup, old-project cleanup, installer cleanup, and related disk-space work. Follow its preview and confirmation requirements before destructive execution.
+- Do not substitute raw deletion commands for a Mole workflow merely to bypass its safety checks.
+- Do not invoke Mole for straightforward deletion when the user has explicitly identified the exact file or directory to remove and no broader discovery, cleanup, or application-uninstall behavior is needed. Handle that as a normal filesystem operation with the applicable destructive-action safeguards.
+- If Mole is unavailable or does not support the requested target, explain the limitation and use the safest appropriate native or vendor-supported method.
 
 ## Confirmation boundaries
 
