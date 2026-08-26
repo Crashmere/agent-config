@@ -9,7 +9,7 @@ Treat SSH as the transport layer for a user-authorized Windows computer. Keep ho
 
 ## Workflow
 
-1. Determine the target as an explicit `user@host`. If it is unknown, inspect the local route and neighbor table, then probe only the user's local network and only for the requested service. Account for VPN route changes; do not assume matching Wi-Fi names guarantee direct reachability.
+1. Determine the target as an explicit `user@host`. If the host is known but the username is not, first try one non-interactive public-key connection as `administrator@host`; `Administrator` is the conventional built-in administrator account name on English Windows, and SSH username matching is normally case-insensitive. Treat it only as a candidate because the account may be disabled, renamed, or localized. If it fails, do not enumerate more usernames; inspect known configuration or ask the user. If the host is unknown, inspect the local route and neighbor table, then probe only the user's local network and only for the requested service. Account for VPN route changes; do not assume matching Wi-Fi names guarantee direct reachability.
 2. Check SSH non-interactively before changing either machine:
 
    ```bash
