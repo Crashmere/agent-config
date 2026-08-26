@@ -48,8 +48,8 @@ Do not assume a saved workflow matches the graph embedded in an earlier image.
 Treat dense color noise or mosaic output as generated corruption, not a file-format problem, when the PNG opens correctly and has normal dimensions.
 
 1. Check architecture first. For example, an SDXL/Pony checkpoint requires an SDXL-compatible graph. An SD3 latent node or an unrelated model-sampling patch can complete without a useful image.
-2. Replay the known-good embedded API prompt with the same seed and parameters. Change only the filename prefix initially.
-3. If the result is cached or points to a deleted file, change the seed to force actual sampling.
+2. Replay the preserved baseline or known-good embedded API prompt. Keep a record of its original seed and parameters.
+3. Run with `--require-execution`. If the sampler is cached or the result points to a deleted file, change the seed in a working copy to force actual sampling.
 4. Replace prompts with concise neutral controls only after graph equivalence is established. If both ordinary and suspect prompts fail, prompt content is not the root cause.
 5. Restart ComfyUI and repeat with a fresh seed. If this restores correct images, inspect model/GPU memory state rather than rewriting the workflow.
 6. When repeated runs later corrupt output, test conservative startup flags supported by that ComfyUI version. On a CUDA system, relevant diagnostic flags may include:
@@ -75,6 +75,8 @@ Confirm all of these:
 - `/view?filename=...&type=output` returns 404.
 
 Force a fresh run by changing the seed or another true upstream input. Use `randomize` for unrelated images or `increment` for reproducible sequences. Restart the service when the exact fixed seed and graph must be recomputed after its output was deleted.
+
+For API validation, use `scripts/run_prompt.py --require-execution`. A zero exit status then means the output is readable and the required generation nodes were not reported as cached.
 
 ## Model files
 
