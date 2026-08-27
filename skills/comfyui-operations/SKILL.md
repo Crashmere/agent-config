@@ -9,6 +9,7 @@ Operate ComfyUI as an application stack: source checkout, accelerator integratio
 
 ## Route by execution context
 
+- When the official `comfy` CLI and `$comfy` skill are available, use them for CLI commands, workflow authoring, submission, job control, and local or cloud execution; use `$comfy-debug` for CLI error envelopes and stuck or failed CLI jobs. Keep installation, environments, models, service lifecycle, host access, and lower-level runtime diagnosis in this skill.
 - For a remote Windows target, use `$windows-ssh` for connection, command transport, file transfer, quoting, and encoding. Use this skill for ComfyUI-specific decisions.
 - For local Windows, macOS, or Linux, run commands directly using the platform's native shell.
 - Use `$software-installation` when installing system-wide prerequisites such as Git, Python, GPU drivers, package managers, or launch services.
