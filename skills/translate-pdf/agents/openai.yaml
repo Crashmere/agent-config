@@ -1,4 +1,4 @@
 interface:
   display_name: "PDF 翻译"
-  short_description: "将英文 PDF 翻译为中文或其他语言，并尽量保留原文的位置与样式"
-  default_prompt: "使用 $translate-pdf 将这份英文 PDF 翻译成简体中文，并检查译文排版。"
+  short_description: "结合上下文完整翻译 PDF，审校原意、语气与可读性并验证图文排版"
+  default_prompt: "使用 $translate-pdf 完整翻译这份 PDF，结合上下文统一术语，逐段核对原意与语气，检查目标语言可读性，并验证图文排版。"

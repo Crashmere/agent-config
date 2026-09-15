@@ -38,7 +38,7 @@
 <table>
   <tr>
     <td><a href="./skills/translate-pdf/SKILL.md">translate-pdf</a></td>
-    <td>将英文等语言的 PDF 翻译为中文或其他语言，并尽量保留原文位置与样式；基于 wshuyi 的开源技能维护。</td>
+    <td>结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。</td>
   </tr>
   <tr>
     <td><a href="./skills/comfyui-operations/SKILL.md">comfyui-operations</a></td>
