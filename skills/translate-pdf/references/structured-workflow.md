@@ -44,12 +44,12 @@ Neither bundled script automatically constructs or reviews these units. Do not m
 
 The bundled translate_pdf.py only accepts a flat string-to-string mapping. It cannot consume this manifest, join paragraphs, select context-specific translations, or reflow tables. Do not pass structured extraction to it or flatten paragraph translations into fragment keys. Build or adapt paragraph/table layout for long documents.
 
-Retain images and vector graphics, use consistent font measurement and rendering, and wrap complete target paragraphs inside planned regions. Check that redacting one region does not remove neighboring text. Adjust line breaks, spacing, columns, and available regions before shrinking type. Respect user constraints on page count; expose an unresolved fit conflict instead of deleting content or producing unreadably small type.
+Retain images, diagram paths, and table rules, use consistent font measurement and rendering, and wrap complete target paragraphs inside planned regions. Original link underlines and other text-bound marks can remain at stale coordinates when all vectors are preserved. Identify those marks using their relationship to source text or link regions, remove only confirmed obsolete marks, and redraw them with the translated text; do not delete arbitrary horizontal lines. Check that redacting one region does not remove neighboring text. Adjust line breaks, spacing, columns, and available regions before shrinking type. Respect user constraints on page count; expose an unresolved fit conflict instead of deleting content or producing unreadably small type.
 
 Keep three distinct checks:
 
 1. Every requested source span is assigned to a translated unit or an explicit retained-content entry; unresolved spans remain visible in the manifest.
 2. The reviewed target text appears in the final PDF after appropriate Unicode/whitespace normalization; inspect differences such as bidirectional punctuation separately.
-3. Rendered pages remain readable with correct figure/caption and table relationships. Verify image digests and positions when preserving original layout, link destinations, and clickable regions.
+3. Rendered pages remain readable with correct figure/caption and table relationships. Verify image digests and positions when preserving original layout. For links, preserve a source phrase → translated phrase → destination mapping and test the corresponding clickable regions; a nearby phrase with the same destination is not automatically an equivalent anchor. Inspect obsolete and rebuilt text decorations separately from retained diagrams.
 
 A manifest with complete coverage can still contain mistranslations. Run the semantic and readability passes in SKILL.md independently.

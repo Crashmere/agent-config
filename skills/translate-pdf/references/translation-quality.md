@@ -17,6 +17,8 @@ Resolve a repeated word anew when its context changes. For example, agent can re
 
 Use source definitions over habitual translations. If a document defines dual use as beneficial versus harmful use, do not narrow it to military versus civilian use. Preserve proper names and technical identifiers. Do not translate product names using their everyday dictionary meaning.
 
+For each figure discussed in the prose, record the relevant visible label, the corresponding source phrase, and the translated occurrence retaining that label. Similar meanings may use different words in the caption and image. Inspect the actual image rather than assuming an English parenthesis in its title covers the figure's terminology. Keep this check task-local and omit labels that the prose does not discuss.
+
 ## Pass 1: compare with the source
 
 For every unit, inspect the source, translation, and necessary context together:
@@ -48,6 +50,8 @@ For Chinese, prefer explicit actions and familiar domain wording. For example, h
 
 Recheck every readability edit against the source. Natural wording may reorganize a sentence but must not invent explanatory facts. Retain unresolved source ambiguity and place necessary translator notes outside the body.
 
+Pay special attention when clarifying compressed noun phrases or participles: do not turn commissioned work into a claim about the commissioned party, or add an intermediary organization or causal mechanism that the source does not establish. Preserve inferential wording such as suggests instead of silently making it categorical. A smoother revision can still introduce a semantic error.
+
 ## Batch and document completion
 
 Track stable unit IDs and actual progress in a task-local manifest, for example:
@@ -55,5 +59,7 @@ Track stable unit IDs and actual progress in a task-local manifest, for example:
     {"unit_id": "u0042", "semantic_review": "complete", "readability_review": "complete", "issues": []}
 
 Use pending states until each pass is performed. The manifest is bookkeeping, not proof that a judgment is correct. Before delivery, check neighboring batches, repeated concepts, definitions, captions, and table references together; return any affected units to review when corrections change them.
+
+Record batch scope and substantive findings as review proceeds. A generic review-method string or an unconditional completion flag is not evidence of a performed review. Unchanged draft text still needs source comparison. When comparing translation workflows, distinguish inherited correct text from new corrections and newly introduced problems; reuse percentages describe provenance, not quality or review effort.
 
 For each unresolved issue, retain a source location, the problematic wording, and its consequence. Distinguish a clear meaning error from a defensible wording preference. Do not produce numerical quality scores or error rates without a defined sample and rubric.

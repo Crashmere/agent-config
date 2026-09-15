@@ -28,6 +28,8 @@ Use `python-environment` to select an existing isolated environment with PyMuPDF
 
 Inspect representative pages to identify selectable text, columns, tables, figures, recurring headers, and cross-page continuations. The bundled tools do not perform OCR; if requested body text is image-only, obtain text through an available OCR workflow and verify it, or report the unresolved coverage. Do not silently omit it.
 
+Record the origin of any existing translation used as a draft, including its path and which content is reused or revised. Reuse can help revision tasks, but must be disclosed. For an independent translation or skill comparison, keep previous translations and evaluation answers outside the translator's context unless the user explicitly includes them; otherwise describe the result as revision of an existing draft.
+
 For prose or long documents, use structured extraction:
 
     python {skill_path}/scripts/extract_texts.py input.pdf --output source.json
@@ -56,11 +58,13 @@ Translate from the source under the translation contract. For uncertainty, inspe
 
 Complete these passes for each batch before final layout. Do not mark a unit reviewed merely because it was generated or passed a text-presence check. If review remains partial, state the actual scope and remaining work.
 
+Set completion from an actual batch review record with unit IDs, checks performed, corrections, and unresolved findings. Finalization scripts may aggregate those records; they must not unconditionally mark all units complete. After revising a recurring concept, search for both its source expressions and old target wording, then review the related occurrences in context.
+
 ### 5. Render the reviewed translation
 
 For prose, use a paragraph-aware renderer consuming source-ID-based translation units, with explicit table cells and reviewed reading order. **The bundled translate_pdf.py is a simple span-replacement helper, not a paragraph renderer.** Structured extraction is not directly accepted by it. Build or adapt an appropriate renderer for the document; see the structured workflow reference for the required mapping and checks.
 
-Preserve images and vector graphics during redaction; measure and render with the same embedded font. Wrap paragraphs and expand available layout space before reducing type. Check body, captions, and tables at a practical reading size. Avoid isolated heading characters, broken identifiers, and excessive gaps. If exact pagination cannot accommodate the translation readably, identify the concrete layout conflict and follow the user's priorities.
+Preserve images, diagram paths, and table rules during redaction. Distinguish these from text-bound decorations: rebuild link underlines, highlights, and similar marks at the translated text's position, removing only confirmed obsolete marks. Measure and render with the same embedded font. Wrap paragraphs and expand available layout space before reducing type. Check body, captions, and tables at a practical reading size. Avoid isolated heading characters, broken identifiers, and excessive gaps. If exact pagination cannot accommodate the translation readably, identify the concrete layout conflict and follow the user's priorities.
 
 Use the bundled helper only for inspected, self-contained labels whose meaning does not vary by occurrence:
 
@@ -74,7 +78,7 @@ Use helv for Latin, china-ss / china-ts for Chinese, japan for Japanese, or kore
 
 - **Source coverage:** account for every requested source unit, including tables and notes. Separate intentionally retained image text or identifiers from untranslated body text.
 - **Output coverage:** extract text from the final PDF and compare it with the reviewed translation using Unicode and whitespace normalization. Investigate differences; do not normalize away identifiers, numbers, or meaningful punctuation. Check images and their placements against the source.
-- **Visual quality:** inspect the cover, representative pages from every section, dense prose, long headings, tables, figures, cross-page sentences, and every flagged page for clipping, overlap, tiny type, broken reading order, or detached captions. Check link targets and clickable regions after reflow.
+- **Visual quality:** inspect the cover, representative pages from every section, dense prose, long headings, tables, figures, cross-page sentences, and every flagged page for clipping, overlap, tiny type, broken reading order, detached captions, or obsolete text decorations. Check each link's target, corresponding source and translated phrase, and clickable region after reflow; retaining the URL alone is insufficient.
 - Report the output path, translation method, semantic-review scope, layout checks, and unresolved issues. Claim full semantic review only when it was completed. A successful save, page count, or replacement count is not evidence of translation accuracy.
 
 Append a language suffix such as _ZH.pdf or _EN.pdf. Keep source files unchanged and working artifacts separate from deliverables.
