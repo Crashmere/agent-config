@@ -37,6 +37,10 @@
 
 <table>
   <tr>
+    <td><a href="./skills/translate-pdf/SKILL.md">translate-pdf</a></td>
+    <td>将英文等语言的 PDF 翻译为中文或其他语言，并尽量保留原文位置与样式；基于 wshuyi 的开源技能维护。</td>
+  </tr>
+  <tr>
     <td><a href="./skills/comfyui-operations/SKILL.md">comfyui-operations</a></td>
     <td>跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖模型部署、工作流、API、缓存和图像异常。</td>
   </tr>
