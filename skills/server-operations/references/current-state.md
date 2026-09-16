@@ -51,6 +51,7 @@
 - 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等；不是 Ledger 创建的。
 - `aegis.service`（Aegis Service）当前 failed，Result=signal，原因未调查。本次只记录，未经授权未修复/移除；不要把所有 failed unit 都归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；有 unattended-upgrades 组件。没有审计自动重启策略，维护窗口前需检查。
+- 核对时存在 /var/run/reboot-required，关联包 libc6；系统需要安排重启，但本次未执行。应在用户同意的维护窗口检查全部应用自启/备份后重启，恢复后验证并删除此条过时状态。
 - Ledger 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
 - 目前没有配置应用外部可用性告警、集中监控或文档自动漂移检测；靠维护流程与只读检查。
 - 目前只确认同盘备份，没有配置异机备份；发布历史和发布前备份不自动轮换，需关注磁盘。是否增设这些能力由实际需求决定，记录建议不代表已经实施。

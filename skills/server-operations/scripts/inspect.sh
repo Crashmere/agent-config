@@ -20,6 +20,12 @@ inspect listeners ss -ltnp
 inspect running-services systemctl list-units --type=service --state=running --no-pager
 inspect failed-services systemctl --failed --no-pager
 inspect timers systemctl list-timers --all --no-pager
+if [[ -f /var/run/reboot-required ]]; then
+  inspect reboot-required cat /var/run/reboot-required
+  if [[ -f /var/run/reboot-required.pkgs ]]; then
+    inspect reboot-packages cat /var/run/reboot-required.pkgs
+  fi
+fi
 inspect applications ls -la /opt
 inspect nginx-sites ls -l /etc/nginx/sites-enabled /etc/nginx/app-locations
 inspect firewall ufw status verbose
