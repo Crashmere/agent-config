@@ -35,7 +35,6 @@
 | `/etc/nginx/sites-available/apps` | 本技能 `assets/nginx-apps.conf`，80 默认 server |
 | `/etc/nginx/sites-enabled/apps` | 指向上面的启用链接 |
 | `/etc/nginx/app-locations/ledger.conf` | 指向 `/opt/ledger/config/nginx-location.conf`，源在 Ledger deploy |
-| `/etc/nginx/default-site-before-ledger` | 原默认站点链接的留存；未启用，不参与当前请求 |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
