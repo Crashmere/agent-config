@@ -54,6 +54,10 @@
 
 <table>
   <tr>
+    <td><a href="./skills/server-operations/SKILL.md">server-operations</a></td>
+    <td>维护个人 Linux 服务器的共享部署约定、当前主机与应用清单、跨项目架构变更、服务器重建及文档同步；项目细节留在各自 docs。</td>
+  </tr>
+  <tr>
     <td><a href="./skills/windows-ssh/SKILL.md">windows-ssh</a></td>
     <td>通过 SSH 安全连接、检查和操作远程 Windows 电脑，并处理 OpenSSH、文件传输、编码和命令转义问题。</td>
   </tr>

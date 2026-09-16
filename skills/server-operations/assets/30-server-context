@@ -1,0 +1,3 @@
+#!/bin/sh
+printf '\nServer maintenance context: read /opt/AGENTS.md before changes.\n'
+printf 'Shared docs: /opt/server-context/SKILL.md | App docs: /opt/<app>/docs/README.md\n\n'
