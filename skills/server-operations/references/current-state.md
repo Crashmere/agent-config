@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后现场核对：2026-09-16（北京时间）。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+应用与入口最后核对：2026-09-17（北京时间）；主机基础信息沿用 2026-09-16 核对。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -22,8 +22,9 @@
 | 应用 / 源码 | URL 前缀 → 本机监听 | 目录 / 身份 | systemd | 文档与验证 |
 | --- | --- | --- | --- | --- |
 | Ledger / [Crashmere/ledger](https://github.com/Crashmere/ledger) | `/ledger/` → `127.0.0.1:18080` | `/opt/ledger`；运行 `ledger`，发布 `ledger-deploy` | `ledger.service`、`ledger-backup.service`、`ledger-backup.timer` | `/opt/ledger/docs/README.md`；直连 `/healthz`、代理 `/ledger/healthz`、深链接 `/ledger/search` |
+| FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、深链接 `/feetable/tables/1` |
 
-目前 `/opt` 中的业务应用只有 Ledger；`server-context` 是文档包，不是应用。Ledger 使用独立 SQLite，备份每天北京时间 03:00 加 0–5 分钟随机延迟，保留 14 份 daily；程序更新由 GitHub Actions 执行。精确流程、权限和风险以项目 docs 为准，不在这里复制。
+Ledger 与 FeeTable 各用独立 SQLite、运行和发布身份。Ledger 每天北京时间 03:00 备份，FeeTable 为 03:15，均加 0–5 分钟随机延迟并保留 14 份 daily；各自 GitHub Actions 从 main、production 环境发布程序。FeeTable 从空库开始，用户明确确认无登录、知址可读写和导出；首份备份与隔离恢复已验证。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 新增应用必须增加一行，填明源码、前缀/端口、运行/发布身份、unit、项目文档、健康验证、数据/备份概况。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
@@ -35,6 +36,7 @@
 | `/etc/nginx/sites-available/apps` | 本技能 `assets/nginx-apps.conf`，80 默认 server |
 | `/etc/nginx/sites-enabled/apps` | 指向上面的启用链接 |
 | `/etc/nginx/app-locations/ledger.conf` | 指向 `/opt/ledger/config/nginx-location.conf`，源在 Ledger deploy |
+| `/etc/nginx/app-locations/feetable.conf` | 指向 `/opt/feetable/config/nginx-location.conf`，源在 FeeTable deploy |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
@@ -51,7 +53,7 @@
 - `aegis.service`（Aegis Service）当前 failed，Result=signal，原因未调查。本次只记录，未经授权未修复/移除；不要把所有 failed unit 都归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；有 unattended-upgrades 组件。没有审计自动重启策略，维护窗口前需检查。
 - 核对时存在 /var/run/reboot-required，关联包 libc6；系统需要安排重启，但本次未执行。应在用户同意的维护窗口检查全部应用自启/备份后重启，恢复后验证并删除此条过时状态。
-- Ledger 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
+- Ledger、FeeTable 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
 - 目前没有配置应用外部可用性告警、集中监控或文档自动漂移检测；靠维护流程与只读检查。
 - 目前只确认同盘备份，没有配置异机备份；发布历史和发布前备份不自动轮换，需关注磁盘。是否增设这些能力由实际需求决定，记录建议不代表已经实施。
 
@@ -61,6 +63,7 @@
 ssh ali 'cat /opt/AGENTS.md'
 ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ssh ali 'cat /opt/server-context/SOURCE; cat /opt/ledger/docs/SOURCE; cat /opt/ledger/current-commit'
+ssh ali 'cat /opt/feetable/docs/SOURCE; cat /opt/feetable/current-commit'
 ```
 
 检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
