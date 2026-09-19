@@ -24,10 +24,13 @@
 | Ledger / [Crashmere/Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` → `127.0.0.1:18080` | `/opt/ledger`；运行 `ledger`，发布 `ledger-deploy` | `ledger.service`、`ledger-backup.service`、`ledger-backup.timer` | `/opt/ledger/docs/README.md`；直连 `/healthz`、代理 `/ledger/healthz`、深链接 `/ledger/search` |
 | FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、深链接 `/feetable/tables/1` |
 | FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
+| RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
 
 Ledger 与 FeeTable 各用独立 SQLite、运行和发布身份。Ledger 每天北京时间 03:00 备份，FeeTable 为 03:15，均加 0–5 分钟随机延迟并保留 14 份 daily；各自 GitHub Actions 从 main、production 环境发布程序。FeeTable 从空库开始，用户明确确认无登录、知址可读写和导出；首份备份与隔离恢复已验证。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 FabricWorld 为无登录共享布料库，用户确认知址可读写、删除和导出。Go 内嵌 Vue 页面，独立 SQLite 和本地照片；照片由 libvips 8.18.0 + libheif-plugin-libde265 处理，应用 CPUQuota=100%、MemoryMax=640M。每天北京时间 03:30 加 0–5 分钟随机延迟备份，14 份 daily；数据库快照与不可变图片硬链接、SHA-256 清单一起恢复。正式空库与首份备份已建立，带图片恢复在隔离库验证。main 推送仅 CI，发布为 production 环境手动工作流。没有异机备份，before-deploy 与发行历史暂人工管理。
+
+RecipeBox 为无登录的家庭菜谱与常备食品服务，用户明确授权打开即用、共同读写。Go 内嵌 Vue、独立 SQLite、本地照片，复用现有 libvips/HEIC 运行依赖；CPUQuota=100%、MemoryMax=640M，照片配额 5 GiB。每天北京时间 03:45 加 0–5 分钟随机延迟备份，保留 14 份 daily。正式空库、首份备份已建立，Linux 隔离带图片备份/恢复通过；main 推送仅 CI，production 手动发布，独立受限发布身份。暂无异机备份。精确操作见 RecipeBox docs。FabricWorld 恢复演练示例改用 19082，避免占用新的正式端口 18083。
 
 新增应用必须增加一行，填明源码、前缀/端口、运行/发布身份、unit、项目文档、健康验证、数据/备份概况。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
@@ -43,6 +46,7 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 | `/etc/nginx/app-locations/ledger.conf` | 指向 `/opt/ledger/config/nginx-location.conf`，源在 Ledger deploy |
 | `/etc/nginx/app-locations/feetable.conf` | 指向 `/opt/feetable/config/nginx-location.conf`，源在 FeeTable deploy |
 | `/etc/nginx/app-locations/fabricworld.conf` | 指向 `/opt/fabricworld/config/nginx-location.conf`，源在 FabricWorld deploy |
+| `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
@@ -53,14 +57,14 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ## 其他软件、后台任务和已知问题
 
-- FabricWorld 图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2；安装没有升级或重启既有应用。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
+- FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2；安装没有升级或重启既有应用。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
 - 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是 Ledger 依赖，也不是这次为 Ledger 安装的运行环境；不因 Ledger 不需要就删除。
 - 核对时 PATH 未找到 Go、Docker、sqlite3；没有发现数据库服务或自托管 Actions runner unit。仅是核对范围内的结果，不替代新增项目时的检查。
 - 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等；不是 Ledger 创建的。
 - `aegis.service`（Aegis Service）当前 failed，Result=signal，原因未调查。本次只记录，未经授权未修复/移除；不要把所有 failed unit 都归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；有 unattended-upgrades 组件。没有审计自动重启策略，维护窗口前需检查。
 - 核对时存在 /var/run/reboot-required，关联包 libc6；系统需要安排重启，但本次未执行。应在用户同意的维护窗口检查全部应用自启/备份后重启，恢复后验证并删除此条过时状态。
-- Ledger、FeeTable、FabricWorld 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
+- Ledger、FeeTable、FabricWorld、RecipeBox 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
 - 目前没有配置应用外部可用性告警、集中监控或文档自动漂移检测；靠维护流程与只读检查。
 - 目前只确认同盘备份，没有配置异机备份；发布历史和发布前备份不自动轮换，需关注磁盘。是否增设这些能力由实际需求决定，记录建议不代表已经实施。
 
