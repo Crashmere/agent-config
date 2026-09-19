@@ -31,6 +31,8 @@ FabricWorld 为无登录共享布料库，用户确认知址可读写、删除�
 
 新增应用必须增加一行，填明源码、前缀/端口、运行/发布身份、unit、项目文档、健康验证、数据/备份概况。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
+Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
+
 ## 共享配置与所有权
 
 | 实际位置 | 维护源 / 含义 |
