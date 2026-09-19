@@ -37,6 +37,10 @@
 
 <table>
   <tr>
+    <td><a href="./skills/pdf-to-word/SKILL.md">pdf-to-word</a></td>
+    <td>以内容质量和可编辑性为优先转换 PDF 为 Word，结合本地 OCR、结构重建与渲染复核，并持续沉淀新经验和通用工具。</td>
+  </tr>
+  <tr>
     <td><a href="./skills/translate-pdf/SKILL.md">translate-pdf</a></td>
     <td>结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。</td>
   </tr>

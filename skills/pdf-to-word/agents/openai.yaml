@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF 转 Word"
+  short_description: "以内容准确和可编辑性为优先转换PDF，核对排版并持续积累经验与工具"
+  default_prompt: "使用 $pdf-to-word 将这些 PDF 转为 Word，优先保证内容质量，验证预览，并把新遇到的问题与通用解决方法沉淀回技能。"

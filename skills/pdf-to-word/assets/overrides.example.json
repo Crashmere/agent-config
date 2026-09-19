@@ -1,0 +1,10 @@
+{
+  "example": {
+    "source_sha256": "REPLACE_WITH_THE_INPUT_PDF_SHA256",
+    "cover_image": true,
+    "page_methods": ["native", "ocr"],
+    "full_image_pages": [],
+    "regions": {},
+    "replace": {}
+  }
+}

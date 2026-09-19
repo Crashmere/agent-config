@@ -1,0 +1,11 @@
+# Keep runtime material outside this source-controlled skill.
+.venv/
+__pycache__/
+*.pyc
+*.onnx
+input/
+output/
+work/
+models/
+bin/
+config/
