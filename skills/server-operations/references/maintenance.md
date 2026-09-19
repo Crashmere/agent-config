@@ -37,7 +37,7 @@
 ```sh
 mktemp -d /tmp/server-context-sync.XXXXXX
 git -C /path/to/agent-config rev-parse HEAD
-git -C /path/to/ledger rev-parse HEAD
+git -C /path/to/Ledger rev-parse HEAD
 ```
 
 使用 `git archive HEAD:skills/server-operations` 导出共享技能到暂存区的 `shared/`。项目用 `git ls-files AGENTS.md 'docs/*.md'` 审核列表后，`git archive HEAD -- <已审阅的相对路径>` 导出到 `project/`。不要把忽略文件、私钥或数据库塞进打包列表。

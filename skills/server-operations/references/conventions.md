@@ -24,6 +24,8 @@
 
 ## 目录、身份和进程
 
+源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
+
 ```text
 /opt/server-context/      共享上下文的受控副本，不放凭据或运行数据
 /opt/<app>/
