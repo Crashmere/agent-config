@@ -12,7 +12,8 @@ description: Maintain the user's personal Linux servers and multi-application de
 1. 每次先读 [共享约定](references/conventions.md) 和 [当前服务器与应用清单](references/current-state.md)。
 2. 读取目标项目的 `AGENTS.md`、`docs/README.md`、`docs/OPERATIONS.md`，按任务补读架构/API/CI 文档。清单给出仓库和服务器文档位置。
 3. 变更、部署、补文档时必须读 [变更与文档闭环](references/maintenance.md)；新增应用、迁移或换服务器时再读 [重建与新增应用](references/rebuild.md)。
-4. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
+4. 发布失败或排障时先查 [共性问题与全局方案](references/common-issues.md)，已有方案直接按其执行。
+5. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
 
 ## 开始工作
 
@@ -23,7 +24,8 @@ description: Maintain the user's personal Linux servers and multi-application de
 
 ## 实施与收尾
 
-- 应用内部改动留在该项目；共享层改动先检查清单中全部应用。列出受影响的配置、代码、数据、CI、文档、验证与回退点。
+- 应用内部改动留在该项目；共享层改动先检查清单中全部应用。
+- 在任一项目遇到可能影响其他应用的共性问题（主机、网络、共享 Nginx、共同的发布/备份模式、运行时依赖等），解决方案一律写入 [common-issues](references/common-issues.md)，覆盖全部受影响应用；项目 docs 只保留本项目参数和链接，不各自维护副本。列出受影响的配置、代码、数据、CI、文档、验证与回退点。
 - 可以在任务范围内改进设计。涉及其他项目的停机、数据迁移、权限/公网暴露变化或额外费用，先解释并取得用户同意。不要以“架构统一”为由扩大授权。
 - 落实后检查所有受影响应用，更新每个项目的源码配置和 docs，同时更新共享清单/约定；不要只改现场或新项目。分阶段迁移时记录真实共存状态和未完成项，不宣称全部已迁移。
 - 每次变更完成前主动维护上下文文档，覆盖过时描述、删除无效章节；历史交给 Git，不在当前文档中追加流水账。若某层不受影响，报告核对过、无需更改即可。
