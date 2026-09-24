@@ -63,9 +63,9 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 - FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
 - 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
 - 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。
-- `aegis.service`（Aegis Service，阿里云安全组件）长期 failed，Result=signal，原因未调查；不要把它归因于应用。
+- `aegis.service`（Aegis Service，阿里云安全组件）重启前长期 failed（Result=signal），2026-09-24 重启后恢复 running；若再次失败，不要归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
-- 至少从 2026-09-16 起存在 /var/run/reboot-required（libc6），系统待重启。重启属于授权表中的先确认事项；重启后验证全部应用自启、健康和备份 timer，再删除本条。
+- 2026-09-24 已重启以应用 libc6 更新：四个应用、Nginx 与备份 timer 均自动恢复，直连与代理健康正常，约 25 秒恢复 SSH。以后出现 /var/run/reboot-required 时，按同样方法先检查没有发布/备份在运行，重启后逐项验证。
 - 发布历史不自动轮换，每次发布约保留两份程序（Ledger 约 35 MB/次）；根盘目前充裕，定期用 `du -sh /opt/*/releases /opt/*/backups` 查看。
 - 没有外部可用性告警或集中监控；靠维护时的只读检查。
 
@@ -78,4 +78,4 @@ ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ssh ali 'for a in ledger feetable fabricworld recipebox; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
-inspect.sh 的 failed-services 里正常只应出现 aegis.service；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+inspect.sh 的 failed-services 当前为空；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
