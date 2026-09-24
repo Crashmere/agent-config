@@ -4,6 +4,18 @@
 
 每条写清现象与判断条件、适用应用、处理步骤、清理与验收，以及尚未实施的改进。方案被替代时直接改写本条，历史由 Git 保存。
 
+## systemd 沙箱下照片硬链接备份失败
+
+**状态：待修复**（2026-09-24 发现；改 unit 属于授权表的先确认事项）。适用 FabricWorld、RecipeBox，以及今后任何“备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。
+
+现象：`<app>-backup.service` 每次 failed，journal 为 `hard-link media backup: link ... invalid cross-device link`。两应用从安装后的第一次定时运行（2026-09-20）起就没有成功过；安装时手动执行的首份备份不经过 unit 沙箱，所以没暴露。
+
+原因：unit 使用 `ProtectSystem=strict` 和 `ReadWritePaths=/opt/<app>/data /opt/<app>/backups`，systemd 把两个目录各自绑定挂载成独立挂载点。Linux 不允许跨挂载点建硬链接（即使底层是同一文件系统），返回 EXDEV。
+
+修复：备份 unit 改为 `ReadWritePaths=/opt/<app>`，让 data 与 backups 处于同一个可写挂载点。`/opt/<app>` 下其余内容由 root 所有，应用用户按文件权限本来就不能写，实际写入范围不变。先改项目仓库 `deploy/<app>-backup.service` 并推送，再安装到 `/opt/<app>/config/`、`systemctl daemon-reload`；常驻服务 unit 不需要改。
+
+验证：`systemctl start <app>-backup.service` 后 `systemctl show <app>-backup.service -p Result` 为 success；新的 `daily-*` 目录含 `manifest.json`，其中照片的硬链接数（`stat -c %h`）大于 1。新增应用启用备份 timer 后，也要像这样通过 unit 实际运行一次，不能只用 `runuser` 手动备份代替。
+
 ## GitHub 上传过慢时的备用发布
 
 四个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`；脚本只等待 90 秒上传（`timeout 90 head -c ...`）。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。

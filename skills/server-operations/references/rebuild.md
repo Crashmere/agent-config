@@ -12,7 +12,7 @@
 ## 2. 建立共享底座
 
 1. 核对 OS/架构、CPU/内存/磁盘、现有监听与服务、时间同步、包源和更新策略；将实际选择写回 current-state。
-2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx 和所需系统工具。不要照抄旧云供应商的内网镜像；不为 Ledger 安装 Go/Node/Docker/数据库服务。
+2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx、libvips-tools、libheif-plugin-libde265 和所需系统工具。不要照抄旧云供应商的内网镜像；应用在 CI 构建，服务器不装 Go/Node/Docker/数据库服务。
 3. 使用 Asia/Shanghai 显示时间并配置可靠 NTP。不要盲目改现有主机的 SSH/防火墙，尤其不能把管理员锁在外面。
 4. 先运行 `scripts/sync-docs.sh shared` 建立 `/opt/server-context`、`/opt/AGENTS.md` 与 MOTD，再把 `/root/AGENTS.md` 链接到 `/opt/AGENTS.md`，让下一位维护者一开始就能发现约定。
 5. 在空主机上使用 `assets/nginx-apps.conf` 建共享 HTTP 入口。先读所有 enabled sites，处理默认站点冲突时保存可恢复副本；不要用覆盖操作破坏现有应用。
@@ -21,28 +21,28 @@
 
 ## 3. 重建或新增每个应用
 
-- 读取项目 docs 的首次安装流程；从源码构建或取得受信产物，核对架构和校验值。Ledger 固定当前构建 `make linux BASE_PATH=/ledger/`，精确命令在项目文档。
+- 读取项目 docs 的首次安装流程；从源码构建或取得受信产物，核对架构和校验值。各项目的精确构建命令（如 `make linux BASE_PATH=/ledger/`）在项目文档。
 - 为新应用选择未冲突的 slug、路径、端口、运行身份和目录，先查现场再登记。不要假设下一个端口永远可用，也不要借用 Ledger 的数据目录/发布密钥。
 - 建独立 data/backups/config，unit 以应用用户运行；新建空数据或导入经验证备份，二者必须明确区分。
 - 添加应用拥有的 Nginx location 链接，保留共享 server。检验裸路径跳转、页面深链接、静态资源、API、写入来源校验；需要 WebSocket/上传时另行确认反代参数。
-- 启动应用、启用开机自启与备份调度，取得首份一致性备份，在隔离目标检查恢复；不要用生产写入当测试数据。
+- 启动应用、启用开机自启与备份调度，用 `systemctl start <app>-backup.service` 通过 unit 取得首份备份并确认 Result=success，在隔离目标检查恢复；不要用生产写入当测试数据。
 - 项目必须具有 `AGENTS.md` 和 docs 入口，至少说明职责/业务约定、架构、运行目录、配置、启动与健康、数据模型、备份/恢复、发布/回退、诊断及已知限制。
 - 在共享应用清单添加完整条目，更新主机实况和共享配置模板（如果确实有变化）；检查原有全部应用仍健康，防止新 location 抢占旧路径。
 
 ## 4. 恢复 CI/CD
 
-- 每个项目用 GitHub 托管 runner 构建，按项目要求设置权限和保护条件；当前 Ledger 为 main + production 环境。
+- 每个项目用 GitHub 托管 runner 构建，发布只允许 main + production 环境：Ledger、FeeTable 推 main 自动发布，FabricWorld、RecipeBox 用手动 Deploy 工作流。
 - 创建每应用的受限部署身份、root 所有的固定发布脚本与最小 sudo 授权。不得上传管理员私钥，不允许任意远程 shell。
 - 为新服务器生成新的专用部署密钥，公钥安装到对应账号，私钥交给 GitHub Secrets。秘密本身不进文档/Git；传递结束后按已确认精确路径清理临时凭据。
-- 更新 SSH_HOST、SSH_USER、SSH_PRIVATE_KEY、SSH_KNOWN_HOSTS（Ledger 的名称；别的应用以项目约定为准）。从受信连接/控制台核验主机公钥，不盲信首次 ssh-keyscan 输出，不直接忽略旧 known_hosts 冲突。
-- 首次发布验证成功、失败回退路径和账本未被覆盖；Ledger 普通发布只更新二进制，配置和文档需另行同步。
+- 四个项目的 production secrets 都是 SSH_HOST、SSH_USER、SSH_PRIVATE_KEY、SSH_KNOWN_HOSTS。从受信连接/控制台核验主机公钥，不盲信首次 ssh-keyscan 输出，不直接忽略旧 known_hosts 冲突。
+- 首次发布验证成功、失败回退路径和数据未被覆盖。普通发布只更新二进制；配置由管理员安装，文档用 `scripts/sync-docs.sh` 同步。
 
 ## 5. 验收与交接
 
 - 所有应用：直连和代理健康、网页深链接与资源、预期的登录/公网边界、运行身份与写权限、开机启用状态、备份/恢复、CI 发布结果。
 - 共享层：端口无冲突、Nginx 语法和请求正确、旧应用不受影响、没有意外对外的内部端口。服务日志和应用日志都要抽查。
 - 文档：把实际 OS/资源/软件/网络/应用清单更新成新服务器状态，删掉旧主机事实；项目里的 IP/路径/命令/配置/安装脚本同步更新。证据不足的项明确标为未核实。
-- 同步所有仓库与服务器文档，验证 SOURCE 和发现入口；缺凭据、缺数据或尚未验收的应用不能写成已重建。
+- 推送所有仓库后运行 `scripts/sync-docs.sh`，并确认发现入口可用；缺凭据、缺数据或尚未验收的应用不能写成已重建。
 
 ## 可以改进但尚未实施的方向
 

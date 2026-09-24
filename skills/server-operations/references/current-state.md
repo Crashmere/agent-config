@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-应用与入口最后核对：2026-09-19（北京时间）；主机基础信息沿用 2026-09-16 核对，新增图片依赖于 2026-09-19 核实。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+最后核对：2026-09-24（北京时间），主机、应用、入口与软件版本均在当天用 inspect.sh 复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -11,7 +11,7 @@
 | 资源 | 2 vCPU，约 1.7 GiB 可见内存，40 GiB ext4 根盘；无 swap，无独立应用数据挂载盘 |
 | 内核 | 核对时 7.0.0-30-generic；不是重建时必须固定的版本 |
 | 时间 | Asia/Shanghai；chrony 提供时间同步，NTP 已同步 |
-| SSH | 公钥认证开启、密码认证关闭、允许 root 登录；本次仅核对，未修改 |
+| SSH | 公钥认证开启、密码认证关闭、允许 root 登录 |
 | HTTP | Nginx 1.28.3（Ubuntu 包 1.28.3-2ubuntu1.11），80 IPv4/IPv6；没有配置 TLS/域名 |
 | 主机防火墙 | UFW inactive；不能据此推断所有 netfilter 规则或云侧防护 |
 | 云安全组 | SSH/HTTP 已可达，未通过云 API 审计完整规则；改网络前从云控制台/授权 API 核实 |
@@ -26,13 +26,16 @@
 | FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
 | RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
 
-Ledger 与 FeeTable 各用独立 SQLite、运行和发布身份。Ledger 每天北京时间 03:00 备份，FeeTable 为 03:15，均加 0–5 分钟随机延迟并保留 14 份 daily；各自 GitHub Actions 从 main、production 环境发布程序。FeeTable 从空库开始，用户明确确认无登录、知址可读写和导出；首份备份与隔离恢复已验证。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+| 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
+| --- | --- | --- | --- | --- |
+| Ledger | SQLite | 03:00，一致性快照 | 推 main 自动 | — |
+| FeeTable | SQLite | 03:15，一致性快照 | 推 main 自动 | — |
+| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 手动 Deploy 工作流 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
+| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 手动 Deploy 工作流 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
 
-FabricWorld 为无登录共享布料库，用户确认知址可读写、删除和导出。Go 内嵌 Vue 页面，独立 SQLite 和本地照片；照片由 libvips 8.18.0 + libheif-plugin-libde265 处理，应用 CPUQuota=100%、MemoryMax=640M。每天北京时间 03:30 加 0–5 分钟随机延迟备份，14 份 daily；数据库快照与不可变图片硬链接、SHA-256 清单一起恢复。正式空库与首份备份已建立，带图片恢复在隔离库验证。main 推送仅 CI，发布为 production 环境手动工作流。没有异机备份，before-deploy 与发行历史暂人工管理。
+四个应用都无登录，用户分别确认知址可读写（及各自的导出/删除）。各用独立数据库、运行和发布身份，全部只有同盘备份、没有异机备份；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
-RecipeBox 为无登录的家庭菜谱与常备食品服务，用户明确授权打开即用、共同读写。Go 内嵌 Vue、独立 SQLite、本地照片，复用现有 libvips/HEIC 运行依赖；CPUQuota=100%、MemoryMax=640M，照片配额 5 GiB。每天北京时间 03:45 加 0–5 分钟随机延迟备份，保留 14 份 daily。正式空库、首份备份已建立，Linux 隔离带图片备份/恢复通过；main 推送仅 CI，production 手动发布，独立受限发布身份。暂无异机备份。精确操作见 RecipeBox docs。FabricWorld 恢复演练示例改用 19082，避免占用新的正式端口 18083。
-
-新增应用必须增加一行，填明源码、前缀/端口、运行/发布身份、unit、项目文档、健康验证、数据/备份概况。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
+新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
 Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
 
@@ -57,16 +60,15 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ## 其他软件、后台任务和已知问题
 
-- FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2；安装没有升级或重启既有应用。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
-- 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是 Ledger 依赖，也不是这次为 Ledger 安装的运行环境；不因 Ledger 不需要就删除。
-- 核对时 PATH 未找到 Go、Docker、sqlite3；没有发现数据库服务或自托管 Actions runner unit。仅是核对范围内的结果，不替代新增项目时的检查。
-- 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等；不是 Ledger 创建的。
-- `aegis.service`（Aegis Service）当前 failed，Result=signal，原因未调查。本次只记录，未经授权未修复/移除；不要把所有 failed unit 都归因于应用。
-- 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；有 unattended-upgrades 组件。没有审计自动重启策略，维护窗口前需检查。
-- 核对时存在 /var/run/reboot-required，关联包 libc6；系统需要安排重启，但本次未执行。应在用户同意的维护窗口检查全部应用自启/备份后重启，恢复后验证并删除此条过时状态。
-- Ledger、FeeTable、FabricWorld、RecipeBox 与 Nginx 当前 active，应用和备份 timer enabled。备份 service 执行后 inactive 是正常的；用 journal/Result 判断结果。
-- 目前没有配置应用外部可用性告警、集中监控或文档自动漂移检测；靠维护流程与只读检查。
-- 目前只确认同盘备份，没有配置异机备份；发布历史和发布前备份不自动轮换，需关注磁盘。是否增设这些能力由实际需求决定，记录建议不代表已经实施。
+- **FabricWorld 与 RecipeBox 的定时备份自 2026-09-20 起每次失败**（`invalid cross-device link`），两者目前没有可用的新 daily 备份。原因与修复见 [common-issues](common-issues.md#systemd-沙箱下照片硬链接备份失败)。修复并确认成功前，`systemctl --failed` 会列出这两个 backup service。
+- FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
+- 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
+- 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。
+- `aegis.service`（Aegis Service，阿里云安全组件）长期 failed，Result=signal，原因未调查；不要把它归因于应用。
+- 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
+- 至少从 2026-09-16 起存在 /var/run/reboot-required（libc6），系统待重启。重启属于授权表中的先确认事项；重启后验证全部应用自启、健康和备份 timer，再删除本条。
+- 发布历史不自动轮换，每次发布约保留两份程序（Ledger 约 35 MB/次）；根盘目前充裕，定期用 `du -sh /opt/*/releases /opt/*/backups` 查看。
+- 没有外部可用性告警或集中监控；靠维护时的只读检查。
 
 ## 重新核对
 
@@ -77,4 +79,4 @@ ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ssh ali 'for a in ledger feetable fabricworld recipebox; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
-检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+inspect.sh 的 failed-services 里正常只应出现 aegis.service；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
