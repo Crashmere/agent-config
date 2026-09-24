@@ -116,7 +116,7 @@ sync_target() {
       mkdir -p "$stage/root$(dirname "$dest")"
       git -C "$repo" cat-file blob "$commit:$src" > "$stage/root$dest"
     done < "${TMPDIR:-/tmp}/sync-docs-map.$$"
-    COPYFILE_DISABLE=1 tar -C "$stage" -cf - root
+    COPYFILE_DISABLE=1 tar --no-xattrs -C "$stage" -cf - root
   ) | ssh "$host" "set -euo pipefail
 s=\$(mktemp -d /tmp/sync-docs.XXXXXX); trap 'rm -rf \"\$s\"' EXIT
 tar -xf - -C \"\$s\"
