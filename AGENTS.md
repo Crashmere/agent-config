@@ -27,4 +27,5 @@
 
 - Use `server-operations` before working on the user's personal Linux servers (including SSH host `ali`), their hosted projects, or adding another deployment. Explicitly read remote `/opt/AGENTS.md`; SSH does not automatically load remote agent instructions.
 - Keep shared server context in `agent-config/skills/server-operations` and project details in each project's `AGENTS.md` and `docs`. After changes, proactively update all affected source configurations and current-state docs, remove obsolete descriptions, and synchronize repository and server copies.
-- For shared architecture changes, inspect the entire application inventory and coordinate all affected projects within the user's authorization. Do not treat a task on one app as permission for unrelated outages, destructive migrations, or broader access.
+- For shared architecture changes, inspect the entire application inventory and update all affected projects.
+- Follow the authorization table in `server-operations` SKILL.md. Documentation edits, commits, pushes and server doc syncs, cleanup of known junk, documented fixes, and fixes to your own mistakes are done without asking and reported afterward. Ask first only for the items that table lists, such as real data or backups, access or permission changes, other apps' downtime, and costs.

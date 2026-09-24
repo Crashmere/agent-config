@@ -14,7 +14,7 @@
 1. 核对 OS/架构、CPU/内存/磁盘、现有监听与服务、时间同步、包源和更新策略；将实际选择写回 current-state。
 2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx 和所需系统工具。不要照抄旧云供应商的内网镜像；不为 Ledger 安装 Go/Node/Docker/数据库服务。
 3. 使用 Asia/Shanghai 显示时间并配置可靠 NTP。不要盲目改现有主机的 SSH/防火墙，尤其不能把管理员锁在外面。
-4. 按 maintenance 的文档同步流程先建立 `/opt/server-context`、`/opt/AGENTS.md`、root 入口与 MOTD，让下一位维护者一开始就能发现约定。
+4. 先运行 `scripts/sync-docs.sh shared` 建立 `/opt/server-context`、`/opt/AGENTS.md` 与 MOTD，再把 `/root/AGENTS.md` 链接到 `/opt/AGENTS.md`，让下一位维护者一开始就能发现约定。
 5. 在空主机上使用 `assets/nginx-apps.conf` 建共享 HTTP 入口。先读所有 enabled sites，处理默认站点冲突时保存可恢复副本；不要用覆盖操作破坏现有应用。
 6. 建立 `/etc/nginx/app-locations`，将共享 server 启用到 `sites-enabled/apps`。运行 `nginx -t`，成功后启动/重载；尚未挂应用时根路径 404 正常。
 7. 云安全组/主机防火墙仅开放本次需要的 SSH 与 HTTP；应用内部端口保持 loopback。是否收窄 SSH 来源由实际访问需求决定，不能拿旧 UFW inactive 当必须复制的安全策略。

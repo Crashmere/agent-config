@@ -73,8 +73,8 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 ```sh
 ssh ali 'cat /opt/AGENTS.md'
 ssh ali 'bash /opt/server-context/scripts/inspect.sh'
-ssh ali 'cat /opt/server-context/SOURCE; cat /opt/ledger/docs/SOURCE; cat /opt/ledger/current-commit'
-ssh ali 'cat /opt/feetable/docs/SOURCE; cat /opt/feetable/current-commit'
+~/agent-config/skills/server-operations/scripts/sync-docs.sh --check    # 在本地运行：各文档副本是否与仓库一致
+ssh ali 'for a in ledger feetable fabricworld recipebox; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
 检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。

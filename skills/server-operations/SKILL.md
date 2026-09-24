@@ -15,9 +15,23 @@ description: Maintain the user's personal Linux servers and multi-application de
 4. 发布失败或排障时先查 [共性问题与全局方案](references/common-issues.md)，已有方案直接按其执行。
 5. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
 
+## 授权：改完告知，还是先确认
+
+这是唯一的授权规则，项目文档只链接这里。默认直接做完再告知用户，只有下面“先确认”一栏才停下来问。
+
+| 直接做，结束时告知 | 先确认 |
+| --- | --- |
+| 只读检查：状态、日志、配置、哈希、网络连通与测速 | 删除、覆盖或恢复真实数据和备份；选择恢复时点；数据库迁移 |
+| 所有项目与 agent-config 的文档：修改、提交、推送（纯文档用 `[skip ci]`）、同步服务器副本 | 公网暴露、鉴权、密钥、发布身份或 sudo 权限变化 |
+| 清理已知垃圾：失败发布残留、暂存目录、`._*` 等非数据文件 | 修改 root 管理的发布脚本、共享 Nginx server 或其他应用的配置 |
+| 用户要求实现或部署时：测试、提交、推送 main、重跑 CI、按 common-issues 已有方案发布 | 其他应用停机、主机重启、额外费用 |
+| 修复自己本次操作引入的问题 | 用户只要求查看或诊断时，部署、重启或修复生产 |
+
+不确定属于哪一栏时，可逆且不碰真实数据就按左栏处理。完成后在报告里列出做了什么、结果和遗留项。
+
 ## 开始工作
 
-- 先核对用户授权范围、各仓库工作区和远端提交，再通过受信的 SSH 别名连接。只读请求不授权部署或修复。
+- 先看各仓库工作区和远端提交，再通过受信的 SSH 别名连接。
 - SSH 远程命令不会自动加载远端指令；显式读取 `ssh ali 'cat /opt/AGENTS.md'`。不要把“存在 AGENTS.md”或登录提示当成所有客户端都会执行的保证。
 - 按任务抽查事实：监听、unit、Nginx include、目录所有者、版本、备份和健康。可在服务器运行 `bash /opt/server-context/scripts/inspect.sh` 取得不含账目的基础状态；云安全组需另行核实。
 - 文档是上次验证的快照，现场是实际状态，Git 是维护来源；不一致时调查差异，不能用文档盲目覆盖现场，也不能把意外漂移直接宣布为新约定。
@@ -26,10 +40,10 @@ description: Maintain the user's personal Linux servers and multi-application de
 
 - 应用内部改动留在该项目；共享层改动先检查清单中全部应用。列出受影响的配置、代码、数据、CI、文档、验证与回退点。
 - 在任一项目遇到可能影响其他应用的共性问题（主机、网络、共享 Nginx、共同的发布/备份模式、运行时依赖等），解决方案一律写入 [common-issues](references/common-issues.md)，覆盖全部受影响应用；项目 docs 只保留本项目参数和链接，不各自维护副本。
-- 可以在任务范围内改进设计。涉及其他项目的停机、数据迁移、权限/公网暴露变化或额外费用，先解释并取得用户同意。不要以“架构统一”为由扩大授权。
+- 可以在任务范围内改进设计；需要先确认的事项只看上面的授权表。
 - 落实后检查所有受影响应用，更新每个项目的源码配置和 docs，同时更新共享清单/约定；不要只改现场或新项目。分阶段迁移时记录真实共存状态和未完成项，不宣称全部已迁移。
 - 每次变更完成前主动维护上下文文档，覆盖过时描述、删除无效章节；历史交给 Git，不在当前文档中追加流水账。若某层不受影响，报告核对过、无需更改即可。
-- 同步 Git 与服务器文档副本，校验内容和链接；不把凭据、数据库、备份、账目统计放入文档或 Git。同步受阻时明确未同步的位置，不报告完全完成。
+- 推送后在本地运行 `scripts/sync-docs.sh`（默认同步 shared 和全部项目，也可只列目标），它完成漂移检查、安装、逐文件校验和清理。不把凭据、数据库、备份、账目统计放入文档或 Git。同步受阻时明确未同步的位置，不报告完全完成。
 
 ## 来源与发现入口
 
@@ -39,4 +53,4 @@ description: Maintain the user's personal Linux servers and multi-application de
 - 交互 SSH 的提示由 `/etc/update-motd.d/30-server-context` 提供。不要改 sshd、shell 全局启动输出或 CI 强制命令来强制提示，这可能破坏非交互传输。
 - 本地全局 AGENTS 路由到本技能；各项目入口补上离线/远端路径，避免只能从一个客户端发现。
 
-共享配置模板在 [assets/nginx-apps.conf](assets/nginx-apps.conf)，服务器指令入口在 [assets/AGENTS.md](assets/AGENTS.md)，登录提示在 [assets/30-server-context](assets/30-server-context)。具体同步步骤见 maintenance；这些是供审阅后部署的材料，读取技能本身不授权安装或重载。
+共享配置模板在 [assets/nginx-apps.conf](assets/nginx-apps.conf)，服务器指令入口在 [assets/AGENTS.md](assets/AGENTS.md)，登录提示在 [assets/30-server-context](assets/30-server-context)。文档副本由 `scripts/sync-docs.sh` 同步；Nginx 模板改动属于授权表中的先确认事项，读取技能本身不会安装或重载它们。
