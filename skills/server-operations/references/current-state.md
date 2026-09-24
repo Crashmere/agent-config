@@ -60,7 +60,6 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ## 其他软件、后台任务和已知问题
 
-- **FabricWorld 与 RecipeBox 的定时备份自 2026-09-20 起每次失败**（`invalid cross-device link`），两者目前没有可用的新 daily 备份。原因与修复见 [common-issues](common-issues.md#systemd-沙箱下照片硬链接备份失败)。修复并确认成功前，`systemctl --failed` 会列出这两个 backup service。
 - FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
 - 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
 - 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。

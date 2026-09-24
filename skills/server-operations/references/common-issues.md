@@ -6,13 +6,13 @@
 
 ## systemd 沙箱下照片硬链接备份失败
 
-**状态：待修复**（2026-09-24 发现；改 unit 属于授权表的先确认事项）。适用 FabricWorld、RecipeBox，以及今后任何“备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。
+适用 FabricWorld、RecipeBox，以及今后任何“在备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。FabricWorld、RecipeBox 已于 2026-09-24 按下述方法修复并验证。
 
-现象：`<app>-backup.service` 每次 failed，journal 为 `hard-link media backup: link ... invalid cross-device link`。两应用从安装后的第一次定时运行（2026-09-20）起就没有成功过；安装时手动执行的首份备份不经过 unit 沙箱，所以没暴露。
+现象：`<app>-backup.service` 每次 failed，journal 为 `hard-link media backup: link ... invalid cross-device link`。安装时用 `runuser` 手动做的首份备份不经过 unit 沙箱，不会暴露这个问题；两应用因此从第一次定时运行起连续失败了 5 天才被发现。
 
 原因：unit 使用 `ProtectSystem=strict` 和 `ReadWritePaths=/opt/<app>/data /opt/<app>/backups`，systemd 把两个目录各自绑定挂载成独立挂载点。Linux 不允许跨挂载点建硬链接（即使底层是同一文件系统），返回 EXDEV。
 
-修复：备份 unit 改为 `ReadWritePaths=/opt/<app>`，让 data 与 backups 处于同一个可写挂载点。`/opt/<app>` 下其余内容由 root 所有，应用用户按文件权限本来就不能写，实际写入范围不变。先改项目仓库 `deploy/<app>-backup.service` 并推送，再安装到 `/opt/<app>/config/`、`systemctl daemon-reload`；常驻服务 unit 不需要改。
+修复：备份 unit 使用 `ReadWritePaths=/opt/<app>`，让 data 与 backups 处于同一个可写挂载点。`/opt/<app>` 下其余内容由 root 所有，应用用户按文件权限本来就不能写，实际写入范围不变。改项目仓库 `deploy/<app>-backup.service` 并推送，安装到 `/opt/<app>/config/` 后 `systemctl daemon-reload`；常驻服务 unit 不需要改。失败的运行不会留下不完整的备份目录，无需清理。
 
 验证：`systemctl start <app>-backup.service` 后 `systemctl show <app>-backup.service -p Result` 为 success；新的 `daily-*` 目录含 `manifest.json`，其中照片的硬链接数（`stat -c %h`）大于 1。新增应用启用备份 timer 后，也要像这样通过 unit 实际运行一次，不能只用 `runuser` 手动备份代替。
 
