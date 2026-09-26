@@ -28,6 +28,12 @@
 
 验收：`curl -sI -H 'Accept-Encoding: gzip'` 请求应用的一个 `.js` 资源，返回 `Content-Encoding: gzip`；reload 后逐个核对五个应用的直连、代理健康检查与深链接。Yuyan 已于 2026-09-26 按此修复并验证。
 
+## GitHub runner 版本固定
+
+GitHub 的 `ubuntu-latest` 从 2026-10-19 起迁移到 Ubuntu 26，会同时改变五个应用 CI 中的系统包、编译环境和 Playwright 依赖安装。2026-09-26 起五个应用的检查与发布作业都固定为 `runs-on: ubuntu-24.04`，每个仓库各推送一次并完成发布和健康检查。
+
+升级时统一处理：在一个应用的分支上改为新版本（如 `ubuntu-26.04`），确认检查、端到端测试（Yuyan 的 `playwright install --with-deps`）和构建产物在服务器上正常运行后，再逐个修改其余应用；不要改回 `ubuntu-latest`。GitHub 宣布 24.04 退役前完成。
+
 ## GitHub 上传过慢时的备用发布
 
 五个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`。Ledger、FeeTable、FabricWorld、RecipeBox 的脚本只等待 90 秒上传（`timeout 90 head -c ...`）；Yuyan 从安装起就上传 gzip 压缩后的程序，并等待 600 秒。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。
@@ -89,4 +95,6 @@ Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-l
 
 ### 尚未实施的改进
 
-已出现：2026-09-24（多个应用）、2026-09-26（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）。Yuyan 已经压缩上传并放宽到 600 秒。若另外四个应用超时频繁出现，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
+已出现：2026-09-24（多个应用）；2026-09-26 白天（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）；2026-09-26 晚间逐个发布固定 runner 的提交时，Ledger、FeeTable、RecipeBox 超时，FabricWorld 18 秒上传成功，Yuyan（压缩、600 秒）正常，本机下载 RecipeBox artifact 读超时一次，重试成功。Yuyan 已经压缩上传并放宽到 600 秒。另外四个应用现在经常超时，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
+
+下载重试用新的临时目录：在 zsh 里清空空目录的 `rm -rf "$tmp"/*` 会因通配符没有匹配而中止脚本。
