@@ -6,7 +6,7 @@
 
 ## systemd 沙箱下照片硬链接备份失败
 
-适用 FabricWorld、RecipeBox，以及今后任何“在备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。FabricWorld、RecipeBox 已于 2026-09-24 按下述方法修复并验证。
+适用 FabricWorld、RecipeBox，以及今后任何“在备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。FabricWorld、RecipeBox 已于 2026-09-24 按下述方法修复并验证；Yuyan 于 2026-09-26 安装时即按此配置，并通过 unit 验证。
 
 现象：`<app>-backup.service` 每次 failed，journal 为 `hard-link media backup: link ... invalid cross-device link`。安装时用 `runuser` 手动做的首份备份不经过 unit 沙箱，不会暴露这个问题；两应用因此从第一次定时运行起连续失败了 5 天才被发现。
 
@@ -18,7 +18,7 @@
 
 ## GitHub 上传过慢时的备用发布
 
-四个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`；脚本只等待 90 秒上传（`timeout 90 head -c ...`）。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。
+五个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`。Ledger、FeeTable、FabricWorld、RecipeBox 的脚本只等待 90 秒上传（`timeout 90 head -c ...`）；Yuyan 从安装起就上传 gzip 压缩后的程序，并等待 600 秒。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。
 
 遇到上传超时不反复重跑发布作业，直接由管理员从受信终端把同一提交的 CI 产物交给同一个发布脚本。锁、哈希校验、停服备份、候选检查/迁移、原子替换、健康检查和失败回退都与 CI 发布相同。
 
@@ -39,6 +39,9 @@
 | FeeTable | 失败的 `CI and deploy` run 本身 | `feetable-linux` / `feetable-linux-amd64` | `/feetable/healthz`、`/feetable/tables/1` |
 | FabricWorld | 失败的 `CI and deploy` run 本身 | `fabricworld-linux` / `fabricworld-linux-amd64` | `/fabricworld/healthz`、`/fabricworld/new` |
 | RecipeBox | 失败的 `CI and deploy` run 本身 | `recipebox-linux` / `recipebox-linux-amd64` | `/recipebox/healthz`、`/recipebox/new` |
+| Yuyan | 失败的 `CI and deploy` run 本身 | `yuyan-linux` / `yuyan-linux-amd64` | `/yuyan/healthz`、`/yuyan/search` |
+
+Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-linux-amd64" | ssh ali '/opt/yuyan/bin/deploy-release.sh <commit> <sha256>'`，SHA-256 仍为未压缩程序的值。
 
 下列命令中 `<app>` 为小写应用名，`<commit>` 为完整 40 位提交号；不要上传本地构建的程序。
 
@@ -52,7 +55,7 @@
      journalctl --since today --no-pager | grep "deploy-release.sh <commit>" | tail -1'
    ```
 
-2. 下载产物到新的临时目录并核对。本地 SHA-256 必须等于 sudo 日志中的值；四个应用的发布作业都直接使用同一次检查构建的 artifact。服务器上已安装的脚本须与该项目仓库 `deploy/deploy-release.sh` 哈希相同。
+2. 下载产物到新的临时目录并核对。本地 SHA-256 必须等于 sudo 日志中的值；五个应用的发布作业都直接使用同一次检查构建的 artifact。服务器上已安装的脚本须与该项目仓库 `deploy/deploy-release.sh` 哈希相同。
 
    ```sh
    tmp=$(mktemp -d)
@@ -74,4 +77,4 @@
 
 ### 尚未实施的改进
 
-已出现：2026-09-24（多个应用）、2026-09-26（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）。若超时频繁出现，可考虑上传前压缩，或放宽服务器端上传时限。两者都要同时修改四个应用由 root 管理的发布脚本及其测试，属于授权表中的先确认事项。
+已出现：2026-09-24（多个应用）、2026-09-26（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）。Yuyan 已经压缩上传并放宽到 600 秒。若另外四个应用超时频繁出现，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。

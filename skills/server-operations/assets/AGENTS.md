@@ -3,7 +3,7 @@
 操作这台服务器或部署新应用前，先读取 `/opt/server-context/SKILL.md`，然后按其导航读取共享约定、当前应用清单及目标项目文档。
 
 - 共享文档来源：`https://github.com/Crashmere/agent-config` 的 `skills/server-operations/`；服务器 `/opt/server-context/` 是同步副本，来源见其中 `SOURCE`。
-- 项目细节来源：各项目自己的仓库。当前有 Ledger、FeeTable、FabricWorld 与 RecipeBox；按共享应用清单定位 `/opt/<app>/AGENTS.md`、`/opt/<app>/docs/README.md`，来源见对应 `docs/SOURCE`。
+- 项目细节来源：各项目自己的仓库。当前有 Ledger、FeeTable、FabricWorld、RecipeBox 与 Yuyan；按共享应用清单定位 `/opt/<app>/AGENTS.md`、`/opt/<app>/docs/README.md`，来源见对应 `docs/SOURCE`。
 - 先读当前状态再只读核实，不因文档记载某服务就假定现场未变化。不要读取或打印无关凭据/业务数据。
 - 哪些事直接做完再告知、哪些先确认，只看 `/opt/server-context/SKILL.md` 的授权表。文档维护、清理已知垃圾、按已有方案处理问题都属于直接做。
 - 修改共享入口、端口、运行时、权限、备份或发布方案前，评估清单中的全部应用，不只修新项目。

@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后核对：2026-09-24（北京时间），主机、应用、入口与软件版本均在当天用 inspect.sh 复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+最后核对：2026-09-26（北京时间），主机、应用、入口与软件版本均在当天用 inspect.sh 复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -25,6 +25,7 @@
 | FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、深链接 `/feetable/tables/1` |
 | FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
 | RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
+| Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`；运行 `yuyan`，发布 `yuyan-deploy` | `yuyan.service`、`yuyan-backup.service`、`yuyan-backup.timer` | `/opt/yuyan/docs/README.md`；直连 `/healthz`、代理 `/yuyan/healthz`、深链接 `/yuyan/search` |
 
 | 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
 | --- | --- | --- | --- | --- |
@@ -32,8 +33,9 @@
 | FeeTable | SQLite | 03:15，一致性快照 | 推 main 自动 | — |
 | FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
+| Yuyan | SQLite + 图片 | 04:00，同 FabricWorld | 推 main 自动（压缩上传，时限 600 秒） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
 
-四个应用都无登录，用户分别确认知址可读写（及各自的导出/删除）。各用独立数据库、运行和发布身份，全部只有同盘备份、没有异机备份；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+五个应用都无登录，用户分别确认知址可读写（及各自的导出/删除）。各用独立数据库、运行和发布身份，全部只有同盘备份、没有异机备份；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
@@ -50,6 +52,7 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 | `/etc/nginx/app-locations/feetable.conf` | 指向 `/opt/feetable/config/nginx-location.conf`，源在 FeeTable deploy |
 | `/etc/nginx/app-locations/fabricworld.conf` | 指向 `/opt/fabricworld/config/nginx-location.conf`，源在 FabricWorld deploy |
 | `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
+| `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
@@ -76,7 +79,7 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 ssh ali 'cat /opt/AGENTS.md'
 ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ~/agent-config/skills/server-operations/scripts/sync-docs.sh --check    # 在本地运行：各文档副本是否与仓库一致
-ssh ali 'for a in ledger feetable fabricworld recipebox; do echo "$a $(cat /opt/$a/current-commit)"; done'
+ssh ali 'for a in ledger feetable fabricworld recipebox yuyan; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
 inspect.sh 的 failed-services 当前为空；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。

@@ -31,10 +31,10 @@
 
 ## 4. 恢复 CI/CD
 
-- 每个项目用 GitHub 托管 runner 构建，发布只允许 main + production 环境：四个项目都用 `CI and deploy` 工作流，推 main 且检查通过后自动发布。
+- 每个项目用 GitHub 托管 runner 构建，发布只允许 main + production 环境：五个项目都用 `CI and deploy` 工作流，推 main 且检查通过后自动发布。
 - 创建每应用的受限部署身份、root 所有的固定发布脚本与最小 sudo 授权。不得上传管理员私钥，不允许任意远程 shell。
 - 为新服务器生成新的专用部署密钥，公钥安装到对应账号，私钥交给 GitHub Secrets。秘密本身不进文档/Git；传递结束后按已确认精确路径清理临时凭据。
-- 四个项目的 production secrets 都是 SSH_HOST、SSH_USER、SSH_PRIVATE_KEY、SSH_KNOWN_HOSTS。从受信连接/控制台核验主机公钥，不盲信首次 ssh-keyscan 输出，不直接忽略旧 known_hosts 冲突。
+- 五个项目的 production secrets 都是 SSH_HOST、SSH_USER、SSH_PRIVATE_KEY、SSH_KNOWN_HOSTS。从受信连接/控制台核验主机公钥，不盲信首次 ssh-keyscan 输出，不直接忽略旧 known_hosts 冲突。
 - 首次发布验证成功、失败回退路径和数据未被覆盖。普通发布只更新二进制；配置由管理员安装，文档用 `scripts/sync-docs.sh` 同步。
 
 ## 5. 验收与交接
