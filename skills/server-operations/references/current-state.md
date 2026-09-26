@@ -30,8 +30,8 @@
 | --- | --- | --- | --- | --- |
 | Ledger | SQLite | 03:00，一致性快照 | 推 main 自动 | — |
 | FeeTable | SQLite | 03:15，一致性快照 | 推 main 自动 | — |
-| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 手动 Deploy 工作流 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
-| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 手动 Deploy 工作流 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
+| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
+| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
 
 四个应用都无登录，用户分别确认知址可读写（及各自的导出/删除）。各用独立数据库、运行和发布身份，全部只有同盘备份、没有异机备份；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 

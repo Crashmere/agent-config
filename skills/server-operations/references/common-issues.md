@@ -37,8 +37,8 @@
 | --- | --- | --- | --- |
 | Ledger | 失败的 `CI and deploy` run 本身 | `ledger-linux` / `ledger-linux-amd64` | `/ledger/healthz`、`/ledger/search` |
 | FeeTable | 失败的 `CI and deploy` run 本身 | `feetable-linux` / `feetable-linux-amd64` | `/feetable/healthz`、`/feetable/tables/1` |
-| FabricWorld | 同一提交成功的 `Build and verify` run（`Deploy FabricWorld` 在作业内构建，不上传产物） | `fabricworld-linux` / `fabricworld-linux-amd64` | `/fabricworld/healthz`、`/fabricworld/new` |
-| RecipeBox | 同一提交成功的 `Build and verify` run（`Deploy RecipeBox` 同上） | `recipebox-linux` / `recipebox-linux-amd64` | `/recipebox/healthz`、`/recipebox/new` |
+| FabricWorld | 失败的 `CI and deploy` run 本身 | `fabricworld-linux` / `fabricworld-linux-amd64` | `/fabricworld/healthz`、`/fabricworld/new` |
+| RecipeBox | 失败的 `CI and deploy` run 本身 | `recipebox-linux` / `recipebox-linux-amd64` | `/recipebox/healthz`、`/recipebox/new` |
 
 下列命令中 `<app>` 为小写应用名，`<commit>` 为完整 40 位提交号；不要上传本地构建的程序。
 
@@ -52,7 +52,7 @@
      journalctl --since today --no-pager | grep "deploy-release.sh <commit>" | tail -1'
    ```
 
-2. 下载产物到新的临时目录并核对。Ledger、FeeTable 的本地 SHA-256 必须等于 sudo 日志中的值。FabricWorld、RecipeBox 的发布作业是另行构建的，哈希通常一致；若不一致，确认 artifact 来自同一提交且 `Build and verify` 成功后，以 artifact 的哈希发布，并在报告中说明。服务器上已安装的脚本须与该项目仓库 `deploy/deploy-release.sh` 哈希相同。
+2. 下载产物到新的临时目录并核对。本地 SHA-256 必须等于 sudo 日志中的值；四个应用的发布作业都直接使用同一次检查构建的 artifact。服务器上已安装的脚本须与该项目仓库 `deploy/deploy-release.sh` 哈希相同。
 
    ```sh
    tmp=$(mktemp -d)
