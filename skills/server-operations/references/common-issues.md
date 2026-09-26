@@ -16,6 +16,18 @@
 
 验证：`systemctl start <app>-backup.service` 后 `systemctl show <app>-backup.service -p Result` 为 success；新的 `daily-*` 目录含 `manifest.json`，其中照片的硬链接数（`stat -c %h`）大于 1。新增应用启用备份 timer 后，也要像这样通过 unit 实际运行一次，不能只用 `runuser` 手动备份代替。
 
+## Go 程序返回的 JavaScript 没有被 Nginx 压缩
+
+适用在应用 location 中用 `gzip_types` 开启压缩的应用，目前只有 Yuyan；Ledger、FeeTable、FabricWorld、RecipeBox 没有设置 `gzip_types`，沿用 nginx.conf 默认只压缩 HTML，不受影响。以后任何 Go 应用开启 `gzip_types` 时都要按此配置。
+
+现象：CSS、JSON 响应带 `Content-Encoding: gzip`，`.js` 没有。Yuyan 从安装起就是这样，2026-09-26 发布单页应用后才发现：应用脚本原样传输 297 KB（压缩后约 100 KB），编辑器分块约 930 KB（压缩后约 290 KB），按服务器约 0.5 MB/s 的下行速度多等 1 秒以上。
+
+原因：Go 的 `http.FileServer` 按扩展名把 `.js` 返回为 `text/javascript; charset=utf-8`，而 `gzip_types` 只写了 `application/javascript`。
+
+处理：在应用自己的 location 中让 `gzip_types` 同时包含 `text/javascript` 与 `application/javascript`。改项目仓库的 `deploy/nginx-location.conf` 并推送，安装到 `/opt/<app>/config/nginx-location.conf` 后 `nginx -t`，再 `systemctl reload nginx`；不需要改共享 server。
+
+验收：`curl -sI -H 'Accept-Encoding: gzip'` 请求应用的一个 `.js` 资源，返回 `Content-Encoding: gzip`；reload 后逐个核对五个应用的直连、代理健康检查与深链接。Yuyan 已于 2026-09-26 按此修复并验证。
+
 ## GitHub 上传过慢时的备用发布
 
 五个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`。Ledger、FeeTable、FabricWorld、RecipeBox 的脚本只等待 90 秒上传（`timeout 90 head -c ...`）；Yuyan 从安装起就上传 gzip 压缩后的程序，并等待 600 秒。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。
