@@ -61,7 +61,8 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 ## 其他软件、后台任务和已知问题
 
 - FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
-- 已有工具：Node v22.22.1、npm 9.2.0、Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
+- 已有工具：Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Node、Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
+- Ubuntu 的 nodejs、npm 及随它们安装的依赖（共 492 个包，含 eslint、webpack 和一批 X11/Mesa/Perl 库）已于 2026-09-26 按用户要求卸载：Node 不是任何应用的依赖，却常让开发 agent 误以为可以在服务器上构建。卸载后四个应用的直连、代理与深链接健康正常，libvips 可用。
 - 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。
 - `aegis.service`（Aegis Service，阿里云安全组件）重启前长期 failed（Result=signal），2026-09-24 重启后恢复 running；若再次失败，不要归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。

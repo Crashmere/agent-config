@@ -43,7 +43,7 @@
 - 单应用单独的运行用户。程序、脚本、配置由 root 管理；运行用户仅写自己的数据、备份等明确目录。默认数据/备份 0700，敏感配置更严格，不能把 0644 当通用密钥权限。
 - 用 systemd 常驻与开机启动；unit 源放应用 config，通过 `/etc/systemd/system/` 链接。日志进 journal；请求日志按应用/共享入口职责定位。
 - 按需加 `NoNewPrivileges`、`ProtectSystem`、`ReadWritePaths` 等限制，验证不会阻碍真实运行。不要复制一个不适用的沙箱。
-- 当前四个应用都是在 CI 构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
+- 当前四个应用都是在 CI 构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在 CI 构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
 - 不清除不属于任务的主机工具、云厂商 agent、定时任务或用户文件。未知 unit 先识别来源。
 
 ## 数据、备份与发布
