@@ -12,7 +12,7 @@
 ## 2. 建立共享底座
 
 1. 核对 OS/架构、CPU/内存/磁盘、现有监听与服务、时间同步、包源和更新策略；将实际选择写回 current-state。
-2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx、libvips-tools、libheif-plugin-libde265 和所需系统工具。不要照抄旧云供应商的内网镜像；应用在 CI 构建，服务器不装 Go/Node/Docker/数据库服务。
+2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx、libvips-tools、libheif-plugin-libde265 和所需系统工具，确认门户声明校验所需的 python3 可用（仅标准库，无额外 Python 包）。不要照抄旧云供应商的内网镜像；应用在 CI 构建，服务器不装 Go/Node/Docker/数据库服务。
 3. 使用 Asia/Shanghai 显示时间并配置可靠 NTP。不要盲目改现有主机的 SSH/防火墙，尤其不能把管理员锁在外面。
 4. 先运行 `scripts/sync-docs.sh shared` 建立 `/opt/server-context`、`/opt/AGENTS.md` 与 MOTD，再把 `/root/AGENTS.md` 链接到 `/opt/AGENTS.md`，让下一位维护者一开始就能发现约定。
 5. 按 [共享 HTTPS](https.md) 先用 `assets/nginx-apps-bootstrap.conf` 建 HTTP 验证入口，安装官方 Certbot 并签发 IP 证书后，渲染 `assets/nginx-apps.conf` 切换 HTTPS。先读所有 enabled sites，处理默认站点冲突时保存可恢复副本；不要用覆盖操作破坏现有应用。
@@ -37,7 +37,7 @@
 - 创建每应用的受限部署身份、root 所有的固定发布脚本与最小 sudo 授权。不得上传管理员私钥，不允许任意远程 shell。
 - 为新服务器生成新的专用部署密钥，公钥安装到对应账号，私钥交给 GitHub Secrets。秘密本身不进文档/Git；传递结束后按已确认精确路径清理临时凭据。
 - 五个项目的 production secrets 都是 SSH_HOST、SSH_USER、SSH_PRIVATE_KEY、SSH_KNOWN_HOSTS。从受信连接/控制台核验主机公钥，不盲信首次 ssh-keyscan 输出，不直接忽略旧 known_hosts 冲突。
-- 首次发布验证成功、失败回退路径和数据未被覆盖。普通发布只更新二进制；配置由管理员安装，文档用 `scripts/sync-docs.sh` 同步。
+- 首次发布验证成功、失败回退路径和数据未被覆盖。普通发布更新二进制及经共享策略校验的本应用 portal.json；unit、Nginx、其他运行配置和发布脚本由管理员安装，文档用 `scripts/sync-docs.sh` 同步。
 
 ## 5. 验收与交接
 

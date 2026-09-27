@@ -47,6 +47,8 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务器仅持 age 公钥，恢复私钥在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
 
+门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规 CI 同步同提交声明，portal_only=true 只更新门户信息；五个应用已全部通过该模式的真实 GitHub CI，保留业务程序与进程。此次迁移只重启门户两个进程。真实 CI 验证记录见 ServerPortal docs/VERIFICATION.md。
+
 ## 共享配置与所有权
 
 | 实际位置 | 维护源 / 含义 |
@@ -61,13 +63,15 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 | `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
 | `/etc/nginx/app-locations/serverportal.conf` | 指向 `/opt/serverportal/config/nginx-location.conf`，源在 ServerPortal deploy |
 | `/etc/nginx/snippets/portal-auth.conf` | 本技能 assets/nginx-portal-auth.conf，仅在公网 443 server 引用 |
+| `/opt/serverportal/registry.d/<app>.json` | 指向应用自己的 config/portal.json；受限发布协议创建和校验 |
+| `/opt/server-context/scripts/validate-portal.py` | 本技能脚本，CI 与服务器共用的资源声明策略 |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP/HTTPS 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
 | `/root/AGENTS.md` | 指向 `/opt/AGENTS.md`，便于在 root 登录目录发现 |
 | `/etc/update-motd.d/30-server-context` | 交互登录提示；非交互 SSH 不依赖它 |
 
-`SOURCE` 分别位于 `/opt/server-context/` 与每个项目的 `/opt/<app>/docs/`，记录各自来源提交和同步时间。应用的 `current-commit` 记录运行程序版本，不代表 docs 版本；文档更新不应伪造它。
+`SOURCE` 分别位于 `/opt/server-context/` 与每个项目的 `/opt/<app>/docs/`，记录各自来源提交和同步时间。应用的 `current-commit` 记录运行程序版本，`config/portal-source.json` 记录声明来源提交与 SHA-256，两者都不代表 docs 版本；只同步文档或声明不应改写程序版本。
 
 ## 手工数据归档
 
