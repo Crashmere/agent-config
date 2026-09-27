@@ -16,6 +16,8 @@ description: Maintain the user's personal Linux servers and multi-application de
 5. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
 6. 公网 HTTPS、IP 证书、自动续期或来源校验，读 [共享 HTTPS](references/https.md)，统一处理全部应用。
 
+7. 门户、统一设备认证、资源声明、整机材料备份或新增数据目录，读 [门户维护](references/portal.md)，同时维护受影响应用的 deploy/portal.json。
+
 ## 授权：改完告知，还是先确认
 
 这是唯一的授权规则，项目文档只链接这里。默认直接做完再告知用户，只有下面“先确认”一栏才停下来问。

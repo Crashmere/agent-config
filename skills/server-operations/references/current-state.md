@@ -41,6 +41,10 @@
 
 Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
 
+## 门户接入准备
+
+ServerPortal 已有本地实现与各应用 deploy/portal.json 接入声明，计划使用 /portal/ 与回环 18085；尚未安装或切换生产认证，未执行生产清理。共享认证候选 include 在 assets/nginx-portal-auth.conf，维护规则见 [门户维护](portal.md)。部署前必须完成用户口令/离线密钥配置及统一入口授权；上线后覆盖此处为真实状态。
+
 ## 共享配置与所有权
 
 | 实际位置 | 维护源 / 含义 |
