@@ -14,7 +14,7 @@
 
 [WebKit 工程师对顶部颜色延伸的说明](https://bugs.webkit.org/show_bug.cgi?id=301756#c2)指出，浏览器会针对视口边缘的 fixed/sticky 元素延伸实色背景，避免其上方在滚动时出现缺口；iPhone 浏览器 UI 下方本身有较柔和的模糊效果。这是对上述代码差异的机制依据，不能仅凭桌面浏览器验证就断言某台 iPhone 的主屏幕效果已修复。
 
-处理：四个服务均使用 `sticky; top: 0` 的实色页头；Ledger 保留内部正文滚动和顶栏尺寸，另外三个保留文档滚动、路由恢复与弹窗滚动锁。新增吸顶的应用为控件/锚点定位预留顶部空间；FabricWorld 桌面照片栏的吸顶位置也移到导航下方。四个服务的视口同时对齐 Yuyan，采用默认安全区布局。用户已真机确认：仅取消 Ledger 的 `viewport-fit=cover` 仍然发虚，FeeTable 改为 sticky 后顶部正常。该对照支持显式吸顶的方向，不能把安全区设置单独当作已验证的根因或解法；Ledger 的显式 sticky 与其余两服务仍需分别真机确认。无需修改 Nginx、PWA 身份、数据库或系统状态栏设置。
+处理：四个服务均使用 `sticky; top: 0` 的实色页头；Ledger 保留内部正文滚动和顶栏尺寸，另外三个保留文档滚动、路由恢复与弹窗滚动锁。新增吸顶的应用为控件/锚点定位预留顶部空间；FabricWorld 桌面照片栏的吸顶位置也移到导航下方。四个服务的视口同时对齐 Yuyan，采用默认安全区布局。用户已真机确认：仅取消 Ledger 的 `viewport-fit=cover` 仍然发虚，FeeTable 改为 sticky 后顶部正常，Ledger 随后仅把 relative 改成 `sticky; top: 0` 后也恢复正常。这验证了显式吸顶在本次问题中的作用，不能把安全区设置单独当作根因或解法。FabricWorld、RecipeBox 的同类修改已发布并通过浏览器回归，但未分别收到真机反馈。无需修改 Nginx、PWA 身份、数据库或系统状态栏设置。
 
 验证分两层：电脑 Chromium/WebKit 只检查 320/375px 和桌面的页头位置、滚动、导航、表单及弹窗，不把它当作 iPhone 原生模糊层的复现或消除证明；最终效果需在真实 iPhone 从主屏幕重新打开、上下滚动后确认。优先完全关闭该主屏幕窗口后重开以加载新 HTML/CSS，不先清除站点数据。页面和 Ledger 的 manifest 使用 no-cache，未注册 Service Worker。仅凭代码差异不能确定具体 iOS 版本的原生渲染原因，也不应添加所谓通用“关闭系统模糊”的 CSS。
 
