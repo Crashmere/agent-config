@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后核对：2026-09-27（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -45,7 +45,7 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ## 门户与统一认证
 
-ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务器仅持 age 公钥，恢复私钥在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
+ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务器仅持 age 公钥，恢复私钥在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
 
 ## 共享配置与所有权
 
