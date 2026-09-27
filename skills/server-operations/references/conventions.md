@@ -19,14 +19,14 @@
 
 - 当前通过公网 IP 的 HTTPS 443 访问，使用 Let’s Encrypt 的可信 IP 证书。应用共用 Nginx，通过 `/应用名/` 分发；公网 HTTP 80 保留 ACME 验证，其余请求 308 到固定 HTTPS 地址。证书、续期和本机检查入口见 [共享 HTTPS](https.md)。
 - 应用只监听各自 `127.0.0.1:<port>`，在应用清单登记端口；新增前核对 `ss -ltnp`，不假定清单完整。不要给每个应用开放一个公网端口。
-- 共享配置在 `/etc/nginx/sites-available/apps`，启用链接在 `sites-enabled/apps`；HTTPS 与仅回环可达的 HTTP 检查 server include `/etc/nginx/app-locations/*.conf`，每个应用的链接指向自己的配置。HTTPS 未分配的 `/` 返回 404。
+- 共享配置在 `/etc/nginx/sites-available/apps`，启用链接在 `sites-enabled/apps`；HTTPS 与仅回环可达的 HTTP 检查 server include `/etc/nginx/app-locations/*.conf`，每个应用的链接指向自己的配置。HTTPS 根路径及未分配路径跳转 `/portal/`；仅回环检查 server 未分配路径仍返回 404。
 - 修改共享 server 必须检查所有 location 的匹配、重写、Host、转发头、静态资源及深链接。`proxy_pass` 尾斜线是否去前缀是每个应用的接口契约，不能机械复制。
-- 同 IP 的不同路径仍是浏览器同源，不是安全隔离。现有五个应用的“无登录，知址可读写”均经用户分别确认，不代表新应用默认可以公开敏感数据。
+- 同 IP 的不同路径仍是浏览器同源，不是安全隔离。公网统一由 ServerPortal 设备认证保护；授权设备共用业务数据，应用内不区分账户角色。新应用必须继承共享认证。
 - 变更域名、TLS、统一鉴权或反代时，核对全部应用的构建前缀、绝对 URL、Origin/Cookie、健康检查、CI 和文档；涉及访问方式变化先确认。
 
 ## 目录、身份和进程
 
-源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
+源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`、`Yuyan`、`ServerPortal`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
 
 ```text
 /opt/server-context/      共享上下文的受控副本，不放凭据或运行数据

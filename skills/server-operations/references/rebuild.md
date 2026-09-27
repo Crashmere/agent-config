@@ -1,6 +1,6 @@
 # 重建服务器与新增应用
 
-目标是从 Git 文档/源码恢复一致的服务形态，不包含数据恢复承诺。以下为操作顺序，不是可以不经检查对现有主机运行的安装脚本。
+目标是从 Git 文档/源码与已验证的加密备份恢复服务形态和备份时点的数据；离线私钥与云侧条件见 ServerPortal docs/RESTORE.md。以下为操作顺序，不是可以不经检查对现有主机运行的安装脚本。
 
 ## 1. 准备来源和边界
 
@@ -16,7 +16,7 @@
 3. 使用 Asia/Shanghai 显示时间并配置可靠 NTP。不要盲目改现有主机的 SSH/防火墙，尤其不能把管理员锁在外面。
 4. 先运行 `scripts/sync-docs.sh shared` 建立 `/opt/server-context`、`/opt/AGENTS.md` 与 MOTD，再把 `/root/AGENTS.md` 链接到 `/opt/AGENTS.md`，让下一位维护者一开始就能发现约定。
 5. 按 [共享 HTTPS](https.md) 先用 `assets/nginx-apps-bootstrap.conf` 建 HTTP 验证入口，安装官方 Certbot 并签发 IP 证书后，渲染 `assets/nginx-apps.conf` 切换 HTTPS。先读所有 enabled sites，处理默认站点冲突时保存可恢复副本；不要用覆盖操作破坏现有应用。
-6. 建立 `/etc/nginx/app-locations`，将共享 server 启用到 `sites-enabled/apps`。运行 `nginx -t`，成功后启动/重载；尚未挂应用时根路径 404 正常。
+6. 建立 `/etc/nginx/app-locations`，将共享 server 启用到 `sites-enabled/apps`。安装 ServerPortal 及设备认证 include 后再启用最终共享模板；尚未准备好门户时使用 bootstrap 配置，不引用不存在的 auth include。运行 `nginx -t`，成功后启动/重载。
 7. 云安全组/主机防火墙仅开放本次需要的 SSH、HTTP（验证与跳转）及 HTTPS；应用内部端口保持 loopback。是否收窄 SSH 来源由实际访问需求决定，不能拿旧 UFW inactive 当必须复制的安全策略。
 
 ## 3. 重建或新增每个应用
@@ -46,4 +46,4 @@
 
 ## 可以改进但尚未实施的方向
 
-异机备份、可用性告警、磁盘/发布历史轮换、更细的权限或域名等，都可按用户需求评估。此处不是待强制执行的任务列表。实施一项后，将其落实到约定/当前状态/所有受影响项目，并删除对应“未实施”描述；若当前需求不需要，不为文档里的建议额外建系统。
+自动异机同步、可用性告警、磁盘/发布历史自动轮换、更细的权限或域名等，都可按用户需求评估。此处不是待强制执行的任务列表。实施一项后，将其落实到约定/当前状态/所有受影响项目，并删除对应“未实施”描述；若当前需求不需要，不为文档里的建议额外建系统。

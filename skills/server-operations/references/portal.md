@@ -1,6 +1,6 @@
 # 门户与恢复材料维护
 
-ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）是应用门户、设备认证和只读资源展示的维护源。预计部署 /opt/serverportal、127.0.0.1:18085、/portal/，unit 为 serverportal 与 serverportal-agent。当前只有本地实现与接入材料，尚未安装到生产；五个应用现有访问方式没有改变。实际启用后覆盖本节和 current-state，不保留过期状态。
+ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）是应用门户、设备认证和只读资源展示的维护源。已部署 /opt/serverportal、127.0.0.1:18085、/portal/，unit 为 serverportal 与 serverportal-agent。公网根路径跳转到门户，五个应用的公网页面/API 均使用统一设备认证。认证只影响公网 HTTPS；ACME、本机发布检查和服务间调用保留。
 
 ## 所有权与维护闭环
 
@@ -12,7 +12,7 @@ ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）是应用
 
 ## 安全与备份
 
-口令验证后由服务器签发随机设备凭据，使用 Secure/HttpOnly Cookie；不要改成客户端自报 device ID 或指纹。设备认证影响全部应用，正式激活按 SKILL 授权表处理。网页浏览只读，清理必须先预览具体路径并确认；用户请求开发清理功能不等于授权现在删除生产备份。
+口令验证后由服务器签发随机设备凭据，使用 Secure/HttpOnly Cookie；不要改成客户端自报 device ID 或指纹。设备认证影响全部应用，变更访问边界按 SKILL 授权表处理。网页浏览只读，清理必须先预览具体路径并确认；用户请求开发清理功能不等于授权现在删除生产备份。
 
 备份使用离线 age 公钥加密，私钥保存在服务器外；整机材料包含原生一致性数据快照、程序/版本、运行配置、部署公钥、共享配置、证书状态和 AGENTS/docs。数据库不复制活动 WAL 主文件。恢复以清单覆盖与实际演练为准，云账号/安全组、GitHub secrets 和本地私钥需独立保存。完整包、增量父链、删除记录、校验、合并与恢复步骤由 ServerPortal docs/RESTORE.md 维护，本技能只保留入口。
 

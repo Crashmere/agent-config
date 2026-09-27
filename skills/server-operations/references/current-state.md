@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后核对：2026-09-27（北京时间），主机、五个应用及共享 HTTPS 入口均已现场复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+最后核对：2026-09-27（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -26,6 +26,7 @@
 | FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
 | RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
 | Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`；运行 `yuyan`，发布 `yuyan-deploy` | `yuyan.service`、`yuyan-backup.service`、`yuyan-backup.timer` | `/opt/yuyan/docs/README.md`；直连 `/healthz`、代理 `/yuyan/healthz`、深链接 `/yuyan/search` |
+| ServerPortal / [Crashmere/ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` → `127.0.0.1:18085` | `/opt/serverportal`；Web 用户 `serverportal`、root Unix socket 采集器 | `serverportal.service`、`serverportal-agent.service` | `/opt/serverportal/docs/README.md`；回环 `/healthz`；公网根跳转、登录与受保护 API |
 
 | 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
 | --- | --- | --- | --- | --- |
@@ -34,16 +35,17 @@
 | FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
 | Yuyan | SQLite + 图片 | 04:00，同 FabricWorld | 推 main 自动（压缩上传，时限 600 秒） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
+| ServerPortal | 设备状态 JSON、私有配置；整机材料加密归档 | 网页手动触发 all/recovery/docs，可选增量父链；不自动轮换或异机同步 | CI 验证产物后管理员部署 | 本机保存离线 age 私钥；无任意 SQL/命令接口 |
 
-五个应用都无登录，用户分别确认知址可读写（及各自的导出/删除）。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
 Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
 
-## 门户接入准备
+## 门户与统一认证
 
-ServerPortal 已有本地实现与各应用 deploy/portal.json 接入声明，计划使用 /portal/ 与回环 18085；尚未安装或切换生产认证，未执行生产清理。共享认证候选 include 在 assets/nginx-portal-auth.conf，维护规则见 [门户维护](portal.md)。部署前必须完成用户口令/离线密钥配置及统一入口授权；上线后覆盖此处为真实状态。
+ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务器仅持 age 公钥，恢复私钥在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
 
 ## 共享配置与所有权
 
@@ -57,6 +59,8 @@ ServerPortal 已有本地实现与各应用 deploy/portal.json 接入声明，�
 | `/etc/nginx/app-locations/fabricworld.conf` | 指向 `/opt/fabricworld/config/nginx-location.conf`，源在 FabricWorld deploy |
 | `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
 | `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
+| `/etc/nginx/app-locations/serverportal.conf` | 指向 `/opt/serverportal/config/nginx-location.conf`，源在 ServerPortal deploy |
+| `/etc/nginx/snippets/portal-auth.conf` | 本技能 assets/nginx-portal-auth.conf，仅在公网 443 server 引用 |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP/HTTPS 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |

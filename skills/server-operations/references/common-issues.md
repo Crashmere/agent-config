@@ -4,6 +4,12 @@
 
 每条写清现象与判断条件、适用应用、处理步骤、清理与验收，以及尚未实施的改进。方案被替代时直接改写本条，历史由 Git 保存。
 
+## root 采集进程无法切换应用用户
+
+ServerPortal 的 root 采集器使用非 root 主组 serverportal，以便 Unix socket 仅向 Web 用户开放。当前主机上，此组合叠加 NoNewPrivileges 与 RestrictAddressFamilies/LockPersonality 时，进程 CapEff/CapPrm 缺少 CAP_SETUID；runuser 报 cannot set user id: Operation not permitted，原生备份无法开始。直接以 root 在终端运行成功不能证明 unit 内可用。
+
+在采集器 unit 明确配置 AmbientCapabilities=CAP_SETUID，保留其他沙箱项；源码在 ServerPortal deploy/serverportal-agent.service。现场已对照验证主组、seccomp 属性和 capabilities，并通过同等沙箱执行原生快照。固定应用用户运行的现有五个备份 unit 无需改动。后续验证必须从正式采集器发起备份，不只检查 id/true。
+
 ## HTTPS 页面能打开但保存返回 403
 
 适用 Ledger、FeeTable、FabricWorld、RecipeBox：TLS 在共享 Nginx 终止，Go 看到本机 HTTP；原来只检查 r.TLS，会把浏览器的 HTTPS Origin 判成跨站。四个项目已统一修复，详见 [共享 HTTPS 的代理信任边界与验收](https.md)。只修改 Nginx 证书不足以完成迁移，也不能通过删除 Origin 校验或放开 CORS 解决。应用只监听回环，Nginx 覆盖 X-Forwarded-Proto，应用仅接受回环对端的单个合法值；回归覆盖 IPv4/IPv6、直接 TLS、跨站与伪造头。

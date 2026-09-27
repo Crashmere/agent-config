@@ -2,7 +2,7 @@
 
 五个应用共用 Nginx 的公网 HTTPS 443，继续使用 /ledger/、/feetable/、/fabricworld/、/recipebox/、/yuyan/。证书由 Let's Encrypt 为服务器公网 IPv4 签发，无需域名。HTTP 80 只提供 ACME 验证文件和到固定公网 IP 的 308 跳转，保留路径、查询参数与请求方法；API 客户端直接使用 HTTPS，不能把首次明文请求也当成已加密。
 
-HTTPS 提供传输加密，尚无登录认证。不同路径仍是同源；后续会话、Cookie、CSRF 和服务间鉴权需统一设计。IP 地址不能依赖浏览器 HSTS，当前不发送 HSTS，也不启用 preload。
+HTTPS 提供传输加密，公网五个业务应用已由 ServerPortal 统一设备认证保护。不同路径仍是同源；设备 Cookie 使用 Secure/HttpOnly/SameSite=Strict/Path=/，授权后共享访问权限，写操作仍保留来源校验。IP 地址不能依赖浏览器 HSTS，当前不发送 HSTS，也不启用 preload。
 
 ## 配置与维护源
 
@@ -15,9 +15,9 @@ HTTPS 提供传输加密，尚无登录认证。不同路径仍是同源；后�
 | /etc/letsencrypt/renewal-hooks/deploy/reload-nginx | assets/certbot-reload-nginx，续期成功后先 nginx -t，再 reload |
 | snap.certbot.renew.timer | 官方 Certbot snap 的自动续期调度 |
 
-TLS 在 Nginx 终止，各 Go 服务继续只监听 127.0.0.1:18080–18084。Ledger 到 FabricWorld 的服务间调用保持本机 HTTP。127.0.0.1:80 与 [::1]:80 有独立 listen，供原有发布脚本检查代理页面；按实际目标地址选择且只允许回环来源，不能仅按可伪造的 Host 决定是否绕过公网跳转。
+TLS 在 Nginx 终止，各 Go 服务继续只监听 127.0.0.1:18080–18085。Ledger 到 FabricWorld 的服务间调用保持本机 HTTP。127.0.0.1:80 与 [::1]:80 有独立 listen，供原有发布脚本检查代理页面；按实际目标地址选择且只允许回环来源，不能仅按可伪造的 Host 决定是否绕过公网跳转。
 
-Ledger、FeeTable、FabricWorld、RecipeBox 的来源校验优先识别直接 TLS；对于 HTTP 连接，只接受回环对端传来的单个、值为 https 的 X-Forwarded-Proto。Nginx 必须覆盖该头，应用不能对外监听。缺失、重复、列表值或非本机连接的代理头不能提升为 HTTPS。Yuyan 已传此头，后续认证若使用它须遵守同样边界。
+Ledger、FeeTable、FabricWorld、RecipeBox 的来源校验优先识别直接 TLS；对于 HTTP 连接，只接受回环对端传来的单个、值为 https 的 X-Forwarded-Proto。Nginx 必须覆盖该头，应用不能对外监听。缺失、重复、列表值或非本机连接的代理头不能提升为 HTTPS。Yuyan 与门户已传此头；任何依赖代理头的来源或协议判断均须遵守同样边界。
 
 ## 初次配置与重建
 
@@ -45,7 +45,7 @@ Ledger、FeeTable、FabricWorld、RecipeBox 的来源校验优先识别直接 TL
 
 最近验收：2026-09-27。五个应用的 CI 检查与构建全部通过，四个来源校验中间件新增的 52 个 HTTPS/伪造头用例通过。五个应用均以正式可信证书通过外网 HTTP/2 健康检查，桌面 1360×900 与手机 375×667 的 Chromium 检查均为 TLS 1.3、安全上下文，无混合内容、脚本错误或资源请求失败。公网跳转、查询参数、Host 伪造、本机检查及切换后的续期/重载演练通过。
 
-- 外网无 -k 访问五个健康接口、首页、深链接及脚本/样式；真实浏览器检查 secure context、HTTP/2、请求失败和 mixed content，包含桌面与 375×667。
+- 外网无 -k 检查：未授权导航跳转认证，API/媒体/健康返回 401；授权设备访问五个健康接口、首页、深链接及脚本/样式；真实浏览器检查 secure context、HTTP/2、请求失败和 mixed content，包含桌面与 375×667。
 - 公网 HTTP 首页、裸路径、深链接和 API 均 308 到固定 HTTPS 地址，完整保留查询参数；公网 Host: localhost/127.0.0.1 也不能访问本机 HTTP 入口。ACME 文件仍能经 HTTP 获取，缺失文件 404。
 - 四个应用同源 HTTPS 请求能通过中间件；伪造非本机代理头、错误 Origin、错误协议等由仓库回归测试覆盖。生产使用不写数据的 OPTIONS 请求验证来源拒绝与通过，不提交测试记录。现有服务间调用保持回环。
 - 从服务器核对五个直连 /healthz 与 127.0.0.1:80 的代理健康、页面资源；检查 nginx -t、所有 unit 及配置哈希。
