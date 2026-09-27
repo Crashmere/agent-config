@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后核对：2026-09-26（北京时间），主机、应用、入口与软件版本均在当天用 inspect.sh 复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+最后核对：2026-09-27（北京时间），主机、五个应用及共享 HTTPS 入口均已现场复查。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -12,9 +12,9 @@
 | 内核 | 核对时 7.0.0-30-generic；不是重建时必须固定的版本 |
 | 时间 | Asia/Shanghai；chrony 提供时间同步，NTP 已同步 |
 | SSH | 公钥认证开启、密码认证关闭、允许 root 登录 |
-| HTTP | Nginx 1.28.3（Ubuntu 包 1.28.3-2ubuntu1.11），80 IPv4/IPv6；没有配置 TLS/域名 |
+| HTTPS | Nginx 1.28.3，443 TLS 1.2/1.3 + HTTP/2；Let’s Encrypt 可信公网 IPv4 证书，无域名。80 提供 ACME 并 308 跳转；仅回环保留 HTTP 代理检查 |
 | 主机防火墙 | UFW inactive；不能据此推断所有 netfilter 规则或云侧防护 |
-| 云安全组 | SSH/HTTP 已可达，未通过云 API 审计完整规则；改网络前从云控制台/授权 API 核实 |
+| 云安全组 | SSH/HTTP/HTTPS 已从外网验证可达，未通过云 API 审计完整规则；未来改规则前另行核实 |
 | 包源 | Ubuntu 签名仓库，当前使用阿里云内网镜像；换供应商时不要照抄该镜像地址 |
 
 ## 已部署应用（共享变更必须逐行核对）
@@ -22,7 +22,7 @@
 | 应用 / 源码 | URL 前缀 → 本机监听 | 目录 / 身份 | systemd | 文档与验证 |
 | --- | --- | --- | --- | --- |
 | Ledger / [Crashmere/Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` → `127.0.0.1:18080` | `/opt/ledger`；运行 `ledger`，发布 `ledger-deploy` | `ledger.service`、`ledger-backup.service`、`ledger-backup.timer` | `/opt/ledger/docs/README.md`；直连 `/healthz`、代理 `/ledger/healthz`、深链接 `/ledger/search` |
-| FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、深链接 `/feetable/tables/1` |
+| FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、路由壳 `/feetable/tables/1`（浏览器验收用实际存在的月表或首页） |
 | FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
 | RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
 | Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`；运行 `yuyan`，发布 `yuyan-deploy` | `yuyan.service`、`yuyan-backup.service`、`yuyan-backup.timer` | `/opt/yuyan/docs/README.md`；直连 `/healthz`、代理 `/yuyan/healthz`、深链接 `/yuyan/search` |
@@ -46,14 +46,14 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 | 实际位置 | 维护源 / 含义 |
 | --- | --- |
 | `/etc/nginx/nginx.conf` | Ubuntu 包基础配置，改动需记录；不是业务项目所有 |
-| `/etc/nginx/sites-available/apps` | 本技能 `assets/nginx-apps.conf`，80 默认 server |
+| `/etc/nginx/sites-available/apps` | 本技能 `assets/nginx-apps.conf` 渲染公网 IPv4，共享 80/443 与回环检查 server |
 | `/etc/nginx/sites-enabled/apps` | 指向上面的启用链接 |
 | `/etc/nginx/app-locations/ledger.conf` | 指向 `/opt/ledger/config/nginx-location.conf`，源在 Ledger deploy |
 | `/etc/nginx/app-locations/feetable.conf` | 指向 `/opt/feetable/config/nginx-location.conf`，源在 FeeTable deploy |
 | `/etc/nginx/app-locations/fabricworld.conf` | 指向 `/opt/fabricworld/config/nginx-location.conf`，源在 FabricWorld deploy |
 | `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
 | `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
-| `/var/log/nginx/access.log`、`error.log` | 共享 HTTP 请求日志；journal 主要反映 Nginx 生命周期 |
+| `/var/log/nginx/access.log`、`error.log` | 共享 HTTP/HTTPS 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
 | `/root/AGENTS.md` | 指向 `/opt/AGENTS.md`，便于在 root 登录目录发现 |
@@ -71,7 +71,8 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
 - 2026-09-24 已重启以应用 libc6 更新：四个应用、Nginx 与备份 timer 均自动恢复，直连与代理健康正常，约 25 秒恢复 SSH。以后出现 /var/run/reboot-required 时，按同样方法先检查没有发布/备份在运行，重启后逐项验证。
 - 发布历史不自动轮换，每次发布约保留两份程序（Ledger 约 35 MB/次）；根盘目前充裕，定期用 `du -sh /opt/*/releases /opt/*/backups` 查看。
-- 没有外部可用性告警或集中监控；靠维护时的只读检查。
+- Certbot 5.8.0 使用 Certbot Project 官方 snap（latest/stable），snap 自动更新；IP 证书 apps-ip 约 160 小时有效，snap.certbot.renew.timer 自动续期，deploy hook 验证配置后重载 Nginx。首次签发、续期演练和实际 timer service 检查已通过，配置与重建见 [共享 HTTPS](https.md)。
+- 没有外部可用性或证书到期告警；inspect.sh 检查证书是否至少还有 48 小时有效。
 
 ## 重新核对
 

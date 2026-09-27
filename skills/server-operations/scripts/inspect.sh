@@ -30,6 +30,11 @@ inspect applications ls -la /opt
 inspect nginx-sites ls -l /etc/nginx/sites-enabled /etc/nginx/app-locations
 inspect firewall ufw status verbose
 inspect nginx-version nginx -v
+if [[ -f /etc/letsencrypt/live/apps-ip/cert.pem ]]; then
+  inspect tls-certificate openssl x509 -in /etc/letsencrypt/live/apps-ip/cert.pem -noout -issuer -dates
+  inspect tls-valid-for-48h openssl x509 -in /etc/letsencrypt/live/apps-ip/cert.pem -noout -checkend 172800
+  inspect certbot-renewal systemctl list-timers snap.certbot.renew.timer --all --no-pager
+fi
 printf '\n[available-tools]\n'
 for tool in git node npm go docker sqlite3 uv; do
   command -v "$tool" || true

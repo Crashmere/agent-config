@@ -1,0 +1,5 @@
+#!/bin/sh
+# Install at /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.
+set -eu
+/usr/sbin/nginx -t -q
+/usr/bin/systemctl reload nginx

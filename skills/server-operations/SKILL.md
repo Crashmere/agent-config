@@ -14,6 +14,7 @@ description: Maintain the user's personal Linux servers and multi-application de
 3. 变更、部署、补文档时必须读 [变更与文档闭环](references/maintenance.md)；新增应用、迁移或换服务器时再读 [重建与新增应用](references/rebuild.md)。
 4. 发布失败或排障时先查 [共性问题与全局方案](references/common-issues.md)，已有方案直接按其执行。
 5. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
+6. 公网 HTTPS、IP 证书、自动续期或来源校验，读 [共享 HTTPS](references/https.md)，统一处理全部应用。
 
 ## 授权：改完告知，还是先确认
 

@@ -4,6 +4,18 @@
 
 每条写清现象与判断条件、适用应用、处理步骤、清理与验收，以及尚未实施的改进。方案被替代时直接改写本条，历史由 Git 保存。
 
+## HTTPS 页面能打开但保存返回 403
+
+适用 Ledger、FeeTable、FabricWorld、RecipeBox：TLS 在共享 Nginx 终止，Go 看到本机 HTTP；原来只检查 r.TLS，会把浏览器的 HTTPS Origin 判成跨站。四个项目已统一修复，详见 [共享 HTTPS 的代理信任边界与验收](https.md)。只修改 Nginx 证书不足以完成迁移，也不能通过删除 Origin 校验或放开 CORS 解决。应用只监听回环，Nginx 覆盖 X-Forwarded-Proto，应用仅接受回环对端的单个合法值；回归覆盖 IPv4/IPv6、直接 TLS、跨站与伪造头。
+
+## 官方 snap 下载过慢
+
+服务器到 Snap Store 的单连接可能仅有几十 KB/s。2026-09-27 安装 Certbot 时，core24/snapd 已完成，但 75 MB 的 Certbot 包下载仍缓慢；问题在下载链路，并非安装后启动失败。
+
+可在受信终端从 Snap Store 的同一下载 URL 预取准确架构与 revision 的包（必要时分段），按 Store 元数据的 SHA3-384 核对完整文件，再传到服务器独立暂存目录，命名为 certbot_<revision>.snap。在该目录执行 snap download certbot --revision=<revision> --target-directory=<目录>，它会核验并复用已有完整文件，同时下载官方 assertion 链。确认生成 .assert 后，取消本次尚未完成的重复下载并等其结束，然后 snap ack <文件.assert>、snap install <文件.snap> --classic；绝不能使用 --dangerous 跳过签名。检查版本、发行者、stable 跟踪与续期 timer 后清理这些明确的安装暂存文件，保留回退配置。
+
+此方法只替换文件传输，仍由官方签名和 snap 管理安装、更新。不要删除或改写 snapd 内部缓存、partial 文件或状态数据库；如服务真正 failed，先按日志排障。
+
 ## systemd 沙箱下照片硬链接备份失败
 
 适用 FabricWorld、RecipeBox，以及今后任何“在备份目录里硬链接数据文件”的应用；Ledger、FeeTable 只备份 SQLite，不受影响。FabricWorld、RecipeBox 已于 2026-09-24 按下述方法修复并验证；Yuyan 于 2026-09-26 安装时即按此配置，并通过 unit 验证。
@@ -95,6 +107,6 @@ Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-l
 
 ### 尚未实施的改进
 
-已出现：2026-09-24（多个应用）；2026-09-26 白天（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）；2026-09-26 晚间逐个发布固定 runner 的提交时，Ledger、FeeTable、RecipeBox 超时，FabricWorld 18 秒上传成功，Yuyan（压缩、600 秒）正常，本机下载 RecipeBox artifact 读超时一次，重试成功。Yuyan 已经压缩上传并放宽到 600 秒。另外四个应用现在经常超时，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
+已出现：2026-09-24（多个应用）；2026-09-26 白天（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）；2026-09-26 晚间逐个发布固定 runner 的提交时，Ledger、FeeTable、RecipeBox 超时，FabricWorld 18 秒上传成功，Yuyan（压缩、600 秒）正常，本机下载 RecipeBox artifact 读超时一次，重试成功。Yuyan 已经压缩上传并放宽到 600 秒。2026-09-27 的 HTTPS 发布中，另外四个应用的 CI 检查也全部通过，但上传均在 90 秒处失败；已按上述流程逐个补发同次 CI 产物并核对线上版本。Yuyan 的压缩上传正常完成。另四个应用仍经常超时，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
 
 下载重试用新的临时目录：在 zsh 里清空空目录的 `rm -rf "$tmp"/*` 会因通配符没有匹配而中止脚本。
