@@ -10,11 +10,13 @@
 
 ## iPhone 主屏幕页面顶部发虚
 
-用户反馈：通过 iPhone Chrome 添加到主屏幕后，Ledger、FeeTable、FabricWorld、RecipeBox 靠近时间、电量的顶部区域发虚，Yuyan 正常。2026-09-27 的代码对照确认：Yuyan 顶栏为 `position: sticky; top: 0`，正文仍随文档滚动，且视口未启用 `viewport-fit=cover`；三个旧服务的页头原为普通流布局，会滚出视口。Ledger 的页头原本就在内部正文滚动区之外，已经常驻，说明不能把四个应用的现象全部归因于“顶栏没有固定”。四个旧服务共同启用了 `viewport-fit=cover`，却没有为页头配置顶部安全区。
+用户反馈：通过 iPhone Chrome 添加到主屏幕后，Ledger、FeeTable、FabricWorld、RecipeBox 靠近时间、电量的顶部区域发虚，Yuyan 正常。代码上的关键差别是定位方式：Yuyan 使用 `position: sticky; top: 0`；三个旧服务原为普通流页头；Ledger 虽然位于内部正文滚动区之外、肉眼看起来常驻，原 CSS 仍是 `position: relative`，并不等同于 WebKit 识别的 fixed/sticky 元素。
 
-处理：四个旧服务均改为与 Yuyan 相同的默认视口安全区布局，由浏览器避让系统区域；FeeTable、FabricWorld、RecipeBox 同时使用吸顶页头与实色背景，保留正文文档滚动、路由恢复与弹窗滚动锁。Ledger 保留现有内部滚动布局。新增吸顶的应用为控件/锚点定位预留顶部空间；FabricWorld 桌面照片栏的吸顶位置也移到导航下方。无需修改 Nginx、PWA 身份、数据库或系统状态栏设置。
+[WebKit 工程师对顶部颜色延伸的说明](https://bugs.webkit.org/show_bug.cgi?id=301756#c2)指出，浏览器会针对视口边缘的 fixed/sticky 元素延伸实色背景，避免其上方在滚动时出现缺口；iPhone 浏览器 UI 下方本身有较柔和的模糊效果。这是对上述代码差异的机制依据，不能仅凭桌面浏览器验证就断言某台 iPhone 的主屏幕效果已修复。
 
-验证分两层：电脑 Chromium/WebKit 只检查 320/375px 和桌面的页头位置、滚动、导航、表单及弹窗，不把它当作 iPhone 原生模糊层的复现或消除证明；最终效果需在真实 iPhone 从主屏幕重新打开、上下滚动后确认。优先完全关闭该主屏幕窗口后重开以加载新 HTML/CSS，不先清除站点数据。仅凭代码差异不能确定具体 iOS 版本的原生渲染原因，也不应添加所谓通用“关闭系统模糊”的 CSS。
+处理：四个服务均使用 `sticky; top: 0` 的实色页头；Ledger 保留内部正文滚动和顶栏尺寸，另外三个保留文档滚动、路由恢复与弹窗滚动锁。新增吸顶的应用为控件/锚点定位预留顶部空间；FabricWorld 桌面照片栏的吸顶位置也移到导航下方。四个服务的视口同时对齐 Yuyan，采用默认安全区布局。用户已真机确认：仅取消 Ledger 的 `viewport-fit=cover` 仍然发虚，FeeTable 改为 sticky 后顶部正常。该对照支持显式吸顶的方向，不能把安全区设置单独当作已验证的根因或解法；Ledger 的显式 sticky 与其余两服务仍需分别真机确认。无需修改 Nginx、PWA 身份、数据库或系统状态栏设置。
+
+验证分两层：电脑 Chromium/WebKit 只检查 320/375px 和桌面的页头位置、滚动、导航、表单及弹窗，不把它当作 iPhone 原生模糊层的复现或消除证明；最终效果需在真实 iPhone 从主屏幕重新打开、上下滚动后确认。优先完全关闭该主屏幕窗口后重开以加载新 HTML/CSS，不先清除站点数据。页面和 Ledger 的 manifest 使用 no-cache，未注册 Service Worker。仅凭代码差异不能确定具体 iOS 版本的原生渲染原因，也不应添加所谓通用“关闭系统模糊”的 CSS。
 
 安全区行为参考 [WebKit 官方说明](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)：`viewport-fit=cover` 会让页面延伸到屏幕边缘，需要开发者自行用安全区 inset 避让；这些应用目前采用默认布局。
 
@@ -69,7 +71,7 @@ GitHub 的 `ubuntu-latest` 从 2026-10-19 起迁移到 Ubuntu 26，会同时改�
 - 发布作业的 SSH 步骤以 exit code 124 结束，耗时约 90–100 秒。
 - 该应用最新发布目录 `result` 为 failed 且没有 `metadata`：脚本在上传阶段中止，从未停服，也没有 before-deploy 备份。
 - `current-commit` 仍是旧提交，服务 active、健康检查正常。
-- 待发布提交仍是 main 最新提交，且对应的测试/构建作业成功。
+- 待发布提交仍是 main 最新提交，且对应的测试/构建作业成功。若其后只有带 `[skip ci]` 的纯文档提交，先 fetch 并逐文件确认差异仅在未参与构建的文档中，代码、依赖、资源、嵌入文件、构建和发布配置均相同，才可补发原提交的同次 CI 产物；运行版本仍记录真实产物的原源码提交，文档副本同步最新文档提交。任一构建输入有变化就不能用此例外。
 
 ### 各应用参数
 
