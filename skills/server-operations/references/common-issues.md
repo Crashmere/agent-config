@@ -128,3 +128,9 @@ Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-l
 已出现：2026-09-24（多个应用）；2026-09-26 白天（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）；2026-09-26 晚间逐个发布固定 runner 的提交时，Ledger、FeeTable、RecipeBox 超时，FabricWorld 18 秒上传成功，Yuyan（压缩、600 秒）正常，本机下载 RecipeBox artifact 读超时一次，重试成功。Yuyan 已经压缩上传并放宽到 600 秒。2026-09-27 的 HTTPS 发布中，另外四个应用的 CI 检查也全部通过，但上传均在 90 秒处失败；已按上述流程逐个补发同次 CI 产物并核对线上版本。Yuyan 的压缩上传正常完成。另四个应用仍经常超时，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
 
 下载重试用新的临时目录：在 zsh 里清空空目录的 `rm -rf "$tmp"/*` 会因通配符没有匹配而中止脚本。
+
+## 统一设备认证后的 CI 健康检查
+
+五个业务服务的公网健康接口同样受 ServerPortal 保护。CI 未携带设备凭据时，不能再以公网 /healthz 返回 200 作为发布条件；该旧检查会在业务已成功发布后因 401 错误地标红。各应用发布脚本继续检查回环直连和回环 Nginx 页面，CI 的公网 HTTPS 检查验证 401，确认认证边界正常。不要为 CI 豁免公网健康接口或把设备口令放进工作流。
+
+声明发布失败时，先核对 config/portal-source.json 与 /registry 回执。校验规则来自本技能 scripts/validate-portal.py；门户保留上一份有效内存配置，发布工具失败会恢复原声明。修正源码后可运行 portal_only=true，完成同步而不重启业务。具体协议见 [门户维护](portal.md)。
