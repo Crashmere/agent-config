@@ -8,6 +8,16 @@
 
 适用 Ledger、FeeTable、FabricWorld、RecipeBox：TLS 在共享 Nginx 终止，Go 看到本机 HTTP；原来只检查 r.TLS，会把浏览器的 HTTPS Origin 判成跨站。四个项目已统一修复，详见 [共享 HTTPS 的代理信任边界与验收](https.md)。只修改 Nginx 证书不足以完成迁移，也不能通过删除 Origin 校验或放开 CORS 解决。应用只监听回环，Nginx 覆盖 X-Forwarded-Proto，应用仅接受回环对端的单个合法值；回归覆盖 IPv4/IPv6、直接 TLS、跨站与伪造头。
 
+## iPhone 主屏幕页面顶部发虚
+
+用户反馈：通过 iPhone Chrome 添加到主屏幕后，Ledger、FeeTable、FabricWorld、RecipeBox 靠近时间、电量的顶部区域发虚，Yuyan 正常。2026-09-27 的代码对照确认：Yuyan 顶栏为 `position: sticky; top: 0`，正文仍随文档滚动，且视口未启用 `viewport-fit=cover`；三个旧服务的页头原为普通流布局，会滚出视口。Ledger 的页头原本就在内部正文滚动区之外，已经常驻，说明不能把四个应用的现象全部归因于“顶栏没有固定”。四个旧服务共同启用了 `viewport-fit=cover`，却没有为页头配置顶部安全区。
+
+处理：四个旧服务均改为与 Yuyan 相同的默认视口安全区布局，由浏览器避让系统区域；FeeTable、FabricWorld、RecipeBox 同时使用吸顶页头与实色背景，保留正文文档滚动、路由恢复与弹窗滚动锁。Ledger 保留现有内部滚动布局。新增吸顶的应用为控件/锚点定位预留顶部空间；FabricWorld 桌面照片栏的吸顶位置也移到导航下方。无需修改 Nginx、PWA 身份、数据库或系统状态栏设置。
+
+验证分两层：电脑 Chromium/WebKit 只检查 320/375px 和桌面的页头位置、滚动、导航、表单及弹窗，不把它当作 iPhone 原生模糊层的复现或消除证明；最终效果需在真实 iPhone 从主屏幕重新打开、上下滚动后确认。优先完全关闭该主屏幕窗口后重开以加载新 HTML/CSS，不先清除站点数据。仅凭代码差异不能确定具体 iOS 版本的原生渲染原因，也不应添加所谓通用“关闭系统模糊”的 CSS。
+
+安全区行为参考 [WebKit 官方说明](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)：`viewport-fit=cover` 会让页面延伸到屏幕边缘，需要开发者自行用安全区 inset 避让；这些应用目前采用默认布局。
+
 ## 官方 snap 下载过慢
 
 服务器到 Snap Store 的单连接可能仅有几十 KB/s。2026-09-27 安装 Certbot 时，core24/snapd 已完成，但 75 MB 的 Certbot 包下载仍缓慢；问题在下载链路，并非安装后启动失败。
