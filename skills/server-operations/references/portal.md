@@ -10,6 +10,8 @@ ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应
 - 门户按请求检测声明变化，普通请求最多缓存 2 秒；/registry 生效检查强制重读。整组声明全部有效才替换内存快照，同时失效概览缓存与未执行清理预览。错误时保留运行中的上一份有效配置并显示提示；重启时仍要求磁盘声明有效。
 - 自动发现的范围是注册目录。应用文件、数据库表和运行状态从现场读取；目录用途、API 说明、服务归属与浏览/清理边界必须显式维护，不能靠扫描猜测。
 
+API 条目须对照项目实际路由与接口文档核对；同步成功不代表内容正确。完整核对方法见 [门户 API 列表与服务不一致](common-issues.md#门户-api-列表与服务不一致)。
+
 ## 共用校验和发布协议
 
 校验维护源只有 scripts/validate-portal.py（Python 3 标准库）。维护电脑从受信 agent-config checkout 执行它；服务器从 /opt/server-context/scripts/validate-portal.py 使用同一规则。更新契约时同步该脚本、ServerPortal 适配和本地共享工具，并验证已有声明。服务器不需要 Go/Node 或额外 Python 包。
