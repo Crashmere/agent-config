@@ -21,7 +21,7 @@
 - 应用只监听各自 `127.0.0.1:<port>`，在应用清单登记端口；新增前核对 `ss -ltnp`，不假定清单完整。不要给每个应用开放一个公网端口。
 - 共享配置在 `/etc/nginx/sites-available/apps`，启用链接在 `sites-enabled/apps`；HTTPS 与仅回环可达的 HTTP 检查 server include `/etc/nginx/app-locations/*.conf`，每个应用的链接指向自己的配置。HTTPS 根路径及未分配路径跳转 `/portal/`；仅回环检查 server 未分配路径仍返回 404。
 - 修改共享 server 必须检查所有 location 的匹配、重写、Host、转发头、静态资源及深链接。`proxy_pass` 尾斜线是否去前缀是每个应用的接口契约，不能机械复制。
-- 同 IP 的不同路径仍是浏览器同源，不是安全隔离。公网统一由 ServerPortal 设备认证保护；授权设备共用业务数据，应用内不区分账户角色。新应用必须继承共享认证。
+- 同 IP 的不同路径仍是浏览器同源，不是安全隔离。公网统一由 ServerPortal 设备认证保护；授权设备共用业务数据，应用内不区分账户角色。新应用必须继承共享认证及有效设备 Cookie 的续期响应头；修改应用 add_header 时核对继承，流程见门户维护。
 - 变更域名、TLS、统一鉴权或反代时，核对全部应用的构建前缀、绝对 URL、Origin/Cookie、健康检查、CI 和文档；涉及访问方式变化先确认。
 
 ## 网站图标与手机桌面入口

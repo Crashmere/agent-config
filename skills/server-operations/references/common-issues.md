@@ -4,6 +4,12 @@
 
 每条写清现象与判断条件、适用应用、处理步骤、清理与验收，以及尚未实施的改进。方案被替代时直接改写本条，历史由 Git 保存。
 
+## 统一认证的 Cookie 续期
+
+五个业务应用通过 Nginx auth_request 检查设备；子请求中的 Set-Cookie 不会自动成为业务响应头。共享 assets/nginx-portal-auth.conf 使用 auth_request_set 取得该头，再由 add_header Set-Cookie ... always 转发，门户自身直接续期。匿名、伪造、过期和撤销凭据不得收到续期 Cookie；不降低 Secure/HttpOnly/SameSite=Strict/Path=/ 属性。
+
+应用 location 新增自己的 add_header 会覆盖上层整组 add_header 继承，可能使持续使用该应用也无法续期。变更时在该层显式保留共享续期头，并核对其他共享响应头。运行 scripts/test-cookie-renewal.py --locations /etc/nginx/app-locations --auth <待部署的共享认证文件>，在独立回环 Nginx 与合成上游验证有效请求恰好续期一次、无效请求不续期；脚本当前覆盖五个业务应用，新增应用时同步扩充案例。不要为此临时放宽生产认证或向测试日志输出真实设备凭据。
+
 ## 统一认证后 iPhone 桌面图标缺失
 
 诊断：HTTPS 资源地址和已有 PNG 本身正常，五个业务应用的图标原来也继承了设备认证。访问日志可见 iPhone 的 Ledger 页面图标/manifest 返回 200，独立的 icon-192.png 请求返回 401。不能假定系统添加桌面时会携带当前浏览器的 Cookie。

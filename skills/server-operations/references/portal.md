@@ -5,6 +5,7 @@ ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应
 ## 所有权与注册目录
 
 - 各应用只在自己的 deploy/portal.json 维护名称、图标、仓库、入口、端口、用户、unit、数据库、备份类型、目录用途和主要 API；生产文件为 /opt/<app>/config/portal.json，由 root 管理。
+- 门户展示名称 name 一律使用英文品牌名（例如 Yuyan），不拼接中文名称；新服务从首次接入即遵循。资源的中文用途名称和 description 继续保留在声明中，门户应用列表不展示 description。
 - 门户使用 registryDir=/opt/serverportal/registry.d，每个 <app>.json 是指向 /opt/<app>/config/portal.json 的 root 管理链接。首次声明发布创建链接，无需维护中央 registry 路径数组。旧 registry 数组仅兼容迁移，不能与 registryDir 同时配置。
 - 门户按请求检测声明变化，普通请求最多缓存 2 秒；/registry 生效检查强制重读。整组声明全部有效才替换内存快照，同时失效概览缓存与未执行清理预览。错误时保留运行中的上一份有效配置并显示提示；重启时仍要求磁盘声明有效。
 - 自动发现的范围是注册目录。应用文件、数据库表和运行状态从现场读取；目录用途、API 说明、服务归属与浏览/清理边界必须显式维护，不能靠扫描猜测。
@@ -40,6 +41,6 @@ gh workflow run ci-cd.yml --ref main -f portal_only=true
 
 ## 安全与备份
 
-设备凭据由服务器生成，使用 Secure/HttpOnly Cookie。网页浏览只读，清理必须预览并确认。根采集器仅监听本机 Unix socket，网页进程独立用户；不开放任意路径、SQL 或命令。
+设备凭据由服务器生成，使用 Secure/HttpOnly/SameSite=Strict Cookie。服务端授权不自动过期；浏览器 Cookie 以 400 天有效期随有效访问续期，实际保留受浏览器限制。门户启动将旧的仍有效授权迁移为无期限，已过期和撤销的凭据不复活。门户请求直接续期，五个业务应用由共享 Nginx 转发续期头；继承规则与新增应用验证见 [统一认证的 Cookie 续期](common-issues.md#统一认证的-cookie-续期)。网页浏览只读，清理必须预览并确认。根采集器仅监听本机 Unix socket，网页进程独立用户；不开放任意路径、SQL 或命令。
 
 备份使用离线 age 公钥加密，包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。恢复私钥、云账号/安全组和 GitHub secrets 独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。
