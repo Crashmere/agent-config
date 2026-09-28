@@ -39,4 +39,4 @@ API 条目须对照项目实际路由与接口文档核对；同步成功不代�
 
 设备凭据由服务器生成，使用 Secure/HttpOnly/SameSite=Strict Cookie。服务端授权不自动过期；浏览器 Cookie 以 400 天有效期随有效访问续期，实际保留受浏览器限制。门户启动将旧的仍有效授权迁移为无期限，已过期和撤销的凭据不复活。门户请求直接续期，五个业务应用由共享 Nginx 转发续期头；继承规则与新增应用验证见 [统一认证的 Cookie 续期](common-issues.md#统一认证的-cookie-续期)。网页浏览只读，清理必须预览并确认。根采集器仅监听本机 Unix socket，网页进程独立用户；不开放任意路径、SQL 或命令。
 
-备份使用离线 age 公钥加密，包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。恢复私钥、云账号/安全组和本机 SSH 私钥独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。
+用户已选择简化门户备份：新包为不加密 .tar.gz，网页默认创建当前恢复集的独立完整包，无需密钥或增量基线。可选包含历史的 all 和仅文档的 docs；旧加密包/增量链继续兼容。备份包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。仅旧加密包仍需原恢复私钥；云账号/安全组和本机 SSH 私钥独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。
