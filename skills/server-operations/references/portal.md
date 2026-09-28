@@ -12,35 +12,29 @@ ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应
 
 ## 共用校验和发布协议
 
-校验维护源只有 scripts/validate-portal.py（Python 3 标准库）。应用 CI checkout 固定提交的 agent-config 执行它；服务器从 /opt/server-context/scripts/validate-portal.py 使用同一规则。更新契约时同步该脚本、ServerPortal 适配和各 CI 固定提交，并验证已有声明。服务器不需要 Go/Node 或额外 Python 包。
+校验维护源只有 scripts/validate-portal.py（Python 3 标准库）。维护电脑从受信 agent-config checkout 执行它；服务器从 /opt/server-context/scripts/validate-portal.py 使用同一规则。更新契约时同步该脚本、ServerPortal 适配和本地共享工具，并验证已有声明。服务器不需要 Go/Node 或额外 Python 包。
 
-每个应用的原有发布身份、authorized_keys 和 sudo 范围保留。root 管理的 deploy-ssh.sh / deploy-release.sh 新增两种固定命令：
+每个应用保留独立发布身份和最小 sudo 范围，authorized_keys 登记当前维护电脑的公钥。root 管理的 deploy-ssh.sh / deploy-release.sh 支持两种声明命令：
 
 - portal-check <source-commit> <declaration-sha256>：stdin 为最多 1 MiB JSON，校验声明归属、整体注册冲突和 SHA-256，不写文件；在替换业务程序之前执行。
 - portal <source-commit> <declaration-sha256>：同样校验，取得本应用发布锁和注册锁，原子安装声明并建立受控链接，强制门户重新加载并核对实际 SHA-256。失败恢复原声明/链接；成功记录 config/portal-source.json。
 
 这两个命令都通过该应用已有的固定 root 发布脚本调用 ServerPortal，应用名由脚本固定。不能上传校验器或发布脚本，不能指定其他应用、目录或任意命令。声明固定自身 root、运行用户和 URL 前缀，unit 必须属于本应用，资源不能越出自身目录，配置/秘密不能改为网页可读，清理仅允许自身 backups/releases。
 
-普通 CI 把同提交 portal.json 与程序放进同一 artifact，先预检，程序成功发布后再同步声明。声明同步失败会使工作流失败；已成功发布的程序不自动回退，运维先检查 source marker 和门户回执，再修正声明。程序健康走服务器回环；公网 HTTPS 无凭据应返回 401。
+本机发布将同提交 portal.json 与程序放入同一本地版本目录，先预检，程序成功发布后再同步声明。声明同步失败会使本机命令失败；已成功发布的程序不自动回退，运维先检查 source marker 和门户回执，再修正声明。程序健康走服务器回环；公网 HTTPS 无凭据应返回 401。
 
-只更新门户元数据时，可在 main 上手动运行：
-
-```sh
-gh workflow run ci-cd.yml --ref main -f portal_only=true
-```
-
-此模式仍执行 CI 验证和声明检查，保留业务程序与 current-commit，不停服务、不运行发布前数据快照；源码/数据库变更仍须普通发布。声明来源提交在 portal-source.json，运行程序来源在 current-commit，不能混写。
+只更新门户元数据时，提交并推送源码后在项目运行 `make portal`。此命令预检声明、同步并核对回执，不构建或重启业务程序。声明来源在 portal-source.json，程序来源在 current-commit。
 
 ## 新服务与日常维护
 
 1. 按共享重建规则准备服务、受限发布身份、文档和 Nginx location，继承公网认证，并默认完成 [网站图标约定](conventions.md#网站图标与手机桌面入口) 的图标、精确公开规则及自动检查；当前自动接入约定为 /opt/<id>、同名运行用户、单个 SQLite 与原生 backup 接口。不同存储/部署形态先实现明确适配。
-2. 在项目中添加 deploy/portal.json、AGENTS 同步规则，CI 接入共享校验与上述发布协议；更新共享应用清单。首次声明发布会自动登记服务。
+2. 在项目中添加 deploy/portal.json、AGENTS 同步规则，本地发布接入共享校验与上述发布协议；更新共享应用清单。首次声明发布会自动登记服务。
 3. 数据根、接口、unit、端口、访问路径或备份契约变化，同一提交维护声明及对应 docs。普通文件、照片、备份文件和数据库记录增减不需要改声明。
-4. 发布后核对门户加载回执、目录用途、只读数据表和未知目录提示。备份契约变化需要相应合成回归；真实恢复演练按用户安排，不自动恢复已暂缓任务。
-5. 文档仍由 sync-docs.sh 同步，普通程序 CI 不发布 docs；新增/改名/退役服务的共享架构和真实数据处置按 SKILL 授权表。
+4. 发布后核对门户加载回执、目录用途、只读数据表和未知目录提示。备份契约变化需要相应的隔离样例验证；真实恢复演练按用户安排，不自动恢复已暂缓任务。
+5. 文档仍由 sync-docs.sh 同步，本机程序发布不发布 docs；新增/改名/退役服务的共享架构和真实数据处置按 SKILL 授权表。
 
 ## 安全与备份
 
 设备凭据由服务器生成，使用 Secure/HttpOnly/SameSite=Strict Cookie。服务端授权不自动过期；浏览器 Cookie 以 400 天有效期随有效访问续期，实际保留受浏览器限制。门户启动将旧的仍有效授权迁移为无期限，已过期和撤销的凭据不复活。门户请求直接续期，五个业务应用由共享 Nginx 转发续期头；继承规则与新增应用验证见 [统一认证的 Cookie 续期](common-issues.md#统一认证的-cookie-续期)。网页浏览只读，清理必须预览并确认。根采集器仅监听本机 Unix socket，网页进程独立用户；不开放任意路径、SQL 或命令。
 
-备份使用离线 age 公钥加密，包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。恢复私钥、云账号/安全组和 GitHub secrets 独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。
+备份使用离线 age 公钥加密，包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。恢复私钥、云账号/安全组和本机 SSH 私钥独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。

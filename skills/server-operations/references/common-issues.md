@@ -25,9 +25,9 @@
 
 处理：各业务项目自己的 nginx-location.conf 只对指定品牌图标（Ledger 还包括公开 manifest）关闭 auth_request，限制为 GET/HEAD；FeeTable 只匹配三个图标名称及其构建哈希。不得开放整个 assets/static、用户上传媒体或 API。Yuyan 与门户从已有 SVG 生成不透明的 180×180 PNG，并在所有页面 head 中声明 apple-touch-icon；不改变它们的登录、Cookie 或业务数据行为。
 
-新增/修改图标时核对 HTML 的真实 href、构建后路径、PNG 尺寸、Content-Type、匿名请求和查询版本参数；部署前运行 scripts/test-public-icons.py（参数见 --help），在独立回环 Nginx 和合成上游验证规则。此脚本的五个服务图标案例需随图标路由更新；门户静态文件由 Web 自身提供，还要检查 /portal/api/overview 未登录仍返回 401。本次隔离检查共 132 项通过，临时进程与目录已清理；Yuyan 构建、make test 与门户 Web race 测试通过。真实 iPhone 添加桌面的最终效果仍需用户确认，不能从服务器检查推断。
+新增/修改图标时核对 HTML 的真实 href、构建后路径、PNG 尺寸、Content-Type、匿名请求和查询版本参数；部署前运行 scripts/test-public-icons.py（参数见 --help），在独立回环 Nginx 和合成上游验证规则。此脚本的五个服务图标案例需随图标路由更新；门户静态文件由 Web 自身提供，还要检查 /portal/api/overview 未登录仍返回 401。真实 iPhone 添加桌面的最终效果仍需用户确认，不能从服务器检查推断。
 
-2026-09-28 用户已确认六站上线及后续项目默认配置。Yuyan、门户通过 CI 发布包含 PNG 和 head 的程序；其余四个业务程序无需重发，只安装各项目的 location 配置并在 nginx -t 通过后 reload。当前部署状态见 current-state，验证结果见 ServerPortal docs/VERIFICATION.md。
+六站的图标与 HTML head 已随当前程序上线，匿名图标规则由各项目的 location 维护；修改规则后先通过 nginx -t 再 reload。当前部署状态见 current-state，后续项目默认按 conventions 配齐图标。
 
 后续新网站必须从首次交付配齐上述配置，完整规范见 [网站图标约定](conventions.md#网站图标与手机桌面入口)。通用 `scripts/check-site-icons.py` 从真实 HTML 自动发现图标和 manifest，核对匿名 GET/HEAD、类型、文件签名与 PNG 尺寸；构建哈希变化无需更新中央列表。
 
@@ -87,77 +87,6 @@ ServerPortal 的 root 采集器使用非 root 主组 serverportal，以便 Unix 
 
 验收：`curl -sI -H 'Accept-Encoding: gzip'` 请求应用的一个 `.js` 资源，返回 `Content-Encoding: gzip`；reload 后逐个核对五个应用的直连、代理健康检查与深链接。Yuyan 已于 2026-09-26 按此修复并验证。
 
-## GitHub runner 版本固定
-
-GitHub 的 `ubuntu-latest` 从 2026-10-19 起迁移到 Ubuntu 26，会同时改变五个应用 CI 中的系统包、编译环境和 Playwright 依赖安装。2026-09-26 起五个应用的检查与发布作业都固定为 `runs-on: ubuntu-24.04`，每个仓库各推送一次并完成发布和健康检查。
-
-升级时统一处理：在一个应用的分支上改为新版本（如 `ubuntu-26.04`），确认检查、端到端测试（Yuyan 的 `playwright install --with-deps`）和构建产物在服务器上正常运行后，再逐个修改其余应用；不要改回 `ubuntu-latest`。GitHub 宣布 24.04 退役前完成。
-
-## GitHub 上传过慢时的备用发布
-
-五个应用都由 GitHub 托管 runner 构建，再经受限 SSH 身份把程序通过 stdin 交给 root 管理的 `/opt/<app>/bin/deploy-release.sh`。Ledger、FeeTable、FabricWorld、RecipeBox 的脚本只等待 90 秒上传（`timeout 90 head -c ...`）；Yuyan 从安装起就上传 gzip 压缩后的程序，并等待 600 秒。runner 位于境外 Azure，到服务器的跨境线路可能突然变慢。2026-09-24 实测：同一 17.7 MB 程序此前 CI 上传约 8–10 秒，当天三次只有约 30–60 KB/s；同时服务器负载、网卡、防火墙正常，境内上传 3.5 秒完成，GitHub 状态页无故障。原因在跨境线路，不是应用或服务器配置。
-
-遇到上传超时不反复重跑发布作业，直接由管理员从受信终端把同一提交的 CI 产物交给同一个发布脚本。锁、哈希校验、停服备份、候选检查/迁移、原子替换、健康检查和失败回退都与 CI 发布相同。
-
-### 判断条件
-
-以下全部成立才使用；哈希不符、候选 check/migrate 失败、健康检查失败或回退信息等其他错误先排查原因，不用本方案绕过。
-
-- 发布作业的 SSH 步骤以 exit code 124 结束，耗时约 90–100 秒（Yuyan 的上传时限为 600 秒）。
-- 该应用最新发布目录 `result` 为 failed 且没有 `metadata`：脚本在上传阶段中止，从未停服，也没有 before-deploy 备份。
-- `current-commit` 仍是旧提交，服务 active、健康检查正常。
-- 待发布提交仍是 main 最新提交，且对应的测试/构建作业成功。若其后只有带 `[skip ci]` 的纯文档提交，先 fetch 并逐文件确认差异仅在未参与构建的文档中，代码、依赖、资源、嵌入文件、构建和发布配置均相同，才可补发原提交的同次 CI 产物；运行版本仍记录真实产物的原源码提交，文档副本同步最新文档提交。任一构建输入有变化就不能用此例外。
-
-### 各应用参数
-
-| 应用 | 产物来源 | artifact / 文件 | 验收路径 |
-| --- | --- | --- | --- |
-| Ledger | 失败的 `CI and deploy` run 本身 | `ledger-linux` / `ledger-linux-amd64` | `/ledger/healthz`、`/ledger/search` |
-| FeeTable | 失败的 `CI and deploy` run 本身 | `feetable-linux` / `feetable-linux-amd64` | `/feetable/healthz`、`/feetable/tables/1` |
-| FabricWorld | 失败的 `CI and deploy` run 本身 | `fabricworld-linux` / `fabricworld-linux-amd64` | `/fabricworld/healthz`、`/fabricworld/new` |
-| RecipeBox | 失败的 `CI and deploy` run 本身 | `recipebox-linux` / `recipebox-linux-amd64` | `/recipebox/healthz`、`/recipebox/new` |
-| Yuyan | 失败的 `CI and deploy` run 本身 | `yuyan-linux` / `yuyan-linux-amd64` | `/yuyan/healthz`、`/yuyan/search` |
-
-Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-linux-amd64" | ssh ali '/opt/yuyan/bin/deploy-release.sh <commit> <sha256>'`，SHA-256 仍为未压缩程序的值。
-
-下列命令中 `<app>` 为小写应用名，`<commit>` 为完整 40 位提交号；不要上传本地构建的程序。
-
-### 步骤
-
-1. 核对现场，并从受限入口的 sudo 日志取出失败发布传入的 SHA-256（第二个参数）：
-
-   ```sh
-   ssh ali 'cat /opt/<app>/current-commit; systemctl is-active <app>
-     d=$(ls -1t /opt/<app>/releases | head -1); echo "$d"; cat "/opt/<app>/releases/$d/result"; ls "/opt/<app>/releases/$d"
-     journalctl --since today --no-pager | grep "deploy-release.sh <commit>" | tail -1'
-   ```
-
-2. 下载产物到新的临时目录并核对。本地 SHA-256 必须等于 sudo 日志中的值；五个应用的发布作业都直接使用同一次检查构建的 artifact。服务器上已安装的脚本须与该项目仓库 `deploy/deploy-release.sh` 哈希相同。
-
-   ```sh
-   tmp=$(mktemp -d)
-   gh run download <run-id> -R Crashmere/<Repo> -n <artifact> -D "$tmp"
-   shasum -a 256 "$tmp/<file>" /path/to/<Repo>/deploy/deploy-release.sh
-   ssh ali 'sha256sum /opt/<app>/bin/deploy-release.sh'
-   ```
-
-3. 以管理员身份发布。成功时脚本输出 `Deployed <commit>`；刚启动时可能出现一次本机端口连接失败，是等待健康前的探测。
-
-   ```sh
-   ssh ali '/opt/<app>/bin/deploy-release.sh <commit> <sha256>' < "$tmp/<file>"
-   ```
-
-4. 只读验收：`current-commit` 为新提交，服务 active，直连 `/healthz` 与上表验收路径正常，按改动核对页面或 API，不写测试数据。
-5. 清理：逐个确认本次超时留下的发布目录 `result` 为 failed 且没有 `metadata` 后，按完整目录名删除；删除本地 `$tmp`。保留成功的发布目录（含 `previous`）和 before-deploy 备份。
-
-失败的 Actions run 会继续显示失败，这是预期结果。发布后不要再重跑它，否则会用同一程序再停服、备份一次。
-
-### 尚未实施的改进
-
-已出现：2026-09-24（多个应用）；2026-09-26 白天（RecipeBox，本机从 GitHub 下载 artifact 也曾 TLS 握手超时一次，重试成功）；2026-09-26 晚间逐个发布固定 runner 的提交时，Ledger、FeeTable、RecipeBox 超时，FabricWorld 18 秒上传成功，Yuyan（压缩、600 秒）正常，本机下载 RecipeBox artifact 读超时一次，重试成功。Yuyan 已经压缩上传并放宽到 600 秒。2026-09-27 的 HTTPS 发布中，另外四个应用的 CI 检查也全部通过，但上传均在 90 秒处失败；已按上述流程逐个补发同次 CI 产物并核对线上版本。Yuyan 的压缩上传正常完成。另四个应用仍经常超时，可照 Yuyan 的 `deploy/deploy-release.sh` 修改它们由 root 管理的发布脚本、测试与 CI，属于授权表中的先确认事项。
-
-下载重试用新的临时目录：在 zsh 里清空空目录的 `rm -rf "$tmp"/*` 会因通配符没有匹配而中止脚本。
-
 ## 发布后旧标签页的动态模块加载失败
 
 带内容哈希的前端分块随 Go 程序一起替换后，已打开的标签页仍可能请求上一版的懒加载文件。2026-09-28 在 Yuyan 确认：Nginx 日志里的 Mermaid 核心、依赖分块和代码阅读模块均返回 404，而当前 manifest 指向的新文件存在；这是版本引用失效，不能当成图表语法错误。
@@ -168,8 +97,6 @@ Yuyan 的发布脚本读取 gzip 流：第 3 步改为 `gzip -9 -c "$tmp/yuyan-l
 
 当前范围核对：Yuyan 采用全局提示和保存后刷新，浏览器用真实 404 覆盖核心与嵌套分块；Ledger 的路由懒加载已有错误组件和“重新加载页面”入口；FeeTable、FabricWorld、RecipeBox 的当前应用源码未使用动态 import；ServerPortal 使用内嵌静态脚本，没有同类懒加载链。此次不改变各应用的发布脚本、资源目录或共享 Nginx。以后引入懒加载时同时验证旧标签页、加载失败及未保存输入的恢复行为。
 
-## 统一设备认证后的 CI 健康检查
+## 本机发布失败
 
-五个业务服务的公网健康接口同样受 ServerPortal 保护。CI 未携带设备凭据时，不能再以公网 /healthz 返回 200 作为发布条件；该旧检查会在业务已成功发布后因 401 错误地标红。各应用发布脚本继续检查回环直连和回环 Nginx 页面，CI 的公网 HTTPS 检查验证 401，确认认证边界正常。不要为 CI 豁免公网健康接口或把设备口令放进工作流。
-
-声明发布失败时，先核对 config/portal-source.json 与 /registry 回执。校验规则来自本技能 scripts/validate-portal.py；门户保留上一份有效内存配置，发布工具失败会恢复原声明。修正源码后可运行 portal_only=true，完成同步而不重启业务。具体协议见 [门户维护](portal.md)。
+当前发布入口、身份、产物复用和回退统一见 [本机发布](release.md)。上传失败先检查本机 SSH、网络和发布日志，校验通过之前服务继续运行；不要为网络失败反复停服。声明失败使用 make portal 单独修复。

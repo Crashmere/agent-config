@@ -30,12 +30,12 @@
 
 | 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
 | --- | --- | --- | --- | --- |
-| Ledger | SQLite | 03:00，一致性快照 | 推 main 自动 | — |
-| FeeTable | SQLite | 03:15，一致性快照 | 推 main 自动 | — |
-| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
-| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 推 main 自动 | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
-| Yuyan | SQLite + 图片 | 04:00，同 FabricWorld | 推 main 自动（压缩上传，时限 600 秒） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
-| ServerPortal | 设备状态 JSON、私有配置；整机材料加密归档 | 网页手动触发 all/recovery/docs，可选增量父链；不自动轮换或异机同步 | CI 验证产物后管理员部署 | 本机保存离线 age 私钥；无任意 SQL/命令接口 |
+| Ledger | SQLite | 03:00，一致性快照 | 本机 make deploy | — |
+| FeeTable | SQLite | 03:15，一致性快照 | 本机 make deploy | — |
+| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
+| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
+| Yuyan | SQLite + 图片 | 04:00，同 FabricWorld | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
+| ServerPortal | 设备状态 JSON、私有配置；整机材料加密归档 | 网页手动触发 all/recovery/docs，可选增量父链；不自动轮换或异机同步 | 本机构建，管理员发布 | 本机保存离线 age 私钥；无任意 SQL/命令接口 |
 
 五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
@@ -47,13 +47,13 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或五个业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。服务器仅持 age 公钥，恢复私钥在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
 
-2026-09-28 门户永久授权与布局调整已上线，运行程序来源 0f330d99（CI 36371553575）。应用门户仅展示紧凑的英文应用卡片；存储页集中展示根文件系统容量条、应用分布条/环形图和动态资源表，命令输出使用 df -h /，Yuyan 名称已由声明同步。四种桌面/手机视口、15 项隔离续期检查、生产容量核对及六站 94 项认证/健康检查通过；测试范围与产物哈希见 ServerPortal docs/VERIFICATION.md。
+门户永久授权与紧凑布局已上线。实际程序来源从 current-commit 与 releases/metadata 读取，文档版本由 docs/SOURCE 记录。
 
-门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规 CI 同步同提交声明，portal_only=true 只更新门户信息；五个应用已全部通过该模式的真实 GitHub CI，保留业务程序与进程。此次迁移只重启门户两个进程。真实 CI 验证记录见 ServerPortal docs/VERIFICATION.md。
+门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；五个应用通过本机 make portal 同步声明。
 
 ## 共享配置与所有权
 
-2026-09-28 六站桌面图标修复已上线：五个业务网站仅对具体品牌图标（Ledger 还含公开 manifest）放行匿名 GET/HEAD；Yuyan 和门户已发布带 180×180 PNG 与共用 head 声明的新程序。六站共 20 个图标/manifest 资源与 94 项线上认证/健康检查通过；隔离 Nginx 的 132 项边界检查通过，前四个业务进程与程序版本保持原样。真机添加桌面的最终效果待用户确认。后续新项目从首次交付默认配置并运行通用检查，见 conventions 的“网站图标与手机桌面入口”；共同原因见 common-issues，产物与验证记录见 ServerPortal docs/VERIFICATION.md。
+六站都已提供独立的 favicon 和 180×180 apple-touch-icon；业务站点只对明确品牌图标（Ledger 含公开 manifest）开放匿名 GET/HEAD，页面、API 和用户媒体继续认证。真机添加桌面的最终效果待用户确认。新增网站从首次交付起遵循 conventions 的网站图标约定。
 
 | 实际位置 | 维护源 / 含义 |
 | --- | --- |
@@ -68,7 +68,7 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 | `/etc/nginx/app-locations/serverportal.conf` | 指向 `/opt/serverportal/config/nginx-location.conf`，源在 ServerPortal deploy |
 | `/etc/nginx/snippets/portal-auth.conf` | 本技能 assets/nginx-portal-auth.conf，仅在公网 443 server 引用 |
 | `/opt/serverportal/registry.d/<app>.json` | 指向应用自己的 config/portal.json；受限发布协议创建和校验 |
-| `/opt/server-context/scripts/validate-portal.py` | 本技能脚本，CI 与服务器共用的资源声明策略 |
+| `/opt/server-context/scripts/validate-portal.py` | 本技能脚本，维护电脑与服务器共用的资源声明策略 |
 | `/var/log/nginx/access.log`、`error.log` | 共享 HTTP/HTTPS 请求日志；journal 主要反映 Nginx 生命周期 |
 | `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
 | `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
@@ -108,3 +108,9 @@ ssh ali 'for a in ledger feetable fabricworld recipebox yuyan; do echo "$a $(cat
 ```
 
 inspect.sh 的 failed-services 当前为空；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+
+## 本机发布与验证
+
+六个应用已迁至 [本机发布](release.md)：GitHub Actions 关闭，只备份源码与配置。原 production Secrets 和旧 CI 公钥已移除，五个业务身份改为信任维护电脑专用发布公钥；门户沿用管理员 SSH。历史回归套件退役，本次功能在本地按需验证，不默认保留永久测试。构建、上传与健康/备份保护由脚本执行。
+
+门户新增 root 私有 releases/ 与 backups/，保存旧程序及停写后的 data/config 快照，其资源来源为 ServerPortal/deploy/portal.example.json。用户暂缓的真实备份下载和恢复验收保持暂缓。

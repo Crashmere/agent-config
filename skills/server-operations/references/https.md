@@ -34,7 +34,7 @@ Ledger、FeeTable、FabricWorld、RecipeBox 的来源校验优先识别直接 TL
    ```
 
 4. 演练成功后去掉 --dry-run，签发正式 apps-ip 证书。未提供联系邮箱时使用上述无邮箱注册方式；后续可按用户提供的邮箱更新 ACME 账户。
-5. 四个应用的来源校验修复须经测试并完成发布；逐个安装已提交的 location。普通 CI 只替换程序，不会安装 Nginx 配置。检查所有应用本机健康和代理页面。
+5. 四个应用的来源校验修复须经测试并完成发布；逐个安装已提交的 location。本机发布 只替换程序，不会安装 Nginx 配置。检查所有应用本机健康和代理页面。
 6. 将 assets/nginx-apps.conf 的 __PUBLIC_IPV4__ 替换为受信公网 IPv4。先用仍保留 HTTP 应用的临时配置加上 443，验证公网 TLS 可达、证书可信、全部应用正常后，再切换完整模板开启 308。云安全组需允许 TCP 443；不能因 UFW inactive 就假定云侧规则已核实。
 7. 把 assets/certbot-reload-nginx 安装为上述 deploy hook（root 所有，0755）。核对 snap 的续期 timer active/enabled；运行 certbot renew --cert-name apps-ip --dry-run --run-deploy-hooks --no-random-sleep-on-renew，确认验证与重载成功。再实际运行一次 snap.certbot.renew.service 并核对 Result=success；未到续期窗口时跳过签发是正常结果。手工演练加 --no-random-sleep-on-renew 避免等待随机延迟；自动任务保留原有随机延迟。
 8. 按下节完成全部验收，更新约定/current-state/项目文档，推送后同步文档副本。
@@ -43,11 +43,11 @@ Ledger、FeeTable、FabricWorld、RecipeBox 的来源校验优先识别直接 TL
 
 ## 验收与日常检查
 
-最近验收：2026-09-27。五个应用的 CI 检查与构建全部通过，四个来源校验中间件新增的 52 个 HTTPS/伪造头用例通过。五个应用均以正式可信证书通过外网 HTTP/2 健康检查，桌面 1360×900 与手机 375×667 的 Chromium 检查均为 TLS 1.3、安全上下文，无混合内容、脚本错误或资源请求失败。公网跳转、查询参数、Host 伪造、本机检查及切换后的续期/重载演练通过。
+最近验收：2026-09-27。五个应用均以正式可信证书通过外网 HTTP/2 健康检查，桌面 1360×900 与手机 375×667 的 Chromium 检查均为 TLS 1.3、安全上下文，无混合内容、脚本错误或资源请求失败。公网跳转、查询参数、Host 伪造、本机检查及切换后的续期/重载演练通过。
 
 - 外网无 -k 检查：未授权导航跳转认证，API/媒体/健康返回 401；授权设备访问五个健康接口、首页、深链接及脚本/样式；真实浏览器检查 secure context、HTTP/2、请求失败和 mixed content，包含桌面与 375×667。
 - 公网 HTTP 首页、裸路径、深链接和 API 均 308 到固定 HTTPS 地址，完整保留查询参数；公网 Host: localhost/127.0.0.1 也不能访问本机 HTTP 入口。ACME 文件仍能经 HTTP 获取，缺失文件 404。
-- 四个应用同源 HTTPS 请求能通过中间件；伪造非本机代理头、错误 Origin、错误协议等由仓库回归测试覆盖。生产使用不写数据的 OPTIONS 请求验证来源拒绝与通过，不提交测试记录。现有服务间调用保持回环。
+- 四个应用同源 HTTPS 请求能通过中间件；伪造非本机代理头、错误 Origin、错误协议等在涉及来源校验改动时用隔离样例验证。生产使用不写数据的 OPTIONS 请求验证来源拒绝与通过，不提交测试记录。现有服务间调用保持回环。
 - 从服务器核对五个直连 /healthz 与 127.0.0.1:80 的代理健康、页面资源；检查 nginx -t、所有 unit 及配置哈希。
 - inspect.sh 检查证书颁发者、有效期、48 小时到期阈值和续期 timer。IP 证书约 160 小时有效；自动续期失败时须及时修复，不能等待到期。当前没有外部证书到期告警。
 

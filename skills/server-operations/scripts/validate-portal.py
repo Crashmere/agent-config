@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate an application's portal declaration in CI and on the server (stdlib only)."""
+"""Validate an application's portal declaration locally and on the server (stdlib only)."""
 import argparse
 import hashlib
 import json
