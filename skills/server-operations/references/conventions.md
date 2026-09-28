@@ -24,6 +24,17 @@
 - 同 IP 的不同路径仍是浏览器同源，不是安全隔离。公网统一由 ServerPortal 设备认证保护；授权设备共用业务数据，应用内不区分账户角色。新应用必须继承共享认证。
 - 变更域名、TLS、统一鉴权或反代时，核对全部应用的构建前缀、绝对 URL、Origin/Cookie、健康检查、CI 和文档；涉及访问方式变化先确认。
 
+## 网站图标与手机桌面入口
+
+2026-09-28 用户确认：今后的每个网站从首次交付起自动配齐以下内容，作为新增项目的默认工作，不留给用户另行配置。
+
+- 提供网站自己的 favicon 和不透明的 180×180 PNG，在所有页面共用的 HTML head 显式声明 `rel="apple-touch-icon" sizes="180x180"`。路径带正确应用前缀，检查实际构建产物；不依赖同源根路径的兜底图标。生成脚本与图形源留在项目，PNG 随构建打包，服务器无需图形构建工具。
+- 启用统一认证时，项目 Nginx location 同时配置品牌图标的匿名 GET/HEAD；仅枚举具体名称，构建带哈希时只允许对应图标名称的严格模式。其他文件、页面、API、上传媒体保持认证，不能豁免整个 assets/static。门户自身的公共登录资源由其 Web 层负责。
+- 已采用 manifest 的应用，其公开 manifest 及引用的全部图标也需要独立访问，并核对 start_url/scope；仅为 iPhone 图标无需引入 manifest 或 Service Worker。manifest 不放业务数据或秘密。
+- 发布后运行 `scripts/check-site-icons.py --page-url <本机上游页面> --public-url <HTTPS应用页面>`：从真实 HTML 自动解析图标和 manifest，匿名核对 GET/HEAD、类型、PNG 尺寸及 manifest 图标；可以通过 SSH 在服务器执行，无需登录口令。该脚本适用于任意新应用，不需要维护中央图标列表。页面源必须直接返回 HTML；门户使用本机 `/portal/login`（与登录后的页面共用 head），不能把跳转响应当作页面。
+- Nginx 规则修改还要在合成环境检查不应公开的文件和方法（现有案例见 `scripts/test-public-icons.py`，新增应用扩充案例），再检查生产页面跳转和 API 未授权响应。图标检查是上线验收的一部分，失败必须修复；若接入 CI，使用固定提交的共享脚本，不复制校验逻辑。
+- 项目 AGENTS 与运维文档记录真实资源路径、生成方式和共享规则链接。真实 iPhone 的添加桌面结果单独确认，不以桌面浏览器或 HTTP 检查冒充真机测试。排障见 [common-issues](common-issues.md#统一认证后-iphone-桌面图标缺失)。
+
 ## 目录、身份和进程
 
 源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`、`Yuyan`、`ServerPortal`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
@@ -43,7 +54,7 @@
 - 单应用单独的运行用户。程序、脚本、配置由 root 管理；运行用户仅写自己的数据、备份等明确目录。默认数据/备份 0700，敏感配置更严格，不能把 0644 当通用密钥权限。
 - 用 systemd 常驻与开机启动；unit 源放应用 config，通过 `/etc/systemd/system/` 链接。日志进 journal；请求日志按应用/共享入口职责定位。
 - 按需加 `NoNewPrivileges`、`ProtectSystem`、`ReadWritePaths` 等限制，验证不会阻碍真实运行。不要复制一个不适用的沙箱。
-- 当前五个应用都是在 CI 构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在 CI 构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
+- 当前五个业务应用与门户都是在 CI 构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在 CI 构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
 - 不清除不属于任务的主机工具、云厂商 agent、定时任务或用户文件。未知 unit 先识别来源。
 
 ## 数据、备份与发布

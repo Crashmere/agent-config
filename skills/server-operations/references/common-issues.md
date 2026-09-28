@@ -4,6 +4,29 @@
 
 每条写清现象与判断条件、适用应用、处理步骤、清理与验收，以及尚未实施的改进。方案被替代时直接改写本条，历史由 Git 保存。
 
+## 统一认证后 iPhone 桌面图标缺失
+
+诊断：HTTPS 资源地址和已有 PNG 本身正常，五个业务应用的图标原来也继承了设备认证。访问日志可见 iPhone 的 Ledger 页面图标/manifest 返回 200，独立的 icon-192.png 请求返回 401。不能假定系统添加桌面时会携带当前浏览器的 Cookie。
+
+| 应用 | 图标配置 |
+| --- | --- |
+| Ledger | 180 px touch icon、192/512 px manifest 图标及公开 manifest，精确 GET/HEAD 例外 |
+| FeeTable | 180 px touch icon，Vite 哈希路径按三个品牌图标名称匹配 |
+| FabricWorld | 180 px touch icon、favicon.ico 与项目 SVG，精确 GET/HEAD 例外 |
+| RecipeBox | 180 px touch icon、favicon.ico 与项目 SVG，精确 GET/HEAD 例外 |
+| Yuyan | static/favicon.svg 与补充的 static/apple-touch-icon.png，精确 GET/HEAD 例外 |
+| ServerPortal | 公共 static/favicon.svg 与补充的 static/apple-touch-icon.png，由 Web 层提供 |
+
+处理：各业务项目自己的 nginx-location.conf 只对指定品牌图标（Ledger 还包括公开 manifest）关闭 auth_request，限制为 GET/HEAD；FeeTable 只匹配三个图标名称及其构建哈希。不得开放整个 assets/static、用户上传媒体或 API。Yuyan 与门户从已有 SVG 生成不透明的 180×180 PNG，并在所有页面 head 中声明 apple-touch-icon；不改变它们的登录、Cookie 或业务数据行为。
+
+新增/修改图标时核对 HTML 的真实 href、构建后路径、PNG 尺寸、Content-Type、匿名请求和查询版本参数；部署前运行 scripts/test-public-icons.py（参数见 --help），在独立回环 Nginx 和合成上游验证规则。此脚本的五个服务图标案例需随图标路由更新；门户静态文件由 Web 自身提供，还要检查 /portal/api/overview 未登录仍返回 401。本次隔离检查共 132 项通过，临时进程与目录已清理；Yuyan 构建、make test 与门户 Web race 测试通过。真实 iPhone 添加桌面的最终效果仍需用户确认，不能从服务器检查推断。
+
+2026-09-28 用户已确认六站上线及后续项目默认配置。Yuyan、门户通过 CI 发布包含 PNG 和 head 的程序；其余四个业务程序无需重发，只安装各项目的 location 配置并在 nginx -t 通过后 reload。当前部署状态见 current-state，验证结果见 ServerPortal docs/VERIFICATION.md。
+
+后续新网站必须从首次交付配齐上述配置，完整规范见 [网站图标约定](conventions.md#网站图标与手机桌面入口)。通用 `scripts/check-site-icons.py` 从真实 HTML 自动发现图标和 manifest，核对匿名 GET/HEAD、类型、文件签名与 PNG 尺寸；构建哈希变化无需更新中央列表。
+
+手机验收应先在浏览器完成认证并回到对应应用页面，再添加到桌面；不要在统一登录页创建应用快捷方式。已有快捷方式可能保留旧图标，需要重新添加。桌面应用如果再次要求设备授权，按正常流程登录，不降低 Cookie 安全属性。Apple 的 PNG/页面图标规则见 [Configuring Web Applications](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html)。
+
 ## root 采集进程无法切换应用用户
 
 ServerPortal 的 root 采集器使用非 root 主组 serverportal，以便 Unix socket 仅向 Web 用户开放。当前主机上，此组合叠加 NoNewPrivileges 与 RestrictAddressFamilies/LockPersonality 时，进程 CapEff/CapPrm 缺少 CAP_SETUID；runuser 报 cannot set user id: Operation not permitted，原生备份无法开始。直接以 root 在终端运行成功不能证明 unit 内可用。
@@ -74,7 +97,7 @@ GitHub 的 `ubuntu-latest` 从 2026-10-19 起迁移到 Ubuntu 26，会同时改�
 
 以下全部成立才使用；哈希不符、候选 check/migrate 失败、健康检查失败或回退信息等其他错误先排查原因，不用本方案绕过。
 
-- 发布作业的 SSH 步骤以 exit code 124 结束，耗时约 90–100 秒。
+- 发布作业的 SSH 步骤以 exit code 124 结束，耗时约 90–100 秒（Yuyan 的上传时限为 600 秒）。
 - 该应用最新发布目录 `result` 为 failed 且没有 `metadata`：脚本在上传阶段中止，从未停服，也没有 before-deploy 备份。
 - `current-commit` 仍是旧提交，服务 active、健康检查正常。
 - 待发布提交仍是 main 最新提交，且对应的测试/构建作业成功。若其后只有带 `[skip ci]` 的纯文档提交，先 fetch 并逐文件确认差异仅在未参与构建的文档中，代码、依赖、资源、嵌入文件、构建和发布配置均相同，才可补发原提交的同次 CI 产物；运行版本仍记录真实产物的原源码提交，文档副本同步最新文档提交。任一构建输入有变化就不能用此例外。

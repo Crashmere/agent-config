@@ -51,6 +51,8 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 
 ## 共享配置与所有权
 
+2026-09-28 六站桌面图标修复已上线：五个业务网站仅对具体品牌图标（Ledger 还含公开 manifest）放行匿名 GET/HEAD；Yuyan 和门户已发布带 180×180 PNG 与共用 head 声明的新程序。六站共 20 个图标/manifest 资源与 94 项线上认证/健康检查通过；隔离 Nginx 的 132 项边界检查通过，前四个业务进程与程序版本保持原样。真机添加桌面的最终效果待用户确认。后续新项目从首次交付默认配置并运行通用检查，见 conventions 的“网站图标与手机桌面入口”；共同原因见 common-issues，产物与验证记录见 ServerPortal docs/VERIFICATION.md。
+
 | 实际位置 | 维护源 / 含义 |
 | --- | --- |
 | `/etc/nginx/nginx.conf` | Ubuntu 包基础配置，改动需记录；不是业务项目所有 |

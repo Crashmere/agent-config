@@ -17,6 +17,7 @@ description: Maintain the user's personal Linux servers and multi-application de
 6. 公网 HTTPS、IP 证书、自动续期或来源校验，读 [共享 HTTPS](references/https.md)，统一处理全部应用。
 
 7. 门户、统一设备认证、资源声明、整机材料备份或新增数据目录，读 [门户维护](references/portal.md)，同时维护受影响应用的 deploy/portal.json。
+8. 新增网站或修改图标、构建路径、统一认证时，默认落实 [网站图标约定](references/conventions.md#网站图标与手机桌面入口)，运行通用图标检查；无需等用户另外提出手机图标需求。
 
 ## 授权：改完告知，还是先确认
 
