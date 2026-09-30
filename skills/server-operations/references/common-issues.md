@@ -110,3 +110,7 @@ ServerPortal 的 root 采集器使用非 root 主组 serverportal，以便 Unix 
 ## 本机发布失败
 
 当前发布入口、身份、产物复用和回退统一见 [本机发布](release.md)。上传失败先检查本机 SSH、网络和发布日志，校验通过之前服务继续运行；不要为网络失败反复停服。声明失败使用 make portal 单独修复。
+
+如果日志已显示 `Deployed`，之后才在公网 HTTPS 检查中超时，程序可能已经发布成功。先核对 `current-commit`、unit/回环健康与本机 `last-deployment.json` 的 `program`，再单独重试未授权 API 的只读检查，预期 401；成功后补记本地发布回执，不重新部署程序。2026-09-30 门户发布已按此处理。
+
+维护电脑新建 SSH 连接偶发超时时，先用短 `ConnectTimeout` 做只读连通检查；文档同步可临时使用 OpenSSH ControlMaster 复用已建立的连接，仍使用原 SSH 别名、身份和主机指纹校验，结束后关闭临时连接。连接超时本身不足以判断应用或服务器故障，不因此重启服务或更改鉴权。
