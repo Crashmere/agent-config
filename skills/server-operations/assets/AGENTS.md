@@ -7,6 +7,7 @@
 - 先读当前状态再只读核实，不因文档记载某服务就假定现场未变化。不要读取或打印无关凭据/业务数据。
 - 哪些事直接做完再告知、哪些先确认，只看 `/opt/server-context/SKILL.md` 的授权表。文档维护、清理已知垃圾、按已有方案处理问题都属于直接做。
 - 修改共享入口、端口、运行时、权限、备份或发布方案前，评估清单中的全部应用，不只修新项目。
+- 网页默认拦截 Tab / Shift+Tab 控件切换并取消焦点高亮；用户明确要求的例外和验证范围见 `/opt/server-context/references/conventions.md` 的“网页键盘与焦点”，不要自行恢复浏览器默认行为。
 - 发布失败或排障先查 `/opt/server-context/references/common-issues.md`。可能影响多个应用的问题，解决方案统一写在那里，项目文档只留参数和链接。
 - 每次变更都更新所属源码配置和当前文档，提交推送后在本地运行 agent-config 的 `skills/server-operations/scripts/sync-docs.sh` 同步服务器副本。只改服务器不回写仓库不能算完成。
 - 项目数据库、备份、私钥、Token 不入 Git。业务仓库与共享上下文公开、ServerPortal 仓库私有；所有源码仍不保存公网地址、真实数据或秘密。

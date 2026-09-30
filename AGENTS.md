@@ -23,6 +23,12 @@
 - Keep changes safe, scoped, and relevant to the task.
 - Explain destructive actions and ask for confirmation before running them.
 
+## Web keyboard and focus policy
+
+- For all web services developed or maintained for the user, block ordinary Tab and Shift+Tab from moving focus between page controls by default, including menus, forms, dialogs, and dynamically loaded pages. Change this only when the user explicitly requests a different behavior.
+- Do not show control focus highlights: remove browser focus outlines and focus-only shadows, border/color changes, and similar decoration unless the user explicitly requests them. Keep text carets, text/content selections, and business selection states working.
+- Preserve explicitly requested Tab shortcuts and document-editing commands such as indentation and table-cell navigation. Keep Ctrl/Command/Alt combinations and IME composition outside the default interception; do not disable controls, blur them, or prevent normal text input to hide focus.
+
 ## Personal servers and hosted projects
 
 - Use `server-operations` before working on the user's personal Linux servers (including SSH host `ali`), their hosted projects, or adding another deployment. Explicitly read remote `/opt/AGENTS.md`; SSH does not automatically load remote agent instructions.

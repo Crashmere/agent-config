@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+基础清单最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -52,6 +52,8 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；五个应用通过本机 make portal 同步声明。
 
 ## 共享配置与所有权
+
+六站均按[网页键盘与焦点约定](conventions.md#网页键盘与焦点)维护。FeeTable、FabricWorld、RecipeBox、Yuyan 和 ServerPortal 已上线普通 Tab / Shift+Tab 拦截并取消控件焦点高亮，覆盖页面、表单、菜单和弹窗。Ledger 保持用户认可的现有快捷键与焦点行为；Yuyan 保留正文/代码缩进和表格单元格导航。五站本地 Chromium 与 WebKit 的页面、弹窗、窄屏及深色模式检查通过，编辑例外与菜单按键另行验证；全局 AGENTS 和六个项目入口均记录默认规则。
 
 六站都已提供独立的 favicon 和 180×180 apple-touch-icon；业务站点只对明确品牌图标（Ledger 含公开 manifest）开放匿名 GET/HEAD，页面、API 和用户媒体继续认证。真机添加桌面的最终效果待用户确认。新增网站从首次交付起遵循 conventions 的网站图标约定。
 
