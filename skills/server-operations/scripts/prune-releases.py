@@ -150,7 +150,7 @@ def verify_backup(app, path, cache):
             json.loads(read_small(path / name))
         return
     db = path if app.kind == 'sqlite' else path / app.database
-    with sqlite3.connect(db.as_uri() + '?mode=ro&immutable=1', uri=True) as conn:
+    with contextlib.closing(sqlite3.connect(db.as_uri() + '?mode=ro&immutable=1', uri=True)) as conn:
         if conn.execute('PRAGMA quick_check').fetchall() != [('ok',)]:
             raise ValueError(f'invalid retained database: {path.name}')
     if app.kind == 'media':
