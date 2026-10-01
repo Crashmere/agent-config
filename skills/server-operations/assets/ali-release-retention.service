@@ -1,0 +1,23 @@
+[Unit]
+Description=Retain recent application releases and pre-deployment snapshots
+After=systemd-tmpfiles-setup.service
+ConditionPathIsDirectory=/opt/serverportal/registry.d
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/server-context/scripts/prune-releases.py --apply
+StateDirectory=ali-release-retention
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt /run/lock
+ReadOnlyPaths=/opt/server-context
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=256M
+CPUQuota=50%
+IOWeight=10
+Nice=15
+TimeoutStartSec=15min

@@ -1,0 +1,10 @@
+[Unit]
+Description=Clean old release materials daily at 05:00 Asia/Shanghai
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 Asia/Shanghai
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

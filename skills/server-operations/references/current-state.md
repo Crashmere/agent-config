@@ -35,9 +35,9 @@
 | FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
 | Yuyan | SQLite（含文档模板/内容片段）+ 图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
-| ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；不自动轮换或异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
+| ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；导出包不自动轮换或由门户异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
 
-五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份和发布历史按 [发布材料自动保留](retention.md) 清理：最近 5 份完整备份、最近 3 次成功发布及当前版本/对应备份保护。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 Yuyan 附件上传已改为流式接收且不设文件大小上限；仅其 /yuyan/api/attachments 子 location 关闭大小检查和请求体缓冲，继承认证，其余请求保留原限制。临时上传写入既有 data/assets，解除引用不回收素材，无新数据根。附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
 
@@ -110,7 +110,7 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 - `aegis.service`（Aegis Service，阿里云安全组件）重启前长期 failed（Result=signal），2026-09-24 重启后恢复 running；若再次失败，不要归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
 - 2026-09-24 已重启以应用 libc6 更新：四个应用、Nginx 与备份 timer 均自动恢复，直连与代理健康正常，约 25 秒恢复 SSH。以后出现 /var/run/reboot-required 时，按同样方法先检查没有发布/备份在运行，重启后逐项验证。
-- 发布历史与发布前快照不自动轮换，每次发布保留候选程序和 previous；持续发布会持续占用磁盘。2026-10-01 六应用与五个 daily timer 正常，当前主要历史占用来自发布材料。保留范围、硬链接计量、门户手动清理边界及只读排查见 [备份与发布历史持续占用磁盘](common-issues.md#备份与发布历史持续占用磁盘)。
+- 发布历史与发布前快照由 `ali-release-retention.timer` 每天北京时间 05:00 自动清理，保留最近 3 次成功发布和最近 5 份完整发布前备份，并保护当前版本、对应备份及待核对失败批次。每日备份共用清理锁，业务 daily 仍保留 14 份；手工/迁移备份和门户 exports 不在自动范围。配置、私有回执目录及验收见 [发布材料自动保留](retention.md)。
 - Certbot 5.8.0 使用 Certbot Project 官方 snap（latest/stable），snap 自动更新；IP 证书 apps-ip 约 160 小时有效，snap.certbot.renew.timer 自动续期，deploy hook 验证配置后重载 Nginx。首次签发、续期演练和实际 timer service 检查已通过，配置与重建见 [共享 HTTPS](https.md)。
 - 没有外部可用性或证书到期告警；inspect.sh 检查证书是否至少还有 48 小时有效。
 
@@ -129,4 +129,4 @@ ssh ali 'for a in ledger feetable fabricworld recipebox yuyan; do echo "$a $(cat
 
 六个应用已迁至 [本机发布](release.md)：GitHub Actions 关闭，只备份源码与配置。原 production Secrets 和旧 CI 公钥已移除，五个业务身份改为信任维护电脑专用发布公钥；门户沿用管理员 SSH。历史回归套件退役，本次功能在本地按需验证，不默认保留永久测试。构建、上传与健康/备份保护由脚本执行。
 
-门户新增 root 私有 releases/ 与 backups/，保存旧程序及停写后的 data/config 快照，其资源来源为 ServerPortal/deploy/portal.example.json。用户暂缓的真实备份下载和恢复验收保持暂缓。
+门户 root 私有 releases/ 与 backups/ 保存旧程序及停写后的 data/config 快照，纳入共享 3/5 发布保留策略；私有清理回执目录也由 ServerPortal/deploy/portal.example.json 登记。用户暂缓的真实备份下载和恢复验收保持暂缓。
