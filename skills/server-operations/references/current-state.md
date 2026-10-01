@@ -49,6 +49,8 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 
 门户永久授权与紧凑布局已上线。实际程序来源从 current-commit 与 releases/metadata 读取，文档版本由 docs/SOURCE 记录。
 
+2026-10-01 已修复共享认证子请求误拦大请求的问题：仅在 `/_portal_device_check` 设置 `client_max_body_size 0`，继续禁止转发请求体，各应用 Nginx 与程序大小上限保持。RecipeBox、FabricWorld、Yuyan 的大图片、Yuyan 的大文档及 Ledger 的 1–2 MiB 请求不再被认证层默认 1 MiB 上限误拦；FeeTable 正常输入与门户自身认证不受原问题影响。全部 location 的 48 项隔离检查、线上 51 项只读 HTTP 检查和六站图标 GET/HEAD 检查通过；Nginx 平滑重载，各应用未重启、未写入合成业务数据。根因与维护方法见 [统一认证误拦大请求](common-issues.md#统一认证误拦大请求)。
+
 门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；五个应用通过本机 make portal 同步声明。
 
 ## 共享配置与所有权

@@ -12,6 +12,8 @@ ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应
 
 API 条目须对照项目实际路由与接口文档核对；同步成功不代表内容正确。完整核对方法见 [门户 API 列表与服务不一致](common-issues.md#门户-api-列表与服务不一致)。
 
+上传与大文档请求的大小由各业务 location 和程序限制；共享内部认证子请求单独关闭 body 大小检查且不转发请求体，避免继承默认 1 MiB 限制造成 500。原因、影响范围和验证见 [统一认证误拦大请求](common-issues.md#统一认证误拦大请求)。
+
 ## 共用校验和发布协议
 
 校验维护源只有 scripts/validate-portal.py（Python 3 标准库）。维护电脑从受信 agent-config checkout 执行它；服务器从 /opt/server-context/scripts/validate-portal.py 使用同一规则。更新契约时同步该脚本、ServerPortal 适配和本地共享工具，并验证已有声明。服务器不需要 Go/Node 或额外 Python 包。

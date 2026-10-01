@@ -14,6 +14,24 @@
 
 当前没有自动比较各业务路由与声明内容的发布门禁；修改接口的 agent 仍需完成上述核对。遇到尚未发布的功能，应随对应程序版本发布声明，不能提前把源码中的新接口描述成线上已可用。
 
+## 统一认证误拦大请求
+
+现象：业务请求返回 500，Nginx error.log 同时出现 `client intended to send too large body`、`subrequest: "/_portal_device_check"` 和 `auth request unexpected status: 413`，应用 journal 没有对应请求。2026-10-01 在 RecipeBox 上传约 4.4 MiB 照片时确认，并在隔离 Nginx 复现：1 MiB 通过，多 1 字节即失败。
+
+原因：业务 location 的 `client_max_body_size` 不会传给认证子请求的 location；`/_portal_device_check` 原来继承 Nginx 默认 1 MiB。即使配置了 `proxy_pass_request_body off` 和清空 `Content-Length`，Nginx 仍会在进入代理阶段前依据原请求长度检查这个上限。认证子请求的 413 不是 auth_request 接受的认证结果，最终对客户端表现为 500。
+
+| 应用 | 原有入口和程序上限 | 影响 |
+| --- | --- | --- |
+| RecipeBox、FabricWorld | Nginx 26 MiB，单张图片 25 MiB | 超过 1 MiB 的正常图片可能被误拦 |
+| Yuyan | Nginx 26 MiB，单张图片 25 MiB，JSON 16 MiB | 大图片与大文档保存均可能被误拦 |
+| Ledger | Nginx 与 JSON 均为 2 MiB | 1–2 MiB 的请求无法到达业务校验 |
+| FeeTable | Nginx 2 MiB，JSON 64 KiB | 正常业务输入不受影响；同样继承共享认证 |
+| ServerPortal | Nginx 与 JSON 均为 1 MiB，自行认证 | 不经过该子请求，不受此问题影响 |
+
+修正只放在共享 `assets/nginx-portal-auth.conf` 的 `location = /_portal_device_check` 内：设置 `client_max_body_size 0;`，保留 `internal`、`proxy_pass_request_body off`、空 `Content-Length` 和 Cookie 校验。业务 location 与后端继续执行各自大小上限；不能在整个 http/server 层取消限制，也不能通过豁免业务 API 认证来绕开故障。
+
+应用前使用全部现有 location、独立回环 Nginx 和合成认证/业务上游，验证各站正常与大请求、无凭据/伪造凭据、超过业务入口上限、认证故障、Cookie 续期，以及外部不能直接访问认证内部路径。确认业务上游收到的字节数与哈希一致，认证上游不收到请求体；隔离检查无需写入真实业务。按授权表安装到 `/etc/nginx/snippets/portal-auth.conf`，保留旧配置，`nginx -t` 成功后平滑 reload；失败恢复旧配置。随后核对六站健康、公开图标 GET/HEAD、未授权页面跳转及 API 拒绝。源码、服务器运行配置和 `/opt/server-context` 副本须一致，部署状态以 [current-state](current-state.md#门户与统一认证) 为准。
+
 ## 统一认证的 Cookie 续期
 
 五个业务应用通过 Nginx auth_request 检查设备；子请求中的 Set-Cookie 不会自动成为业务响应头。共享 assets/nginx-portal-auth.conf 使用 auth_request_set 取得该头，再由 add_header Set-Cookie ... always 转发，门户自身直接续期。匿名、伪造、过期和撤销凭据不得收到续期 Cookie；不降低 Secure/HttpOnly/SameSite=Strict/Path=/ 属性。
