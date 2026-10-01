@@ -34,7 +34,7 @@
 | FeeTable | SQLite | 03:15，一致性快照 | 本机 make deploy | — |
 | FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
-| Yuyan | SQLite（含文档模板/内容片段）+ 图片 | 04:00，同 FabricWorld；快照覆盖模板及其图片 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
+| Yuyan | SQLite（含文档模板/内容片段）+ 图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
 | ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；不自动轮换或异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
 
 五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
