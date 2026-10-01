@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yuyan"
+  short_description: "直接在个人 Yuyan 知识库中查找、编写和修改文档，保留丰富格式"
+  default_prompt: "使用 $yuyan-doc 在我的知识库中查找目标文档并按要求编写或修改，保留已有格式和素材。"
