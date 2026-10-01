@@ -39,6 +39,8 @@
 
 五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
+Yuyan 附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
+
 新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
 
 Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
