@@ -7,7 +7,7 @@
 共享维护源为 `scripts/prune-releases.py`、`assets/ali-release-retention.service`、`.timer` 和 `.tmpfiles.conf`。Python 3 标准库实现，不安装依赖。服务从 ServerPortal 的受控 registry.d 读取五个应用，复用 validate-portal.py 验证声明；门户自身只使用明确登记的 backups/releases。新应用沿用同一发布与备份契约时纳入相同规则，其他契约先明确适配。
 
 - 保留最近 3 次成功发布及当前运行版本；以 result 的完成时间排序，不按提交字符串或目录名称排序。
-- 保留最近 5 份完整 before-deploy 备份，并额外保护仍保留的发布批次对应备份。因当前旧版本或失败保护而超过 3/5 是正常的，不为凑数量删除保护项。
+- 保留最近 5 份完整 before-deploy 备份，并额外保护仍保留的发布批次对应备份。因当前旧版本或失败保护而超过 3/5 是正常的，不为凑数量删除保护项。两次任务间新发布产生的材料也会暂时超过数量，在下次空闲清理时轮换。
 - 失败批次仅在 recovery 为 healthy 或 not-needed、完成已超过 7 天、后续存在成功发布且应用当前健康时才可清理。六个 root 发布脚本在 finish 中写 recovery，再写终态 result。旧失败记录无回退结果时留作人工核对；未完成、未知格式、校验异常和符号链接均保护并记录原因。
 - 只匹配 `<40位提交>.<6位发布后缀>` 以及它对应的 before-deploy 名称。不处理 daily、manual、迁移/恢复前快照、业务 data、门户 exports、本地构建目录或云端快照。
 - 每次先校验备份结构、SQLite quick_check、媒体清单 SHA-256（相同硬链接只计算一次）、保留程序和 current-commit 对应的程序哈希。没有有效当前版本记录、保留程序损坏或运行状态异常时不删除。
@@ -48,3 +48,9 @@ journalctl -u ali-release-retention.service --no-pager
 首次先核对待删清单、保护项和实际回收估算，再按用户已确认策略执行。`--expect-plan` 拒绝与已核对预览不一致的计划；定时 unit 每次在锁内重新生成并执行当前策略。需要手工触发同一策略时 `systemctl start ali-release-retention.service`，完成后看 Result、删除日志与保留清单；不要以 unit inactive 判断失败。
 
 暂停自动清理用 `systemctl disable --now ali-release-retention.timer`；已在执行的任务要单独检查 service。停用无需回退程序或恢复已删除材料。删除不可通过关闭 timer 撤销，数据恢复仍需从保留的原生/云端备份选择时点并验证。
+
+## 部署与验收
+
+2026-10-01 已安装六个发布脚本、五个每日备份锁入口、共享 tmpfiles/service/timer，并验证门户采集器加载私有回执资源。首次执行与预览清单完全一致：删除 164 个普通旧发布目录、151 份普通发布前备份，实际释放约 9.15 GiB，根盘使用率由 45% 降至 20%。Ledger 的 schema2 迁移发布材料作为特殊批次保留；daily、manual 和门户 exports 核对无变化。首次清理未改变六个业务程序版本或进程，timer 已启用。
+
+隔离验证覆盖三种快照契约、重复轮换与回执续用、硬链接空间估算、当前版本/失败批次保护、符号链接/损坏材料/变化清单拒绝及发布失败恢复标记。五个备份 unit 在真实 Linux 沙箱下验证共享锁/独占锁互斥；连续 200 次 SQLite 校验无文件描述符增长。首次清理后再次只读校验成功；同期新增发布的超额材料仍按下一次定时任务处理。
