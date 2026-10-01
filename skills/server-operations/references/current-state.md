@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-基础清单最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+基础清单最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。备份与数据保留于 2026-10-01 只读复核，另确认已运行的阿里云 Cloud Backup，见下方云备份。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -37,7 +37,7 @@
 | Yuyan | SQLite（含文档模板/内容片段）+ 图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
 | ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；不自动轮换或异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
 
-五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），尚无自动异机同步；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份与发布历史不自动轮换。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
 
 Yuyan 附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
 
@@ -85,22 +85,32 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 
 ## 手工数据归档
 
-2026-09-27 已按用户要求生成五个应用的当前一致性数据快照，汇总为 `ali-data-<UTC时间>.tar.gz`，通过 SSH 下载到维护电脑的 `~/ali/backups/`（位于各项目 Git 仓库之外，目录 0700、文件 0600）。这是一次手工异机副本，尚未配置持续的异机同步。准确生成时间、各应用运行提交、校验和与恢复说明在归档旁的 metadata、verification、SHA-256 和 README 文件中；实际数据及这些清单不进入公开仓库。
+2026-09-27 已按用户要求生成五个应用的当前一致性数据快照，汇总为 `ali-data-<UTC时间>.tar.gz`，通过 SSH 下载到维护电脑的 `~/ali/backups/`（位于各项目 Git 仓库之外，目录 0700、文件 0600）。这是一次手工下载，不是持续同步到维护电脑；主机另有下述阿里云文件备份。准确生成时间、各应用运行提交、校验和与恢复说明在归档旁的 metadata、verification、SHA-256 和 README 文件中；实际数据及这些清单不进入公开仓库。
 
 归档含五个数据库、所有已登记照片/知识库图片、数据库内历史与回收站内容，并保留 Ledger 数据目录内的历史迁移快照。各应用通过自身 backup 命令生成独立在线一致性快照；不是五个应用的同一事务时点。没有运行 daily 清理或轮换，也没有停止服务。下载后核对整包 SHA-256、全部文件清单、三个图片应用的原生 manifest、六个数据库的完整性/外键及数据库登记图片的覆盖。
 
 服务器单应用快照保留在各自 `/opt/<app>/backups/manual-ali-data-*`，汇总包和解包目录位于 root 私有的 `/opt/backup-exports/`；它们不自动轮换。打包使用 tar --hard-dereference，让归档内图片成为独立文件。只下载已完成归档，传输先保留 .part 名称，通过整包校验后再改为正式文件名；恢复先解到全新隔离目录并按包内说明验证，正式恢复另行确认。归档为数据备份，应用程序、运行配置与凭据仍按各自重建流程维护。
+
+## 云备份
+
+2026-10-01 从现场进程与客户端任务日志确认：阿里云 Cloud Backup 的 `hbrclient.service` 与 `hbrclientupdater.service` 已运行，目录为 `/opt/alibabacloud/hbrclient`。它独立于五个应用的 daily timer 和 ServerPortal 下载流程；不能再将“应用脚本不主动上传”表述为整机没有自动异机备份。
+
+- 最近三个任务均于北京时间约 01:44 开始；最新任务成功完成增量备份。此时间来自运行日志，控制台计划配置未核对。
+- 文件备份目标为 `/`，排除系统程序、虚拟文件系统及客户端自身；现场排除列表未排除应用的 `/opt` 目录，应用数据、daily/manual/before-deploy、releases 和门户 exports 都在扫描范围内。
+- 任务记录的保留期为 30 天，快照到期时间与之相符。云端已用空间、账单、保留策略的控制台配置以及实际到期删除结果尚未独立核对；日志中的逻辑扫描量不等于云端物理占用。
+- 客户端启动日志显示本地旧元数据按 15 天清理；成功任务结束时回收旧文件缓存，最新日志保留最近两代缓存。客户端目录是第三方受管数据，不按应用垃圾处理。
+- 云端保留期不会删除服务器源文件。未轮换的 releases/备份持续进入新快照，增量去重不能替代源目录保留策略。云端直接扫描活跃 SQLite/WAL 也不等于应用一致性快照；恢复仍优先使用已完成的原生备份，并按项目契约验证。
 
 ## 其他软件、后台任务和已知问题
 
 - FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
 - 已有工具：Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Node、Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
 - Ubuntu 的 nodejs、npm 及随它们安装的依赖（共 492 个包，含 eslint、webpack 和一批 X11/Mesa/Perl 库）已于 2026-09-26 按用户要求卸载：Node 不是任何应用的依赖，却常让开发 agent 误以为可以在服务器上构建。卸载后四个应用的直连、代理与深链接健康正常，libvips 可用。
-- 系统/厂商服务包含 `aliyun`（Aliyun Assist）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。
+- 系统/厂商服务包含 `aliyun`（Aliyun Assist）、`hbrclient` / `hbrclientupdater`（阿里云 Cloud Backup）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。云备份详情见上节。
 - `aegis.service`（Aegis Service，阿里云安全组件）重启前长期 failed（Result=signal），2026-09-24 重启后恢复 running；若再次失败，不要归因于应用。
 - 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
 - 2026-09-24 已重启以应用 libc6 更新：四个应用、Nginx 与备份 timer 均自动恢复，直连与代理健康正常，约 25 秒恢复 SSH。以后出现 /var/run/reboot-required 时，按同样方法先检查没有发布/备份在运行，重启后逐项验证。
-- 发布历史不自动轮换，每次发布约保留两份程序（Ledger 约 35 MB/次）；根盘目前充裕，定期用 `du -sh /opt/*/releases /opt/*/backups` 查看。
+- 发布历史与发布前快照不自动轮换，每次发布保留候选程序和 previous；持续发布会持续占用磁盘。2026-10-01 六应用与五个 daily timer 正常，当前主要历史占用来自发布材料。保留范围、硬链接计量、门户手动清理边界及只读排查见 [备份与发布历史持续占用磁盘](common-issues.md#备份与发布历史持续占用磁盘)。
 - Certbot 5.8.0 使用 Certbot Project 官方 snap（latest/stable），snap 自动更新；IP 证书 apps-ip 约 160 小时有效，snap.certbot.renew.timer 自动续期，deploy hook 验证配置后重载 Nginx。首次签发、续期演练和实际 timer service 检查已通过，配置与重建见 [共享 HTTPS](https.md)。
 - 没有外部可用性或证书到期告警；inspect.sh 检查证书是否至少还有 48 小时有效。
 
@@ -113,7 +123,7 @@ ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ssh ali 'for a in ledger feetable fabricworld recipebox yuyan; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
-inspect.sh 的 failed-services 当前为空；出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+2026-10-01 六应用和五个每日备份 unit 正常；failed 列表另有旧的 systemd-run 身份/快照诊断单元，不应混为当前业务或定时备份失败。出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
 
 ## 本机发布与验证
 
