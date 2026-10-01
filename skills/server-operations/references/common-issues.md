@@ -144,7 +144,7 @@ ServerPortal 的 root 采集器使用非 root 主组 serverportal，以便 Unix 
 | manual、迁移/恢复前快照、`/opt/backup-exports` | 无自动轮换，生成后一直保留；不按名称推断可以删除 |
 | ServerPortal `exports/` | 手动生成完整包或旧增量链；无自动过期清理，旧增量依赖父链 |
 | FabricWorld、RecipeBox 数据内清理 | daily 先删除超过 30 天的回收站与已移除媒体、超过 24 小时的未绑定/孤立上传和 upload 暂存，再清理超过 7 天的普通幂等结果；FabricWorld 的 Ledger 来源记录长期保留。存活业务记录的修改历史无独立轮换 |
-| Yuyan 数据内历史和素材 | 历史快照全部保留，回收站需手动清空；图片与附件连续一小时未被正文（含回收站）、历史、模板/片段或媒体链接引用后自动回收，每分钟扫描，重新引用/上传重置计时。已有备份硬链接保留；备份与回收通过目录锁协调，详见 Yuyan OPERATIONS |
+| Yuyan 数据内历史和素材 | 历史保留 30 天，每天北京时间 03:00 清理、不保底保留，停机后启动补跑；当前与回收站正文独立保留，回收站需手动清空。图片/附件最后引用消失后连续一小时才回收，每分钟扫描；历史过期后重新开始宽限期，重新引用/上传重置计时。已有备份按自身策略保留；备份与回收通过目录锁协调，详见 Yuyan OPERATIONS |
 | Ledger、FeeTable 删除 | Ledger 软删除记录长期保留；FeeTable 直接删除记录。SQLite 删除释放的页可复用，不保证文件立刻变小，不自动对正式库做 VACUUM |
 | 系统日志和临时目录 | Nginx daily/14 份并压缩，rsyslog weekly/4 份；journald 按默认空间上限轮换；tmpfiles 默认 /tmp 10 天、/var/tmp 30 天并有系统排除项。它们不清理 /opt 应用历史 |
 
