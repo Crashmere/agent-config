@@ -1,0 +1,8 @@
+{
+  "name": "yuyan-doc-tools",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

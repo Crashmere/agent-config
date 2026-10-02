@@ -30,7 +30,7 @@ function baseURL(value) {
   return url;
 }
 
-export async function connect(options) {
+export async function connect(options, { manageSignals = true, signal } = {}) {
   const timeout = Number(options.timeout ?? 120000);
   assert(Number.isSafeInteger(timeout) && timeout >= 0, '--timeout must be milliseconds, or 0 for no total deadline.');
   let cookie;
@@ -64,11 +64,14 @@ export async function connect(options) {
     child.on('exit', () => { exited = true; });
     const stop = () => child.kill();
     const interrupted = () => { stop(); process.exit(130); };
-    process.once('exit', stop); process.once('SIGINT', interrupted); process.once('SIGTERM', interrupted);
-    cleanup = () => { stop(); process.removeListener('exit', stop); process.removeListener('SIGINT', interrupted); process.removeListener('SIGTERM', interrupted); };
+    process.once('exit', stop);
+    if (manageSignals) { process.once('SIGINT', interrupted); process.once('SIGTERM', interrupted); }
+    signal?.addEventListener('abort', stop, { once: true });
+    cleanup = () => { stop(); process.removeListener('exit', stop); process.removeListener('SIGINT', interrupted); process.removeListener('SIGTERM', interrupted); signal?.removeEventListener('abort', stop); };
     try {
       let ready = false;
       for (let n = 0; n < 200 && !ready; n++) {
+        signal?.throwIfAborted();
         if (exited) throw new Failure('connection_failed', `SSH connection failed: ${reason.trim()}`);
         ready = await new Promise(ok => {
           const socket = net.connect({ host: '127.0.0.1', port });
@@ -104,7 +107,8 @@ export async function connect(options) {
       if (body !== undefined && !(body instanceof FormData)) { payload = JSON.stringify(body); headers['Content-Type'] = 'application/json'; }
       let response;
       try {
-        response = await fetch(url, { method, headers, body: payload, redirect: 'error', signal: timeout ? AbortSignal.timeout(timeout) : undefined });
+        const signals = [signal, timeout ? AbortSignal.timeout(timeout) : undefined].filter(Boolean);
+        response = await fetch(url, { method, headers, body: payload, redirect: 'error', signal: signals.length ? AbortSignal.any(signals) : undefined });
       } catch (error) {
         throw new Failure(method === 'GET' || method === 'HEAD' ? 'network_error' : 'write_outcome_unknown', error.message, { method, path, hint: 'Do not blindly retry a write. Read the target to determine whether it was applied.' });
       }

@@ -98,7 +98,7 @@ export async function formatTools(repoArg) {
       assert(!issues.length, `Markdown conversion requires attention: ${issues.join('; ')}`, 'conversion_error');
       validate(content); return content;
     }
-    loaded = { repo, revision, schema, validate, fromMarkdown, toMarkdown: markdown.docToMarkdown,
+    loaded = { repo, revision, schema, validate, fromMarkdown, toMarkdown: markdown.docToMarkdown, normalizeLanguage: markdown.normalizeLanguage,
       describe(name) {
         const describe = types => Object.fromEntries(Object.entries(types).filter(([key]) => !name || key === name).map(([key, value]) => [key, { content: value.spec.content ?? '', inline: !!value.isInline, attrs: Object.fromEntries(Object.entries(value.attrs).map(([key, spec]) => [key, spec.hasDefault ? spec.default : { required: true }])) }]));
         return { sourceRevision: revision, nodes: describe(schema.nodes), marks: describe(schema.marks), highlightBlockColors: blockColors.map(c => ({ name: c.label, value: c.value })), textGradients: colors.textGradients };

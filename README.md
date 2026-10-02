@@ -17,7 +17,7 @@
 
 ## 应用工作流
 
-- [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持模板、目录、历史和单篇导出。
+- [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持模板、目录、历史、单篇导出和按需本地排版预览。
 - [pdf-to-word](./skills/pdf-to-word/SKILL.md)：以内容质量和可编辑性为优先转换 PDF 为 Word，结合本地 OCR、结构重建与渲染复核，并持续沉淀新经验和通用工具。
 - [translate-pdf](./skills/translate-pdf/SKILL.md)：结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。
 - [comfyui-operations](./skills/comfyui-operations/SKILL.md)：跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖模型部署、工作流、API、缓存和图像异常。

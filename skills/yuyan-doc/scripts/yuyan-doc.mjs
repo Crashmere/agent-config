@@ -26,6 +26,11 @@ edit --snapshot FILE --patch FILE [--out next-snapshot.json]
 upload --input FILE [--kind image|attachment] [--name NAME]
 download --src /assets/...|/attachments/... --out FILE
 export --doc ID_OR_URL --out NEW_DIRECTORY
+preview-setup                       Prepare a cached local build (no installs)
+preview --snapshot FILE --out NEW_DIRECTORY
+    [--scope section --path 3] [--viewport 1280x900,375x667] [--full-page]
+    [--media-map FILE] [--media-dir DIRECTORY] [--offline]
+    [--browser webkit|chromium] [--theme light|dark]
 
 Common: --repo PATH (default YUYAN_REPO or ~/ali/Yuyan)
         --ssh ALIAS (default YUYAN_SSH or ali; uses an ephemeral SSH tunnel)
@@ -33,15 +38,16 @@ Common: --repo PATH (default YUYAN_REPO or ~/ali/Yuyan)
         --public-url URL (YUYAN_PUBLIC_URL; document links)
         --cookie-file FILE (optional one-line Cookie header; never print it)
         --timeout MS (default 120000; 0 removes the total deadline)
+                     Preview: 45000; setup: 180000; both require 1000–600000
         --dry-run (validate and preview writes without sending them)
         --confirm (only after the user's deletion/restore request is clear)
 FILE may be - for stdin except upload/snapshot. Output files must not exist.
 Patches use text, attrs, replace, splice; see references/editing.md.
 JSON success on stdout; JSON error on stderr with nonzero exit. Never retry writes blindly.
 `;
-const strings = ['repo', 'ssh', 'server', 'public-url', 'cookie-file', 'timeout', 'node', 'path', 'method', 'input', 'doc', 'out', 'scope', 'keyword', 'format', 'book', 'title', 'parent', 'kind', 'template', 'snapshot', 'patch', 'name', 'src'];
+const strings = ['repo', 'ssh', 'server', 'public-url', 'cookie-file', 'timeout', 'node', 'path', 'method', 'input', 'doc', 'out', 'scope', 'keyword', 'format', 'book', 'title', 'parent', 'kind', 'template', 'snapshot', 'patch', 'name', 'src', 'viewport', 'media-map', 'media-dir', 'browser', 'theme'];
 let parsed;
-try { parsed = parseArgs({ options: Object.fromEntries([...strings.map(key => [key, { type: 'string' }]), ...['help', 'dry-run', 'confirm'].map(key => [key, { type: 'boolean' }])]), allowPositionals: true }); }
+try { parsed = parseArgs({ options: Object.fromEntries([...strings.map(key => [key, { type: 'string' }]), ...['help', 'dry-run', 'confirm', 'offline', 'full-page'].map(key => [key, { type: 'boolean' }])]), allowPositionals: true }); }
 catch (error) { console.error(json({ ok: false, error: { code: 'invalid_arguments', message: error.message } }).trimEnd()); process.exit(2); }
 const o = parsed.values, command = parsed.positionals[0];
 let client, receipt;
@@ -139,7 +145,8 @@ async function main() {
     assert(!exists, 'Output already exists. Choose a new path; files are never overwritten.');
   }
   let result;
-  if (command === 'schema') result = (await tools()).describe(o.node);
+  if (command === 'preview' || command === 'preview-setup') result = await (await import('./preview.mjs')).previewCommand(o, command === 'preview-setup');
+  else if (command === 'schema') result = (await tools()).describe(o.node);
   else if (command === 'validate') {
     assert(o.input, 'validate requires --input.');
     const fmt = await tools(), content = await contentInput(fmt);
