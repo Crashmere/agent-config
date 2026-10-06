@@ -19,6 +19,7 @@
 
 - [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持模板、目录、历史、单篇导出和按需本地排版预览。
 - [game-guide](./skills/game-guide/SKILL.md)：从多语言网络资料全面收集游戏攻略，统一为简体中文版术语，按主题整理并通过 yuyan-doc 存入“游戏攻略”知识库。
+- [game-novelization](./skills/game-novelization/SKILL.md)：贴合原作风格，结合攻略与视频细节忠实改编游戏主线，控制详略、支持多游戏续写，最终只交付小说正文。
 - [pdf-to-word](./skills/pdf-to-word/SKILL.md)：以内容质量和可编辑性为优先转换 PDF 为 Word，结合本地 OCR、结构重建与渲染复核，并持续沉淀新经验和通用工具。
 - [translate-pdf](./skills/translate-pdf/SKILL.md)：结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。
 - [comfyui-operations](./skills/comfyui-operations/SKILL.md)：跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖模型部署、工作流、API、缓存和图像异常。

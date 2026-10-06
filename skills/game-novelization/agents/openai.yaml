@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏主线小说化"
+  short_description: "贴合游戏原作风格，利用攻略和视频细节忠实改编主线，只交付小说正文"
+  default_prompt: "使用 $game-novelization，结合我提供的攻略和视频，忠实改编游戏主线，贴合原作风格并安排好细节和详略，最终只交付小说正文，不附引用、参考资料或过程说明。"
