@@ -1,0 +1,4 @@
+interface:
+  display_name: "网易云音乐下载与去重"
+  short_description: "通过 MSCD 配置接口下载歌单、排除重复并嵌入歌词封面与核验音质"
+  default_prompt: "使用 $mscd-music-download 下载指定网易云歌单，排除已有歌曲，优先无损并嵌入歌词和封面。"
