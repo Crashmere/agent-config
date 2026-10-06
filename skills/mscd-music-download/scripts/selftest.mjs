@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {run,writeJSON,readJSON,safeName,inside,httpsURL,digest} from './common.mjs';
 import {makePlan,overlap} from './library.mjs';
 import {replacementFor,validatePlan} from './download.mjs';
-import {checkDuration,tagAudio,verify,packetsHash} from './audio.mjs';
+import {checkDuration,tagAudio,verify,packetsHash,probe,tagsOf} from './audio.mjs';
 
 const scripts=path.dirname(fileURLToPath(import.meta.url));
 const mkSong=(id,extras={})=>({id,title:'测试曲目 '+id,artists:[{id:'10',name:'测试歌手'}],album:{id:'20',name:'测试专辑',cover:'https://fixture.invalid/cover.png'},durationMs:4000,track:1,disc:'1',publishTime:0,...extras});
@@ -92,7 +92,9 @@ test('native FLAC and MP3 keep audio packets and embed Unicode lyrics/cover',asy
   const s=mkSong('1',{title:'中文 $() `标题` \' ☀',album:{id:'0',name:'',cover:''}}),lyrics='[00:00.00]中文歌词\n[00:02.00]English';
   for(const [codec,source] of [['flac','flac.flac'],['mp3','mp3-320.mp3']]){
     const input=path.join(temp,source),output=path.join(temp,'写入 元数据.'+codec);
+    s.publishTime=Date.parse('2026-06-16T00:00:00+08:00');
     const result=await tagAudio(input,output,s,{cover:path.join(temp,'cover.png'),lyrics});
+    assert.equal(tagsOf(await probe(output)).date,'2026-06-16');
     assert.equal(result.audio.codec,codec);assert.equal(result.lyricHash,digest(lyrics));assert.equal(result.cover,true);
     assert.equal(await packetsHash(input),await packetsHash(output));
     if(codec==='mp3')assert.ok((await fs.readFile(output)).includes(Buffer.from('USLT')));

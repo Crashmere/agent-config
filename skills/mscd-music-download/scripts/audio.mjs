@@ -47,7 +47,8 @@ export async function verify(file,song,{lyricHash,requireCover=true,fullDecode=t
 export async function tagAudio(source,target,song,{cover,lyrics='',translation='',yrc='',originalId=song.id}={}){
   const before=audioInfo(await probe(source));
   if(!['flac','mp3'].includes(before.codec))throw new Error('Only native FLAC or MP3 is supported');checkDuration(before,song.durationMs);
-  const metadata={title:song.title,artist:song.artists.map(a=>a.name).join(' / '),album:song.album.name,track:song.track?String(song.track):'',disc:song.disc||'',date:song.publishTime>0?new Date(song.publishTime).toISOString().slice(0,10):'',NETEASE_SONG_ID:song.id,NETEASE_PLAYLIST_SONG_ID:originalId,NETEASE_ALBUM_ID:song.album.id,lyrics:before.codec==='flac'?lyrics:'',LYRICS_TRANSLATION:translation,LYRICS_YRC:yrc};
+  const releaseDate=song.publishTime>0?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(song.publishTime)):'';
+  const metadata={title:song.title,artist:song.artists.map(a=>a.name).join(' / '),album:song.album.name,track:song.track?String(song.track):'',disc:song.disc||'',date:releaseDate,NETEASE_SONG_ID:song.id,NETEASE_PLAYLIST_SONG_ID:originalId,NETEASE_ALBUM_ID:song.album.id,lyrics:before.codec==='flac'?lyrics:'',LYRICS_TRANSLATION:translation,LYRICS_YRC:yrc};
   const args=['-hide_banner','-loglevel','error','-nostdin','-n','-i',source];if(cover)args.push('-i',cover);
   args.push('-map','0:a:0');if(cover)args.push('-map','1:v:0');args.push('-map_metadata','-1','-c','copy');
   if(before.codec==='mp3')args.push('-id3v2_version','3');
