@@ -107,6 +107,21 @@ test('query CLI paginates created/collected playlists and preserves metadata/cou
   const playlists=await query('user-playlists','101');assert.deepEqual(playlists.playlists.map(p=>p.createdByUser),[true,false]);assert.equal(playlists.more,false);
   const p=await query('playlist','201');assert.equal(p.declaredCount,4);assert.equal(p.returnedIds.length,3);assert.equal(p.tracks.length,2);assert.equal(p.countGap,1);assert.deepEqual(p.unresolvedIds,['3']);
 });
+test('audit preserves the original download failure for a missing file',async()=>{
+  const plan=makePlan([snapshot('301',[mkSong('2')])]);
+  const planFile=path.join(temp,'failed-plan.json'),out=path.join(temp,'failed-download');
+  await writeJSON(planFile,plan);
+  const args=[path.join(scripts,'download.mjs'),'--plan',planFile,'--out',out,'--netease-base','https://fixture.invalid/','--meting-base','https://fixture.invalid/meting/'];
+  await assert.rejects(()=>run(process.execPath,args));
+  const before=(await readJSON(path.join(out,'manifest.json'))).records[0];
+  assert.match(before.error,/No FLAC available/);
+  await assert.rejects(()=>run(process.execPath,[...args,'--audit']));
+  const audited=(await readJSON(path.join(out,'manifest.json'))).records[0];
+  assert.equal(audited.error,before.error);assert.equal(audited.auditError,'Missing completed file');
+  await run(process.execPath,[...args,'--allow-mp3']);
+  const recovered=(await readJSON(path.join(out,'manifest.json'))).records[0];
+  assert.equal(recovered.status,'ok');assert.equal(recovered.error,undefined);assert.equal(recovered.auditError,undefined);
+});
 test('download CLI selects available bitrate, resumes offline, audits, and preserves failures',async()=>{
   const a=mkSong('1'),b=mkSong('2'),c=mkSong('3'),release={...c,id:'4',album:{...c.album,cover:'https://fixture.invalid/protected.png'}};
   const plan=makePlan([snapshot('101',[a,b,c]),snapshot('102',[b])]);

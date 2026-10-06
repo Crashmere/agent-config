@@ -87,7 +87,7 @@ async function processItem(item,context){
     const file=inside(out,prior.path),checked=await verify(file,s,{lyricHash:prior.lyricHash,fullDecode:audit});
     if((await fs.stat(file)).size!==prior.bytes||await packetsHash(file)!==prior.packetHash)throw new Error('Completed file changed or is corrupt');
     if(!allowMp3&&checked.audio.codec!=='flac')throw new Error('Existing file is not lossless');
-    const recovered={...prior,status:'ok',checkedAt:new Date().toISOString()};delete recovered.error;await writeJSON(recordFile,recovered);return recovered;
+    const recovered={...prior,status:'ok',checkedAt:new Date().toISOString()};delete recovered.error;delete recovered.auditError;await writeJSON(recordFile,recovered);return recovered;
   }
   if(audit)throw new Error('Missing completed file');
   const work=await fs.mkdtemp(path.join(state,'work',original.id+'-'));
@@ -134,7 +134,7 @@ async function main(){
     let cursor=0,complete=0,failures=0;
     const timer=setInterval(()=>console.log(JSON.stringify({processed:complete+failures,total:plan.items.length,complete,failures})),15000);
     try{
-      await Promise.all(Array.from({length:jobs},async()=>{while(cursor<plan.items.length){const item=plan.items[cursor++];try{const r=await processItem(item,context);complete++;console.log('OK '+item.song.id+' '+r.audio.codec+' '+r.song.title);}catch(e){failures++;const file=path.join(state,'records',item.song.id+'.json');let prior={};try{prior=await readJSON(file);}catch{}await writeJSON(file,{...prior,id:item.song.id,song:prior.song||item.song,originalSong:item.song,memberships:item.memberships,status:'failed',error:errorText(e),checkedAt:new Date().toISOString()});console.log('FAIL '+item.song.id+' '+errorText(e));}}}));
+      await Promise.all(Array.from({length:jobs},async()=>{while(cursor<plan.items.length){const item=plan.items[cursor++];try{const r=await processItem(item,context);complete++;console.log('OK '+item.song.id+' '+r.audio.codec+' '+r.song.title);}catch(e){failures++;const file=path.join(state,'records',item.song.id+'.json');let prior={};try{prior=await readJSON(file);}catch{}const failure=errorText(e),preserveDownloadError=v.audit&&prior.status==='failed'&&prior.error&&failure==='Missing completed file';await writeJSON(file,{...prior,id:item.song.id,song:prior.song||item.song,originalSong:item.song,memberships:item.memberships,status:'failed',error:preserveDownloadError?prior.error:failure,...(preserveDownloadError?{auditError:failure}:{}),checkedAt:new Date().toISOString()});console.log('FAIL '+item.song.id+' '+failure);}}}));
     }finally{clearInterval(timer);}
     const summary=await reports(plan,out,state);console.log(JSON.stringify(summary,null,2));if(summary.failed||summary.lyricsUnavailable||summary.snapshotGaps.length)process.exitCode=2;
   }finally{await fs.unlink(lock);}
