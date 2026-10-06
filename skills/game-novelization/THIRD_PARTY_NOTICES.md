@@ -90,4 +90,32 @@ SOFTWARE.
 
 Source: https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32
 
-media-adaptation 与 shared-world 的 SKILL.md 元数据均声明 `license: MIT`、`author: jwynia`。本次读取未找到独立许可正文，因此不补造版权年份或许可原文；本技能只以独立表述借鉴其分析与资料组织方法，没有复制其完整技能正文或脚本。
+media-adaptation、shared-world 与 prose-style 的 SKILL.md 元数据均声明 `license: MIT`、`author: jwynia`。本次读取未找到独立许可正文，因此不补造版权年份或许可原文；本技能只以独立表述借鉴其分析、资料组织与文风诊断方法，没有复制其完整技能正文或脚本。
+
+## op7418/Humanizer-zh
+
+Source: https://github.com/op7418/Humanizer-zh/blob/f4518a8eab97b8bfebc66a89d34320a89bef6930/LICENSE
+
+```text
+MIT License
+
+Copyright (c) 2026 歸藏
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
