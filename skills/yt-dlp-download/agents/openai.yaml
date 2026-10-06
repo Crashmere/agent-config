@@ -1,0 +1,4 @@
+interface:
+  display_name: "YouTube 视频下载"
+  short_description: "使用 yt-dlp 完整下载 YouTube 视频，安全续传并核验音画与章节"
+  default_prompt: "使用 $yt-dlp-download 下载这个 YouTube 视频，保留完整音画、章节和可用字幕，并核验最终文件。"

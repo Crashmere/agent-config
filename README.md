@@ -17,6 +17,7 @@
 
 ## 应用工作流
 
+- [yt-dlp-download](./skills/yt-dlp-download/SKILL.md)：使用 yt-dlp 搜索和完整下载 YouTube 视频，保存音轨、章节和字幕，处理大文件并行下载与安全续传，并核验最终媒体。
 - [mscd-music-download](./skills/mscd-music-download/SKILL.md)：使用 Mscd 配置的接口解析网易云歌单、分析重叠并按差集下载音乐，优先无损，嵌入歌词封面并核验文件。
 - [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持模板、目录、历史、单篇导出和按需本地排版预览。
 - [game-guide](./skills/game-guide/SKILL.md)：从多语言网络资料全面收集游戏攻略，统一为简体中文版术语，按主题整理并通过 yuyan-doc 存入“游戏攻略”知识库。
