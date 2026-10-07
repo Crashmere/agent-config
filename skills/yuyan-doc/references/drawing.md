@@ -32,6 +32,8 @@ node "$YUYAN_DOC" upload --kind drawing --input "$work_dir/drawing/drawing.yuyan
 
 先实际查看预览，核对中文、数字、箭头方向、端点和图例。SVG 可用浏览器查看，PNG 可直接用图片工具；需要整篇排版时在插入后按 preview 参考局部预览。不要用“生成成功”代替图形语义检查。
 
+生成预览固定为 1 倍导出比例，尺寸不随设备像素密度变化；SVG 使用 XML 序列化，保留不换行空格与画框裁切。若旧网页在高分屏上连简单图形也报 `unsupported or unsafe SVG preview`，先通过“下载 → 可编辑文件”保留未应用的画板，再加载修复后的网页并恢复草稿或导入文件。CLI 生成缓存也需随已提交的 Yuyan 源码执行 `preview-setup` 更新；不要手改预览尺寸或关闭服务端安全校验来绕过错误。
+
 upload 先读取包同目录的图片并核对哈希，再上传图片和包，返回完整 `node`。`--dry-run` 只检查本地输入，不连接生产。随后 `read --out` 当前文档，用 `edit` 的 splice/replace 插入整个块；新文档用 create。服务端会核对包、派生文字及预览属性，不能手造 src/text 绕过上传。
 
 ## 修改与读取
