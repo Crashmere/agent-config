@@ -21,6 +21,8 @@
 
 文字标记：`bold`、`italic`、`strike`、`underline`、`code`；`highlight` 默认无色值，对应 `==高亮==`。标记存于 text.marks，不应写成节点。
 
+原生 text 中的 `**文字**` 仍是字面正文，不会由阅读页再次解释为加粗。Markdown 导入会诊断未解析的加粗，修正边界空白、闭合或乘号歧义后再保存，见 [Markdown 加粗检查](editing.md#markdown-加粗检查)；不要靠全局删星号模拟 marks。
+
 ```json
 {"type":"paragraph","content":[
   {"type":"text","text":"重要内容","marks":[{"type":"bold"},{"type":"highlight"}]},
@@ -29,6 +31,8 @@
 ```
 
 文字颜色用 `textColor` 标记，attrs 为 color 与可选 gradient；文字背景用 `highlight.color`。纯色推荐 #rrggbb；不支持任意 CSS、透明背景或自定义渐变。固定文字渐变：ocean、violet、sunset、flame，配套纯色回退从 `schema` 返回的 textGradients 读取。例如 ocean 的 color 为 `#14b8a6`。同类标记只出现一次；修改颜色时保留链接、粗体等其他 marks。
+
+普通文字强调可写为 `{"type":"text","text":"性能损耗","marks":[{"type":"textColor","attrs":{"color":"#d63384"}}]}`。迁移源用行内代码模拟颜色时，确认是普通文字后移除 `code`，不能只叠加颜色；真正代码保留 `code`，混合句子拆成多个 text，见 [语义迁移](editing.md#资料迁移的语义与截图处理)。
 
 ## 代码、Mermaid 与公式
 
@@ -91,6 +95,7 @@ image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard �
 
 - 基础属性：src、alt、title、width、height、caption、shadow、blockAlign。caption 为可见说明，与 alt/title 独立；shadow 为可选布尔阴影边框。
 - crop：`{x,y,width,height}`，相对原图的 0–1 范围；x+width、y+height 不超过 1；null 表示整图。sourceWidth/sourceHeight 保存原始像素尺寸，width/height 为显示尺寸。裁切后同步合理的显示宽高比例，原始素材不变。
+- 物理裁剪：提取混合截图中的独立文字后，需要从上传素材中去掉文字区时，裁剪工作副本再 upload；新图 `crop:null`，`sourceWidth/sourceHeight` 为新文件实际尺寸，显示宽度按可读性设置并用 `height:null` 保持比例。与 `crop` 的阅读遮罩不同，实际文件已变小。
 - 互补切分：复用同一 src，用不重叠 crop 矩形分割区域。例如左右两半为 `{x:0,y:0,width:0.5,height:1}` 和 `{x:0.5,y:0,width:0.5,height:1}`；原图不修改、不重新上传。已有 crop 时在当前区域内计算。
 - `imageBoard`：attrs.width、height 为画板尺寸，blockAlign 为整体位置；content 是一个或多个真实 image。每张图片的 placement 为相对画板的 `{x,y,width,height}`。列表顺序也是叠放顺序。超出画板会被裁切。
 - 改画板尺寸与整体缩放不同：前者保持图片像素位置时须按新尺寸重算 placement，后者可保持比例；根据用户意图选择。批量样式只是对所选图片合并相同 attrs，不修改无关图片。
