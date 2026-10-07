@@ -93,7 +93,9 @@ sync_target() {
       if ! $force; then failed="$failed $target"; return; fi
     fi
   fi
-  ssh "$host" "find $junk -name '._*' -type f" | sed "s/^/junk  /"
+  # A new application's docs directory is created by install -D below.
+  # Missing directories are normal on first sync, including in --check mode.
+  ssh "$host" "if [ -e $junk ]; then find $junk -name '._*' -type f; fi" | sed "s/^/junk  /"
 
   if $check_only; then
     if [ "$old" = "$commit" ]; then echo "OK    $target @ ${commit:0:8}"; else echo "BEHIND ${target}：服务器 ${old:0:8}，本地 ${commit:0:8}"; fi
