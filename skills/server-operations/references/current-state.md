@@ -34,7 +34,7 @@
 | FeeTable | SQLite | 03:15，一致性快照 | 本机 make deploy | — |
 | FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
-| Yuyan | SQLite（含文档模板/内容片段）+ 图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
+| Yuyan | SQLite（含文档模板/内容片段）+ 画板包、图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
 | ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；导出包不自动轮换或由门户异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
 
 五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份和发布历史按 [发布材料自动保留](retention.md) 清理：最近 5 份完整备份、最近 3 次成功发布及当前版本/对应备份保护。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
@@ -42,6 +42,8 @@
 Yuyan 附件上传已改为流式接收且不设文件大小上限；仅其 /yuyan/api/attachments 子 location 关闭大小检查和请求体缓冲，继承认证，其余请求保留原限制。临时上传写入既有 data/assets，无新数据根；图片与附件连续一小时未被正文（含回收站）、历史、模板/片段或媒体链接引用后自动回收，每分钟扫描，重新引用/上传重置计时。状态复用 meta；备份/上传共享目录锁与回收排他锁跨进程协调，已有备份硬链接保留。旧版备份程序不可与新版回收并行，诊断使用 gc --dry-run。附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
 
 新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
+
+Yuyan 已实现 Excalidraw 文档画板：包和预览复用 assets/.bin，`POST/GET /api/drawings` 与 `/drawings/{id}/preview|file` 登记于项目门户声明，沿用设备认证和普通请求大小限制，包限 12 MiB。正文/历史/模板保护包并展开图片依赖，未引用包宽限期内也保护图片；v2 备份覆盖全部素材，未知或损坏包让当轮 GC 保守停止。前端和字体随 Go 发布，不增 Node/浏览器运行时、数据根或数据库迁移。旧客户端编辑保护、导入导出与程序回退约束见 Yuyan WHITEBOARD.md。
 
 Yuyan 历史快照保留 30 天，每天北京时间 03:00 由应用清理，不保底保留；成功状态持久化，停机后启动补跑。当前正文、回收站正文、模板与片段不受影响，历史最后引用移除后媒体重新开始一小时宽限期。编辑前与恢复前快照同样适用 30 天，历史 ID 不重用；无数据库迁移或额外系统任务，诊断使用 history-gc --dry-run。已有备份仍按各自策略保留，隔离恢复后若要提取更早历史，先只读查看、不要启动自动清理服务，详见 Yuyan OPERATIONS。
 

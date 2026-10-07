@@ -23,8 +23,9 @@ validate --input FILE [--format json|markdown] [--out content.json]
 create --book ID --title TITLE [--parent ID] [--kind doc|group]
     [--input FILE --format json|markdown | --template ID] [--out snapshot.json]
 edit --snapshot FILE --patch FILE [--out next-snapshot.json]
-upload --input FILE [--kind image|attachment] [--name NAME]
-download --src /assets/...|/attachments/... --out FILE
+drawing --input spec.json --out NEW_DIRECTORY  Generate with the local engine; no production write
+upload --input FILE [--kind image|attachment|drawing] [--name NAME]
+download --src /assets/...|/attachments/...|/drawings/ID/file|preview --out FILE
 export --doc ID_OR_URL --out NEW_DIRECTORY
 preview-setup                       Prepare a cached local build (no installs)
 preview --snapshot FILE --out NEW_DIRECTORY
@@ -38,7 +39,7 @@ Common: --repo PATH (default YUYAN_REPO or ~/ali/Yuyan)
         --public-url URL (YUYAN_PUBLIC_URL; document links)
         --cookie-file FILE (optional one-line Cookie header; never print it)
         --timeout MS (default 120000; 0 removes the total deadline)
-                     Preview: 45000; setup: 180000; both require 1000–600000
+                     Preview: 45000; setup: 180000; drawing: 60000; all require 1000–600000
         --dry-run (validate and preview writes without sending them)
         --confirm (only after the user's deletion/restore request is clear)
 FILE may be - for stdin except upload/snapshot. Output files must not exist.
@@ -71,18 +72,24 @@ async function verifyDoc(id, intended, fmt) {
   return actual;
 }
 async function checkMedia(content) {
+  for (const { node } of walk(content)) if (node.type === 'drawing') await client.request(`api/drawings/${node.attrs.src.split('/').pop()}`);
   const media = new Set(walk(content).filter(e => ['image', 'attachment'].includes(e.node.type)).map(e => e.node.attrs.src));
   for (const src of media) await client.request(src.slice(1), { method: 'HEAD', raw: true });
 }
 
-function exportMedia(content, publicBase) {
-  const resources = new Map(), links = new Map();
+async function exportMedia(content, publicBase) {
+  const resources = new Map(), links = new Map(), drawings = new Map();
   function add(href, name) {
     if (typeof href !== 'string') return;
     let url; try { url = new URL(href, publicBase); } catch { return; }
     if (url.origin !== publicBase.origin) return;
     const path = url.pathname.startsWith(publicBase.pathname)
       ? '/' + url.pathname.slice(publicBase.pathname.length) : url.pathname;
+    const drawing = /^\/drawings\/([0-9a-f]{32})(?:\/(file|preview))?$/.exec(path);
+    if (drawing) {
+      const src = '/drawings/' + drawing[1], refs = drawings.get(src) || [];
+      refs.push({ href, preview: drawing[2] === 'preview', hash: url.hash }); drawings.set(src, refs); return;
+    }
     const match = /^\/(assets\/[0-9a-f]{32}\.(?:png|jpg|gif|webp|bmp)|attachments\/[0-9a-f]{32})(?:\/content)?$/.exec(path);
     if (!match) return;
     const src = '/' + match[1];
@@ -103,6 +110,17 @@ function exportMedia(content, publicBase) {
   // Prefer card metadata when the same file also appears as a text link.
   for (const { node } of entries) if (['image', 'attachment'].includes(node.type)) add(node.attrs.src, node.attrs.name);
   for (const { node } of entries) for (const mark of node.marks ?? []) if (mark.type === 'link') add(mark.attrs?.href);
+  for (const { node } of entries) if (node.type === 'drawing') add(node.attrs.src);
+  for (const [src, refs] of drawings) {
+    const id = src.split('/').pop();
+    const pkg = await client.request(`api/drawings/${id}`);
+    const sourcePath = `attachments/${id}.yuyan.json`;
+    resources.set(src, { src: src + '/file', path: sourcePath });
+    const previewPath = `attachments/${id}.${pkg.preview.mime === 'image/png' ? 'png' : 'svg'}`;
+    resources.set(src + '/preview', { src: src + '/preview', path: previewPath });
+    for (const ref of refs) links.set(ref.href, (ref.preview ? previewPath : sourcePath) + ref.hash);
+    for (const file of Object.values(pkg.files)) add(file.src);
+  }
   return { resources: [...resources.values()], links };
 }
 
@@ -111,7 +129,7 @@ async function api() {
   const method = (o.method || 'GET').toUpperCase();
   const route = o.path.split('?')[0];
   // A bounded escape hatch for product operations; document content always uses validated commands.
-  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview)$/;
+  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
   const writes = {
     POST: /^(books|templates|docs\/batch|docs\/\d+\/(move|restore|snapshot)|books\/\d+\/restore|versions\/\d+\/restore)$/,
     PATCH: /^(books\/\d+|templates\/[a-f0-9]{32})$/,
@@ -146,6 +164,7 @@ async function main() {
   }
   let result;
   if (command === 'preview' || command === 'preview-setup') result = await (await import('./preview.mjs')).previewCommand(o, command === 'preview-setup');
+  else if (command === 'drawing') result = await (await import('./drawing.mjs')).generateCommand(o);
   else if (command === 'schema') result = (await tools()).describe(o.node);
   else if (command === 'validate') {
     assert(o.input, 'validate requires --input.');
@@ -202,6 +221,10 @@ async function main() {
       await client.request(`api/docs/${doc.id}/snapshot`, { method: 'POST' });
       result = { ...receipt, verified: true, snapshot: await saveSnapshot(actual) };
     }
+  } else if (command === 'upload' && o.kind === 'drawing') {
+    if (!o['dry-run']) await service();
+    result = await (await import('./drawing.mjs')).uploadDrawing(o, client);
+    if (!o['dry-run']) receipt = { action: 'uploaded', node: result.node };
   } else if (command === 'upload') {
     assert(o.input && o.input !== '-', 'upload requires a real file path.');
     const file = resolve(o.input), info = await stat(file), kind = o.kind || 'image';
@@ -216,7 +239,7 @@ async function main() {
       result = { media, node, hint: 'Insert this node into a document/template. Unreferenced uploads are eligible for collection after one hour. Images are inline: put them in a paragraph or imageBoard.' };
     }
   } else if (command === 'download') {
-    assert(/^\/(?:assets\/[0-9a-f]{32}\.(?:png|jpg|gif|webp|bmp)|attachments\/[0-9a-f]{32}(?:\/content)?)(?:\?name=[^#]*)?$/.test(o.src ?? ''), 'Use an existing app-relative media URL.');
+    assert(/^\/(?:assets\/[0-9a-f]{32}\.(?:png|jpg|gif|webp|bmp)|attachments\/[0-9a-f]{32}(?:\/content)?|drawings\/[0-9a-f]{32}\/(?:file|preview))(?:\?name=[^#]*)?$/.test(o.src ?? ''), 'Use an existing app-relative media URL.');
     assert(o.out, 'download requires --out.'); await service();
     const response = await client.request(o.src.slice(1), { raw: true });
     const target = resolve(o.out), stream = createWriteStream(target, { flags: 'wx', mode: 0o600 });
@@ -230,13 +253,13 @@ async function main() {
     fmt.validate(doc.content);
     const { mkdir } = await import('node:fs/promises');
     await mkdir(directory, { mode: 0o700 });
-    const { resources, links } = exportMedia(doc.content, client.publicBase);
+    const { resources, links } = await exportMedia(doc.content, client.publicBase);
     if (resources.length) await mkdir(`${directory}/attachments`, { mode: 0o700 });
     for (const { src, path } of resources) {
       const response = await client.request(src.slice(1), { raw: true });
       await pipeline(Readable.fromWeb(response.body), createWriteStream(`${directory}/${path}`, { flags: 'wx', mode: 0o600 }));
     }
-    const markdown = fmt.toMarkdown(doc.content, { imageSrc: src => links.get(src) ?? src, attachmentSrc: src => links.get(src) ?? src, linkHref: href => links.get(href) ?? (href.startsWith('/docs/') ? new URL(href.slice(1), client.publicBase).href : href) });
+    const markdown = fmt.toMarkdown(doc.content, { drawingSrc: src => links.get(src) ?? src, imageSrc: src => links.get(src) ?? src, attachmentSrc: src => links.get(src) ?? src, linkHref: href => links.get(href) ?? (href.startsWith('/docs/') ? new URL(href.slice(1), client.publicBase).href : href) });
     await outputFile(`${directory}/document.md`, markdown);
     await outputFile(`${directory}/document.json`, json({ title: doc.title, content: doc.content }));
     result = { directory, id, mediaCount: resources.length, hint: 'document.json retains native formatting; document.md plus attachments is portable. This is a single-document export, not a backup of history or templates.' };

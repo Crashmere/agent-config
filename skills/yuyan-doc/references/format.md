@@ -100,7 +100,11 @@ image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard �
 - `imageBoard`：attrs.width、height 为画板尺寸，blockAlign 为整体位置；content 是一个或多个真实 image。每张图片的 placement 为相对画板的 `{x,y,width,height}`。列表顺序也是叠放顺序。超出画板会被裁切。
 - 改画板尺寸与整体缩放不同：前者保持图片像素位置时须按新尺寸重算 placement，后者可保持比例；根据用户意图选择。批量样式只是对所选图片合并相同 attrs，不修改无关图片。
 
-任意形状、文字、连线、自由绘制的通用画板尚未实现；可用 Mermaid 表达流程，或插入实际图片。
+## 可编辑画板
+
+`drawing` 是原子块，与只包含 image 的 imageBoard 独立。attrs 为 src `/drawings/<32位ID>`、version 1、width 100–2400（首建不放大小图且不超过 800）、blockAlign left/center/right、caption，以及服务端派生的 text、previewWidth、previewHeight、previewMime。完整节点来自 `upload --kind drawing`，不能手造派生值；显示属性可局部修改，图形修改需生成并上传新包。
+
+支持原生形状、文字、绑定连线、自由画笔和图片，包中保留 Excalidraw 场景。Markdown 导出以 HTML figure、预览和源文件链接保留；完整导出还需包及图片文件。生成、审阅、修改和跨实例导入见 [可编辑画板](drawing.md)。
 
 ## 附件
 

@@ -8,7 +8,7 @@ import { assert, Failure } from './runtime.mjs';
 
 export const canonical = value => Array.isArray(value) ? `[${value.map(canonical).join(',')}]` : value && typeof value === 'object' ? `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${canonical(value[k])}`).join(',')}}` : JSON.stringify(value);
 export const hash = value => createHash('sha256').update(canonical(value)).digest('hex');
-export const textOf = node => node.text ?? (node.type === 'attachment' ? node.attrs?.name ?? '' : node.type === 'image' ? node.attrs?.caption ?? node.attrs?.alt ?? '' : node.type.endsWith('Math') ? node.attrs?.latex ?? '' : (node.content ?? []).map(textOf).join(node.type === 'doc' ? '\n' : ''));
+export const textOf = node => node.text ?? (node.type === 'drawing' ? [node.attrs?.text, node.attrs?.caption].filter(Boolean).join('\n') : node.type === 'attachment' ? node.attrs?.name ?? '' : node.type === 'image' ? node.attrs?.caption ?? node.attrs?.alt ?? '' : node.type.endsWith('Math') ? node.attrs?.latex ?? '' : (node.content ?? []).map(textOf).join(node.type === 'doc' ? '\n' : ''));
 export function walk(node, path = '', out = []) {
   assert(node && typeof node.type === 'string' && (!node.content || Array.isArray(node.content)), `Malformed node at ${path || 'root'}.`, 'invalid_document');
   assert(!path || path.split('/').length <= 64, 'Document nesting exceeds 64 levels.', 'invalid_document');
@@ -73,6 +73,7 @@ export async function formatTools(repoArg) {
             if (!['x', 'y', 'width', 'height'].every(k => Number.isFinite(r[k])) || r.x < 0 || r.y < 0 || r.width <= 0 || r.height <= 0 || (key === 'crop' && (r.x + r.width > 1.000001 || r.y + r.height > 1.000001))) fail(`Invalid ${key} rectangle.`);
           }
         }
+        if (node.type === 'drawing' && (!/^\/drawings\/[0-9a-f]{32}$/.test(attrs.src ?? '') || attrs.version !== 1 || !Number.isInteger(attrs.width) || attrs.width < 100 || attrs.width > 2400 || !['image/svg+xml', 'image/png'].includes(attrs.previewMime) || !Number.isInteger(attrs.previewWidth) || attrs.previewWidth < 1 || !Number.isInteger(attrs.previewHeight) || attrs.previewHeight < 1 || typeof attrs.text !== 'string' || typeof attrs.caption !== 'string')) fail('Invalid drawing metadata; use the node returned by drawing upload.');
         if (node.type === 'attachment' && (!/^\/attachments\/[0-9a-f]{32}$/.test(attrs.src ?? '') || !Number.isSafeInteger(attrs.size) || attrs.size < 0 || typeof attrs.name !== 'string' || !attrs.name.trim() || typeof attrs.mime !== 'string')) fail('Invalid attachment metadata.');
         if (node.type === 'tableCell' || node.type === 'tableHeader') {
           for (const key of ['colspan', 'rowspan']) if (attrs[key] != null && !(Number.isInteger(attrs[key]) && attrs[key] > 0)) fail(`Invalid ${key}.`);
@@ -158,6 +159,6 @@ export function select(content, options) {
     return { parentPath: '', index: start, count: end - start, content: content.content.slice(start, end) };
   }
   assert(scope === 'keyword' && options.keyword, 'Use full, outline, node, section, or keyword with --keyword.');
-  const hits = entries.filter(e => ['paragraph', 'heading', 'codeBlock', 'attachment', 'image', 'calloutTitle', 'foldTitle', 'inlineMath', 'blockMath'].includes(e.node.type) && textOf(e.node).toLocaleLowerCase().includes(options.keyword.toLocaleLowerCase()));
+  const hits = entries.filter(e => ['paragraph', 'heading', 'codeBlock', 'drawing', 'attachment', 'image', 'calloutTitle', 'foldTitle', 'inlineMath', 'blockMath'].includes(e.node.type) && textOf(e.node).toLocaleLowerCase().includes(options.keyword.toLocaleLowerCase()));
   return { total: hits.length, matches: hits.slice(0, 30).map(e => ({ path: e.path, hash: hash(e.node), content: e.node })), truncated: hits.length > 30 };
 }

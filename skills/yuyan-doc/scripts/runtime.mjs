@@ -101,7 +101,7 @@ export async function connect(options, { manageSignals = true, signal } = {}) {
       assert(typeof path === 'string' && !path.startsWith('/') && !path.includes('\\') && !/(^|\/)\.\.(\/|$)/.test(path), 'Use an application-relative path.');
       const url = new URL(path, base);
       assert(url.origin === base.origin && url.pathname.startsWith(base.pathname), 'Request escaped the configured application.');
-      const headers = {};
+      const headers = { 'X-Yuyan-Features': 'drawing-v1' };
       if (cookie) headers.Cookie = cookie;
       let payload = body;
       if (body !== undefined && !(body instanceof FormData)) { payload = JSON.stringify(body); headers['Content-Type'] = 'application/json'; }

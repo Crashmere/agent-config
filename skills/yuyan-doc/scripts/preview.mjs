@@ -92,6 +92,39 @@ async function renderPreview(options, engine, signal, timeout) {
       }));
       const failed = results.find(r => r.status === 'rejected'); if (failed) throw failed.reason;
     }
+    const drawings = entries.filter(e => e.node.type === 'drawing');
+    for (const { node } of drawings) {
+      const id = node.attrs.src.split('/').pop();
+      const mapped = map[node.attrs.src + '/file'] && resolve(dirname(resolve(options['media-map'])), map[node.attrs.src + '/file']);
+      const candidates = mapped ? [mapped] : options['media-dir'] ? [join(resolve(options['media-dir']), id + '.yuyan.json'), join(resolve(options['media-dir']), 'attachments', id + '.yuyan.json')] : [];
+      let bytes;
+      for (const file of candidates) {
+        try {
+          const info = await stat(file); assert(info.isFile() && info.size <= 12 * 1024 ** 2, 'Drawing package exceeds 12 MiB.');
+          bytes = await readFile(file); report.media.local++; break;
+        } catch (error) { if (error.code !== 'ENOENT' || mapped) throw error; }
+      }
+      if (!bytes) {
+        assert(!options.offline, `Missing offline drawing ${id}.`);
+        remotePromise ??= connect(options, { manageSignals: false, signal }).then(client => { remote = client; assert(original.source === client.source, 'Snapshot belongs to another service.', 'preview_source_mismatch'); return client; }); remote = await remotePromise;
+        const response = await remote.request(`drawings/${id}/file`, { raw: true });
+        const chunks = []; let size = 0;
+        for await (const chunk of response.body) { size += chunk.length; assert(size <= 12 * 1024 ** 2, 'Drawing package exceeds 12 MiB.'); chunks.push(chunk); }
+        bytes = Buffer.concat(chunks); report.media.downloaded++;
+      }
+      assert(createHash('sha256').update(bytes).digest('hex').slice(0, 32) === id, 'Drawing package identity mismatch.');
+      const pkg = JSON.parse(bytes.toString('utf8'));
+      for (const file of Object.values(pkg.files)) {
+        const data = await imageBytes(file.src);
+        assert(createHash('sha256').update(data).digest('hex').slice(0, 32) === basename(file.src).split('.')[0], 'Drawing image identity mismatch.');
+        const form = new FormData(); form.append('file', new Blob([data]), basename(file.src));
+        const uploaded = await local.request('api/assets', { method: 'POST', body: form });
+        assert(uploaded.url === file.src, 'Drawing dependency changed in local preview.');
+      }
+      const published = await local.request('api/drawings', { method: 'POST', body: pkg });
+      assert(published.attrs.text === node.attrs.text && published.attrs.previewWidth === node.attrs.previewWidth && published.attrs.previewHeight === node.attrs.previewHeight, 'Drawing preview metadata mismatch.');
+      node.attrs.src = published.attrs.src;
+    }
     const attachments = entries.filter(e => e.node.type === 'attachment');
     if (attachments.length) {
       // Card name/size/MIME come from the original node. Real bytes are unnecessary for screenshots.

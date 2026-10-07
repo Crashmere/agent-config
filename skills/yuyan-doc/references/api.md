@@ -18,6 +18,7 @@
 | templates / templates/ID | 模板/片段列表 / 完整内容与预览 |
 | docs/ID/versions / versions/ID | 历史列表 / 某个历史的原生内容 |
 | versions/ID/view | 历史阅读 HTML 与元信息 |
+| drawings/CONTENT_ID | 受支持的不可变画板包、场景、预览与派生文字 |
 | trash | 回收站 |
 | attachments/CONTENT_ID/preview?name=文件名 | 素材预览类型、有限文本或压缩包目录 |
 
@@ -60,6 +61,12 @@ PATCH templates/ID 只支持重命名：name、baseRevision。DELETE 同样要�
 - 回收站恢复与历史恢复都要求 --confirm；用户已明确请求具体操作时无需重复询问。模糊的“清理一下”不等于同意清空全部数据。
 
 泛用 API 写入返回服务响应，随后按任务读取一次必要的树、列表、文档或历史核验，确认受影响对象后结束；批量操作合并核对，不逐篇重复获取全文和历史。create/edit 已在脚本中回读比对，不因使用了 API 参考就再检查一遍。`--dry-run` 返回请求计划且不写入。网络失败不可自动重试 copy/create 等非幂等操作，先核对是否已成功。
+
+## 画板与客户端兼容
+
+`api/meta` 的 features 包含 drawing-v1 表示支持画板。新 CLI 自动携带 `X-Yuyan-Features: drawing-v1`；含画板的当前文档保存和取消编辑拒绝旧客户端，revision 检查仍适用。
+
+包发布走 `upload --kind drawing`，不通过泛用 API 写入。它调用 POST /api/drawings，返回完整 drawing 节点；包限 12 MiB，依赖图片必须已存在且类型匹配。GET drawings/ID 读取包；媒体下载路径不含 /api，使用 download 的 `/drawings/ID/file` 或 `/drawings/ID/preview`。未知版本不能编辑，允许保留原文件和服务端校验通过的静态预览。详见 [可编辑画板](drawing.md)。
 
 ## 运行与维护边界
 

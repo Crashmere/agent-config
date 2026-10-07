@@ -1,6 +1,6 @@
 ---
 name: yuyan-doc
-description: "操作个人 Yuyan（语燕）知识库：查找、读取、创建、编写和局部修改文档，使用代码、公式、Mermaid、复杂表格、颜色、分栏、折叠块、图片裁切与组合、附件、文档链接、模板和片段，并管理目录、历史和导出。用户提到 Yuyan/语燕中的文档或提供其 /yuyan/docs/ 链接时使用。服务开发、部署和数据库备份恢复交给项目及 server-operations。"
+description: "操作个人 Yuyan（语燕）知识库：查找、读取、创建、编写和局部修改文档，使用代码、公式、Mermaid、复杂表格、颜色、分栏、折叠块、图片裁切与组合、可编辑画板、附件、文档链接、模板和片段，并管理目录、历史和导出。用户提到 Yuyan/语燕中的文档或提供其 /yuyan/docs/ 链接时使用。服务开发、部署和数据库备份恢复交给项目及 server-operations。"
 ---
 
 # Yuyan 文档
@@ -30,6 +30,7 @@ node "$YUYAN_DOC" doctor
 | 查找文档、知识库或目录；链接和反向链接 | [API 与知识库操作](references/api.md)，`api` / `read` |
 | 新建、润色、补写、重组、改样式 | [读写流程与局部修改](references/editing.md) |
 | 富文本、代码、公式、表格、分栏、图片与附件 | [文档格式](references/format.md)，按所需小节读取；`schema --node TYPE` 核对属性 |
+| 生成/上传/修改可编辑画板、技术图模板 | [可编辑画板](references/drawing.md)，`drawing` / `upload --kind drawing` |
 | 模板、片段、历史、恢复、复制/移动/删除 | [API 与知识库操作](references/api.md) |
 | 下载素材、导出单篇 | [读写流程与局部修改](references/editing.md#素材与导出) |
 | 本次布局需要截图核对、图片窄屏比例、公式/图表排版 | [本地阅读页预览](references/preview.md)，`preview`；首次准备或代码更新时 `preview-setup` |
@@ -60,7 +61,7 @@ node "$YUYAN_DOC" doctor
 - 输出文件使用独占创建且权限 0600；不要覆盖已有快照。临时正文放独占任务目录，例如 `mktemp -d "${TMPDIR:-/tmp}/yuyan-doc.XXXXXX"`，不进入任何公开仓库。无需把正文或截图同步到技能仓库。
 - 删除、清空回收站和恢复历史须有明确用户请求，核对目标及影响后使用 `--confirm`；不要从“整理”推断永久删除。`--dry-run` 不执行业务写入，不代表用户已经授权。
 - 当前已有 30 天历史、回收站和媒体回收规则，不另造备份体系。连续一小时未引用的上传会被回收；先上传再及时插入文档/模板。历史和模板中的引用继续保护媒体。
-- 本地 schema 来自实际 Yuyan 源码，新增格式不一定递增 schemaVersion。未知节点/属性或不兼容应停止写入并核对项目版本，不能静默删除。通用画板、协作评论、标签和收藏目前不是本技能承诺的能力；图片组合与 Mermaid 已可使用。
+- 本地 schema 来自实际 Yuyan 源码，新增格式不一定递增 schemaVersion。未知节点/属性或不兼容应停止写入并核对项目版本，不能静默删除。协作评论、标签和收藏目前不是本技能承诺的能力；可编辑画板、图片组合与 Mermaid 已可使用。
 
 ## 随平台能力同步维护
 
