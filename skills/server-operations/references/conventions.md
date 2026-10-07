@@ -37,7 +37,7 @@
 
 ## 目录、身份和进程
 
-源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`、`Yuyan`、`ServerPortal`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
+源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`、`Yuyan`、`ServerPortal`、`AICalendar`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
 
 ```text
 /opt/server-context/      共享上下文的受控副本，不放凭据或运行数据
@@ -54,7 +54,7 @@
 - 单应用单独的运行用户。程序、脚本、配置由 root 管理；运行用户仅写自己的数据、备份等明确目录。默认数据/备份 0700，敏感配置更严格，不能把 0644 当通用密钥权限。
 - 用 systemd 常驻与开机启动；unit 源放应用 config，通过 `/etc/systemd/system/` 链接。日志进 journal；请求日志按应用/共享入口职责定位。
 - 按需加 `NoNewPrivileges`、`ProtectSystem`、`ReadWritePaths` 等限制，验证不会阻碍真实运行。不要复制一个不适用的沙箱。
-- 当前五个业务应用与门户都是在本机构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在本机构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
+- 当前业务应用与门户都是在本机构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在本机构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
 - 不清除不属于任务的主机工具、云厂商 agent、定时任务或用户文件。未知 unit 先识别来源。
 
 ## 数据、备份与发布
@@ -63,7 +63,7 @@
 - 活跃 WAL 库不能只复制主文件；用应用的一致性备份工具。恢复前确认时点和数据损失，保留可恢复的现状，不能把“启动失败”处理成创建空库。
 - 备份 unit 的沙箱不能把源和目标拆成不同挂载点，否则硬链接会失败，见 [common-issues](common-issues.md#systemd-沙箱下照片硬链接备份失败)。启用 timer 后通过 unit 实际运行一次并确认 Result=success。
 - 每个有数据的应用登记备份工具、调度/时区、保留策略、恢复步骤、验证方式和异机状态。共享文档只列概况，精确操作在项目 docs。
-- 五个业务应用使用独立受限发布身份和本机专用密钥，不使用管理员私钥或允许任意 sudo。ServerPortal 因管理 root 采集器而沿用管理员 SSH，具体边界见 [本机发布](release.md)。所有连接保留 SSH 主机身份校验。
+- 业务应用使用独立受限发布身份和本机专用密钥，不使用管理员私钥或允许任意 sudo。ServerPortal 因管理 root 采集器而沿用管理员 SSH，具体边界见 [本机发布](release.md)。所有连接保留 SSH 主机身份校验。
 - 正常发布不带生产数据；schema 更新要设计兼容/回退，不把程序回退误写成数据库回退。
 - 共享机器上控制构建、备份和发布资源。在维护电脑构建、逐应用发布，不为单人服务引入不必要的并发设施。
 

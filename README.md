@@ -17,6 +17,7 @@
 
 ## 应用工作流
 
+- [ai-calendar-import](./skills/ai-calendar-import/SKILL.md)：按需整理 AI 使用历史，提取日期与交流次数、归纳主题，可靠地导入个人活动日历。
 - [yt-dlp-download](./skills/yt-dlp-download/SKILL.md)：使用 yt-dlp 搜索和完整下载 YouTube 视频，保存音轨、章节和字幕，处理大文件并行下载与安全续传，并核验最终媒体。
 - [mscd-music-download](./skills/mscd-music-download/SKILL.md)：使用 Mscd 配置的接口解析网易云歌单、分析重叠并按差集下载音乐，优先无损，嵌入歌词封面并核验文件。
 - [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持可编辑画板生成、模板、目录、历史、单篇导出和按需本地排版预览。

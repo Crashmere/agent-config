@@ -4,11 +4,11 @@
 
 ## 策略与实现
 
-共享维护源为 `scripts/prune-releases.py`、`assets/ali-release-retention.service`、`.timer` 和 `.tmpfiles.conf`。Python 3 标准库实现，不安装依赖。服务从 ServerPortal 的受控 registry.d 读取五个应用，复用 validate-portal.py 验证声明；门户自身只使用明确登记的 backups/releases。新应用沿用同一发布与备份契约时纳入相同规则，其他契约先明确适配。
+共享维护源为 `scripts/prune-releases.py`、`assets/ali-release-retention.service`、`.timer` 和 `.tmpfiles.conf`。Python 3 标准库实现，不安装依赖。服务从 ServerPortal 的受控 registry.d 读取已登记应用，复用 validate-portal.py 验证声明；门户自身只使用明确登记的 backups/releases。新应用沿用同一发布与备份契约时纳入相同规则，其他契约先明确适配。
 
 - 保留最近 3 次成功发布及当前运行版本；以 result 的完成时间排序，不按提交字符串或目录名称排序。
 - 保留最近 5 份完整 before-deploy 备份，并额外保护仍保留的发布批次对应备份。因当前旧版本或失败保护而超过 3/5 是正常的，不为凑数量删除保护项。两次任务间新发布产生的材料也会暂时超过数量，在下次空闲清理时轮换。
-- 失败批次仅在 recovery 为 healthy 或 not-needed、完成已超过 7 天、后续存在成功发布且应用当前健康时才可清理。六个 root 发布脚本在 finish 中写 recovery，再写终态 result。旧失败记录无回退结果时留作人工核对；未完成、未知格式、校验异常和符号链接均保护并记录原因。
+- 失败批次仅在 recovery 为 healthy 或 not-needed、完成已超过 7 天、后续存在成功发布且应用当前健康时才可清理。各应用的 root 发布脚本在 finish 中写 recovery，再写终态 result。旧失败记录无回退结果时留作人工核对；未完成、未知格式、校验异常和符号链接均保护并记录原因。
 - 只匹配 `<40位提交>.<6位发布后缀>` 以及它对应的 before-deploy 名称。不处理 daily、manual、迁移/恢复前快照、业务 data、门户 exports、本地构建目录或云端快照。
 - 每次先校验备份结构、SQLite quick_check、媒体清单 SHA-256（相同硬链接只计算一次）、保留程序和 current-commit 对应的程序哈希。没有有效当前版本记录、保留程序损坏或运行状态异常时不删除。
 - 备份优先于旧发布目录删除；每项执行前重新核对包含路径、inode、模式、大小与 mtime 的指纹，并用不跟随符号链接的目录描述符操作。回收估算只计算删除集合覆盖全部硬链接的文件及目录占用。
@@ -17,7 +17,7 @@
 
 `ali-release-retention.timer` 每天北京时间 05:00 执行，Persistent=true。任务独立于应用发布，失败只反映为该维护 unit 失败，不改变发布结果或重启业务。
 
-清理先独占 `/run/lock/ali-release-retention.lock`，再非阻塞获取全部应用既有的 `<app>-deploy.lock`。五个每日备份 unit 的 ExecStart 通过 `flock --shared` 持有前一把锁；先运行的备份使清理跳过，清理先运行时新备份等待锁释放。发布和门户归档/手动清理已使用发布锁；清理检查门户任务状态、每日备份状态、各应用回环健康，检测到云备份 ids 进程也跳过。忙碌跳过记入 journal，下次调度重试；不停止别人的任务。
+清理先独占 `/run/lock/ali-release-retention.lock`，再非阻塞获取全部应用既有的 `<app>-deploy.lock`。业务应用的每日备份 unit 的 ExecStart 通过 `flock --shared` 持有前一把锁；先运行的备份使清理跳过，清理先运行时新备份等待锁释放。发布和门户归档/手动清理已使用发布锁；清理检查门户任务状态、每日备份状态、各应用回环健康，检测到云备份 ids 进程也跳过。忙碌跳过记入 journal，下次调度重试；不停止别人的任务。
 
 清理 CPUQuota=50%、MemoryMax=256M、Nice=15、超时 15 分钟。只读预览同样获取锁和校验真实材料；目录较大时应避开正在进行的维护。
 
@@ -29,7 +29,7 @@
 
 ## 安装、检查与停用
 
-先提交推送共享源并运行 sync-docs.sh。首次安装共享锁及 state 目录，然后安装五个带 flock 的 backup unit 和六个记录 recovery 的发布脚本；应用脚本仍归所属项目维护，部署时核对旧脚本哈希并持有发布锁。无需重建或重启业务程序。新服务器先准备本节的锁文件，再启用任何 backup timer。
+先提交推送共享源并运行 sync-docs.sh。首次安装共享锁及 state 目录，然后安装各应用带 flock 的 backup unit 和记录 recovery 的发布脚本；应用脚本仍归所属项目维护，部署时核对旧脚本哈希并持有发布锁。无需重建或重启业务程序。新服务器先准备本节的锁文件，再启用任何 backup timer。
 
 ```sh
 install -m 0644 /opt/server-context/assets/ali-release-retention.tmpfiles.conf /etc/tmpfiles.d/ali-release-retention.conf

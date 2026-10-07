@@ -1,6 +1,6 @@
 # 本机发布与按需验证
 
-适用当前个人服务 Ledger、FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal。2026-09-28 用户决定：GitHub 仅备份源码与配置；构建和发布由维护电脑完成；本地验证本次功能后即可上线，不以全量历史回归为发布门槛，不默认积累永久测试代码。临时检查脚本用完即可移除。普通功能故障接受修复或程序回退；数据库迁移、批量写入/删除、导入覆盖和备份恢复先在隔离副本针对性验证。
+适用当前个人服务 Ledger、FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal、AICalendar。2026-09-28 用户决定：GitHub 仅备份源码与配置；构建和发布由维护电脑完成；本地验证本次功能后即可上线，不以全量历史回归为发布门槛，不默认积累永久测试代码。临时检查脚本用完即可移除。普通功能故障接受修复或程序回退；数据库迁移、批量写入/删除、导入覆盖和备份恢复先在隔离副本针对性验证。
 
 ## 维护电脑
 
@@ -14,7 +14,7 @@
 
 1. 本地验证本次修改。界面检查实际使用的桌面/手机场景；计算或导入逻辑用代表性样例。构建保留必要的类型检查。开发时已经验证的内容无需发布时重复完整测试。
 2. 提交明确的源码快照并 git push origin main。推送只备份，不触发任何生产操作。
-3. 在项目执行 make release：只导出 Git 已提交文件，在隔离构建目录安装锁定依赖并 make linux；生成静态 Linux amd64 程序。五个业务应用同时校验和保存同提交 deploy/portal.json。
+3. 在项目执行 make release：只导出 Git 已提交文件，在隔离构建目录安装锁定依赖并 make linux；生成静态 Linux amd64 程序。业务应用同时校验和保存同提交 deploy/portal.json。
 4. make deploy 复用同提交构建产物；没有产物才构建。拒绝未提交的受跟踪修改、未备份到 origin/main 的提交及哈希不符的产物。未跟踪文件不进入快照。
 5. 本机通过 SSH 上传，服务器固定脚本完成备份、候选校验、原子替换和启动健康检查；随后同步声明并核对门户回执，验证公网未授权接口返回 401。
 6. 文档变更推送后运行 scripts/sync-docs.sh；只改文档无需部署程序。
@@ -26,10 +26,10 @@
 ## 身份与传输
 
 - RELEASE_HOST 默认 ali，使用本地已信任的 SSH 主机配置和严格指纹校验。
-- 五个业务应用使用各自 <app>-deploy 受限身份，共用维护电脑的 ~/.ssh/ali_deploy_ed25519 发布密钥（可用 RELEASE_KEY 指定），私钥只留本机并独立保管。该密钥拥有五个业务应用的发布/数据权限，不拥有整机管理员权限；不复用到其他机器。
+- 业务应用使用各自 <app>-deploy 受限身份，共用维护电脑的 ~/.ssh/ali_deploy_ed25519 发布密钥（可用 RELEASE_KEY 指定），私钥只留本机并独立保管。该密钥拥有业务应用的发布/数据权限，不拥有整机管理员权限；不复用到其他机器。
 - 服务器 authorized_keys 设置 restrict 与固定 deploy-ssh.sh；只接受 deploy、portal-check、portal，sudo 仅允许本应用 root 管理的 deploy-release.sh。新服务器/新应用用各项目 setup-deploy.sh 建立身份；已有账号显式轮换公钥，不重复初始化。
 - ServerPortal 使用现有管理员 SSH；它的采集器运行于 root，因此门户发布仍是管理员操作。其固定脚本由 ServerPortal/deploy 维护，不创建一个伪装成低权限的门户发布账号。
-- GitHub Actions 在六个应用仓库均关闭，workflow 和五套 production Secrets 已移除，旧 CI 公钥已撤销。不要向 GitHub 上传生产发布私钥。GitHub 推送认证独立保留。
+- GitHub Actions 在各应用仓库均关闭，workflow 和原有 production Secrets 已移除，旧 CI 公钥已撤销。不要向 GitHub 上传生产发布私钥。GitHub 推送认证独立保留。
 - SSH 启用压缩；Yuyan 继续传 gzip 流并校验未压缩哈希，其他应用沿用原始程序流。服务器不安装构建工具。
 
 ## 回退和数据保护

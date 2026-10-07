@@ -1,6 +1,6 @@
 # 当前服务器与应用清单
 
-基础清单最后核对：2026-09-28（北京时间），主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。备份与数据保留于 2026-10-01 只读复核，另确认已运行的阿里云 Cloud Backup，见下方云备份。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+AICalendar 新增、全部七站健康与认证入口最后核对：2026-10-07（北京时间）。主机基础清单核对：2026-09-28，主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。备份与数据保留于 2026-10-01 只读复核，另确认已运行的阿里云 Cloud Backup，见下方云备份。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
 
 ## 主机
 
@@ -27,6 +27,7 @@
 | RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
 | Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`；运行 `yuyan`，发布 `yuyan-deploy` | `yuyan.service`、`yuyan-backup.service`、`yuyan-backup.timer` | `/opt/yuyan/docs/README.md`；直连 `/healthz`、代理 `/yuyan/healthz`、深链接 `/yuyan/search` |
 | ServerPortal / [Crashmere/ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` → `127.0.0.1:18085` | `/opt/serverportal`；Web 用户 `serverportal`、root Unix socket 采集器 | `serverportal.service`、`serverportal-agent.service` | `/opt/serverportal/docs/README.md`；回环 `/healthz`；公网根跳转、登录与受保护 API |
+| AICalendar / [Crashmere/AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` → `127.0.0.1:18086` | `/opt/aicalendar`；运行 `aicalendar`，发布 `aicalendar-deploy` | `aicalendar.service`、`aicalendar-backup.service`、`aicalendar-backup.timer` | `/opt/aicalendar/docs/README.md`；直连 `/healthz`、代理 `/aicalendar/healthz`、页面 `/aicalendar/` |
 
 | 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
 | --- | --- | --- | --- | --- |
@@ -36,8 +37,11 @@
 | RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
 | Yuyan | SQLite（含文档模板/内容片段）+ 画板包、图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
 | ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；导出包不自动轮换或由门户异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
+| AICalendar | SQLite（活动记录、用户注释、导入批次） | 04:15，一致性快照 | 本机 make deploy | MemoryMax=192M、GOMEMLIMIT=144MiB；独立手动导入凭据；演示用 19086 |
 
-五个业务应用已接入统一设备认证；授权设备可读写及执行各自的导出/删除。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份和发布历史按 [发布材料自动保留](retention.md) 清理：最近 5 份完整备份、最近 3 次成功发布及当前版本/对应备份保护。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+六个业务应用的浏览器页面/API 已接入统一设备认证；授权设备可执行各自支持的数据操作。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份和发布历史按 [发布材料自动保留](retention.md) 清理：最近 5 份完整备份、最近 3 次成功发布及当前版本/对应备份保护。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+
+AICalendar 使用空库首次上线；真实历史尚未导入。浏览器沿用门户认证，只有 `/aicalendar/ingest/v1/` 使用本应用的独立 Bearer 凭据；服务端保存 SHA-256，原文和客户端配置仅在维护电脑 Git 外的 `~/.config/aicalendar/`。手动 skill `ai-calendar-import` 负责本地整理、预览、提交与回读，不配置自动采集。每日备份、发布前快照和发布保留沿用现有 SQLite 契约；资源声明已被门户动态加载。
 
 Yuyan 附件上传已改为流式接收且不设文件大小上限；仅其 /yuyan/api/attachments 子 location 关闭大小检查和请求体缓冲，继承认证，其余请求保留原限制。临时上传写入既有 data/assets，无新数据根；图片与附件连续一小时未被正文（含回收站）、历史、模板/片段或媒体链接引用后自动回收，每分钟扫描，重新引用/上传重置计时。状态复用 meta；备份/上传共享目录锁与回收排他锁跨进程协调，已有备份硬链接保留。旧版备份程序不可与新版回收并行，诊断使用 gc --dry-run。附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
 
@@ -51,19 +55,19 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 ## 门户与统一认证
 
-ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。五个应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或五个业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
+ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
 
 门户永久授权与紧凑布局已上线。实际程序来源从 current-commit 与 releases/metadata 读取，文档版本由 docs/SOURCE 记录。
 
 2026-10-01 已修复共享认证子请求误拦大请求的问题：仅在 `/_portal_device_check` 设置 `client_max_body_size 0`，继续禁止转发请求体，各应用 Nginx 与程序大小上限保持。RecipeBox、FabricWorld、Yuyan 的大图片、Yuyan 的大文档及 Ledger 的 1–2 MiB 请求不再被认证层默认 1 MiB 上限误拦；FeeTable 正常输入与门户自身认证不受原问题影响。全部 location 的 48 项隔离检查、线上 51 项只读 HTTP 检查和六站图标 GET/HEAD 检查通过；Nginx 平滑重载，各应用未重启、未写入合成业务数据。根因与维护方法见 [统一认证误拦大请求](common-issues.md#统一认证误拦大请求)。
 
-门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。五个应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；五个应用通过本机 make portal 同步声明。
+门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。六个业务应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；各业务应用通过本机 make portal 同步声明。
 
 ## 共享配置与所有权
 
-六站均按[网页键盘与焦点约定](conventions.md#网页键盘与焦点)维护。FeeTable、FabricWorld、RecipeBox、Yuyan 和 ServerPortal 已上线普通 Tab / Shift+Tab 拦截并取消控件焦点高亮，覆盖页面、表单、菜单和弹窗。Ledger 保持用户认可的现有快捷键与焦点行为；Yuyan 保留正文/代码缩进和表格单元格导航。五站本地 Chromium 与 WebKit 的页面、弹窗、窄屏及深色模式检查通过，编辑例外与菜单按键另行验证；全局 AGENTS 和六个项目入口均记录默认规则。
+七站均按[网页键盘与焦点约定](conventions.md#网页键盘与焦点)维护。FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal 和 AICalendar 已上线普通 Tab / Shift+Tab 拦截并取消控件焦点高亮，覆盖页面、表单、菜单和弹窗。Ledger 保持用户认可的现有快捷键与焦点行为；Yuyan 保留正文/代码缩进和表格单元格导航。五站本地 Chromium 与 WebKit 的页面、弹窗、窄屏及深色模式检查通过，编辑例外与菜单按键另行验证；全局 AGENTS 和七个项目入口均记录默认规则。
 
-六站都已提供独立的 favicon 和 180×180 apple-touch-icon；业务站点只对明确品牌图标（Ledger 含公开 manifest）开放匿名 GET/HEAD，页面、API 和用户媒体继续认证。真机添加桌面的最终效果待用户确认。新增网站从首次交付起遵循 conventions 的网站图标约定。
+七站都已提供独立的 favicon 和 180×180 apple-touch-icon；业务站点只对明确品牌图标（Ledger 含公开 manifest）开放匿名 GET/HEAD，页面、API 和用户媒体继续认证。AICalendar 已通过 Chromium 桌面与 375×667 窄屏交互检查，全部七站图标匿名 GET/HEAD 检查通过；真机添加桌面的最终效果待用户确认。新增网站从首次交付起遵循 conventions 的网站图标约定。
 
 | 实际位置 | 维护源 / 含义 |
 | --- | --- |
@@ -76,6 +80,7 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 | `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
 | `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
 | `/etc/nginx/app-locations/serverportal.conf` | 指向 `/opt/serverportal/config/nginx-location.conf`，源在 ServerPortal deploy |
+| `/etc/nginx/app-locations/aicalendar.conf` | 指向 `/opt/aicalendar/config/nginx-location.conf`，源在 AICalendar deploy |
 | `/etc/nginx/snippets/portal-auth.conf` | 本技能 assets/nginx-portal-auth.conf，仅在公网 443 server 引用 |
 | `/opt/serverportal/registry.d/<app>.json` | 指向应用自己的 config/portal.json；受限发布协议创建和校验 |
 | `/opt/server-context/scripts/validate-portal.py` | 本技能脚本，维护电脑与服务器共用的资源声明策略 |
@@ -124,13 +129,13 @@ ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户
 ssh ali 'cat /opt/AGENTS.md'
 ssh ali 'bash /opt/server-context/scripts/inspect.sh'
 ~/agent-config/skills/server-operations/scripts/sync-docs.sh --check    # 在本地运行：各文档副本是否与仓库一致
-ssh ali 'for a in ledger feetable fabricworld recipebox yuyan; do echo "$a $(cat /opt/$a/current-commit)"; done'
+ssh ali 'for a in ledger feetable fabricworld recipebox yuyan aicalendar; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
-2026-10-01 六应用和五个每日备份 unit 正常；failed 列表另有旧的 systemd-run 身份/快照诊断单元，不应混为当前业务或定时备份失败。出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+2026-10-07 七个应用服务均健康，AICalendar 每日备份首跑与完整性检查成功，其余备份的最近完整核对仍为 2026-10-01；failed 列表另有旧的 systemd-run 身份/快照诊断单元，不应混为当前业务或定时备份失败。出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
 
 ## 本机发布与验证
 
-六个应用已迁至 [本机发布](release.md)：GitHub Actions 关闭，只备份源码与配置。原 production Secrets 和旧 CI 公钥已移除，五个业务身份改为信任维护电脑专用发布公钥；门户沿用管理员 SSH。历史回归套件退役，本次功能在本地按需验证，不默认保留永久测试。构建、上传与健康/备份保护由脚本执行。
+七个应用使用 [本机发布](release.md)：GitHub Actions 关闭，只备份源码与配置。原 production Secrets 和旧 CI 公钥已移除，业务发布身份信任维护电脑专用发布公钥；门户沿用管理员 SSH。历史回归套件退役，本次功能在本地按需验证，不默认保留永久测试。构建、上传与健康/备份保护由脚本执行。
 
 门户 root 私有 releases/ 与 backups/ 保存旧程序及停写后的 data/config 快照，纳入共享 3/5 发布保留策略；私有清理回执目录也由 ServerPortal/deploy/portal.example.json 登记。用户暂缓的真实备份下载和恢复验收保持暂缓。
