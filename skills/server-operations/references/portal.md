@@ -1,6 +1,6 @@
 # 门户与资源声明维护
 
-ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应用门户、设备认证、只读资源、受限清理和备份。运行在 /opt/serverportal、回环 18085、/portal/，公网根路径跳转门户。共享认证覆盖业务公网页面/API；AICalendar 的 `/aicalendar/ingest/v1/` 使用独立导入 Bearer 凭据，其浏览器页面/API 继续继承门户认证；ACME、本机发布检查和服务间调用保留。
+ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应用门户、设备认证、只读资源、受限清理和备份。运行在 /opt/serverportal、回环 18085、/portal/，公网根路径跳转门户。共享认证覆盖业务公网页面/API；AICalendar 的 `/aicalendar/ingest/v1/` 使用独立导入 Bearer 凭据，支持日历摘要导入/核验和完整聊天存档的上传、查询、下载，其浏览器页面/API 继续继承门户认证；ACME、本机发布检查和服务间调用保留。存档复用 AICalendar SQLite，应用资源声明和原生快照已覆盖，无需增加门户备份类型。
 
 ## 所有权与注册目录
 

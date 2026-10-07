@@ -135,6 +135,8 @@ def prepare(payload, client, upsert):
             record.pop('expected_version', None)
             item = existing.get((record['source'], record['external_id']))
             if item:
+                if not record.get('source_label') and item['record'].get('source_label'):
+                    record['source_label'] = item['record']['source_label']
                 record['expected_version'] = item['version']
     else:
         for record in records:
@@ -217,7 +219,7 @@ def run(args):
                 superseded.append({'source': key[0], 'external_id': key[1], 'committed_version': version, 'current_version': activity['version']})
                 continue
             stored = activity['record']
-            if any(stored.get(k) != record.get(k) for k in ('activity_date', 'user_message_count', 'record_state', 'timezone', 'quality')) or any(stored.get(k) != record[k].strip() for k in ('title', 'summary')) or stored.get('tags', []) != sorted({tag.strip() for tag in record['tags'] if tag.strip()}):
+            if any(stored.get(k) != record.get(k) for k in ('activity_date', 'user_message_count', 'record_state', 'timezone', 'quality')) or stored.get('source_label', '') != (record.get('source_label') or '').strip() or any(stored.get(k) != record[k].strip() for k in ('title', 'summary')) or stored.get('tags', []) != sorted({tag.strip() for tag in record['tags'] if tag.strip()}):
                 raise ValueError(f'Readback differs for {key}; inspect concurrent updates before retrying')
             checked += 1
     return {'committed': True, 'exact_current': not superseded, 'verified_records': checked, 'superseded_records': superseded, 'batches': [{'id': r['id'], 'inserted': r['inserted'], 'updated': r['updated'], 'unchanged': r['unchanged'], 'replay': r['replay']} for r in results], 'calendar_url': client.base + '/'}

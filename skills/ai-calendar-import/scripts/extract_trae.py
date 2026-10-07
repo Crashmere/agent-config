@@ -14,6 +14,7 @@ from pathlib import Path
 import sqlite3
 from zoneinfo import ZoneInfo
 from import_records import private_write
+from trae_archives import archive_thread
 
 
 def connect(path):
@@ -91,7 +92,8 @@ def extract(args):
         raise ValueError('Start date must not exceed end date')
     sessions_root = (home / 'sessions').resolve()
     report = collections.Counter()
-    records, contexts = [], []
+    records, contexts, archives = [], [], []
+    archive_directory = args.archive_out_dir or str(Path(args.out).expanduser().parent / "archives")
     unknown = []
     for thread in state.execute('SELECT id,source,title,name,rollout_path FROM threads'):
         report['threads_seen'] += 1
@@ -136,6 +138,8 @@ def extract(args):
             day = when.astimezone(zone).date()
             if start <= day <= end:
                 days[day.isoformat()].append((when, text, origin))
+        if days and not args.summary_only:
+            archives.append(archive_thread(thread, path, history, args.source, archive_directory, args.source_label))
         for day, rows in sorted(days.items()):
             rows.sort(key=lambda r: r[0])
             existing_title = (thread['name'] or thread['title'] or '').strip()
@@ -151,6 +155,7 @@ def extract(args):
                 'provenance': {'method': 'trae_' + method, 'producer': 'ai-calendar-import', 'source_ref': thread['id'], 'produced_at': dt.datetime.now(dt.timezone.utc).isoformat()},
                 'record_state': 'partial' if day >= dt.datetime.now(zone).date().isoformat() else 'final',
             }
+            if args.source_label: record['source_label'] = args.source_label
             records.append(record)
             contexts.append({'source': args.source, 'external_id': external_id, 'title': record['title'], 'count_quality': count_quality, 'user_messages': [{'at': when.isoformat(), 'text': text[:args.snippet_chars]} for when, text, _ in rows[:args.max_snippets]], 'total_user_messages': len(rows), 'needs_topic_review': True})
     state.close()
@@ -159,7 +164,11 @@ def extract(args):
     payload = {'schema_version': 1, 'mode': 'insert_only', 'records': records, 'coverage': [{'source': args.source, 'from': args.start, 'to': args.end, 'status': 'partial', 'note': '按本地可恢复历史整理；投影、回退与平台历史保留可能影响完整性。'}]}
     private_write(args.out, payload)
     private_write(args.context_out, {'review_context': contexts, 'diagnostics': dict(report), 'note': 'Local sensitive excerpts for topic review; never send this file to the calendar API or commit it.'})
-    return {'draft': str(Path(args.out).expanduser()), 'review_context': str(Path(args.context_out).expanduser()), 'records': len(records), 'recoverable_user_messages': sum(r['user_message_count'] for r in records), 'diagnostics': dict(report), 'upload_performed': False}
+    archive_index = None
+    if not args.summary_only:
+        archive_index = str(Path(archive_directory) / 'index.json')
+        private_write(archive_index, {'archives': archives})
+    return {'archive_index': archive_index, 'archives': len(archives), 'draft': str(Path(args.out).expanduser()), 'review_context': str(Path(args.context_out).expanduser()), 'records': len(records), 'recoverable_user_messages': sum(r['user_message_count'] for r in records), 'diagnostics': dict(report), 'upload_performed': False}
 
 
 def main():
@@ -169,9 +178,12 @@ def main():
     parser.add_argument('--from', dest='start', required=True)
     parser.add_argument('--to', dest='end', required=True)
     parser.add_argument('--source', default='trae-personal')
+    parser.add_argument('--source-label', help='User supplied display tag, e.g. Trae · 工作电脑')
     parser.add_argument('--timezone', default='Asia/Shanghai')
     parser.add_argument('--out', required=True)
     parser.add_argument('--context-out', required=True)
+    parser.add_argument('--archive-out-dir')
+    parser.add_argument('--summary-only', action='store_true', help='Explicitly skip full conversation archives')
     parser.add_argument('--max-snippets', type=int, default=8)
     parser.add_argument('--snippet-chars', type=int, default=800)
     try:

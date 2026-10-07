@@ -1,4 +1,4 @@
 interface:
   display_name: "AI 日历导入"
-  short_description: "按需整理 AI 使用历史，归纳主题并可靠地导入个人活动日历"
-  default_prompt: "使用 $ai-calendar-import 整理最近一周的 AI 使用记录并导入日历。"
+  short_description: "按需归纳 AI 使用主题，保存完整聊天与原始资料，并展示指定来源标签"
+  default_prompt: "使用 $ai-calendar-import 整理最近一周的 AI 使用记录，标记来源并将完整聊天和日历摘要导入服务。"
