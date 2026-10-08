@@ -77,6 +77,26 @@ def fallback(path):
     return list(messages.values()), revision, malformed
 
 
+def legacy_review_candidates(path, max_snippets, snippet_chars):
+    """Unattributed old append messages need human/agent review, not counting."""
+    candidates = []
+    for line_number, line in enumerate(path.open(), 1):
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        payload = record.get('payload', {})
+        if record.get('type') != 'history_mutation' or not isinstance(payload, dict) or payload.get('operation') != 'append':
+            continue
+        for item in payload.get('items', []):
+            if not isinstance(item, dict) or item.get('role') != 'user':
+                continue
+            metadata = item.get('internal_chat_message_metadata_passthrough') or {}
+            if metadata.get('turn_id') and not metadata.get('content_item_kinds'):
+                candidates.append({'line_1based': line_number, 'item_id': item.get('id'), 'logged_at': record.get('timestamp'), 'text': text_content(item)[:snippet_chars]})
+    return {'candidate_count': len(candidates), 'candidates': candidates[:max_snippets]}
+
+
 def extract(args):
     home = Path(args.cli_home).expanduser().resolve()
     source_db = home / 'state_5.sqlite'
@@ -94,7 +114,7 @@ def extract(args):
     report = collections.Counter()
     records, contexts, archives = [], [], []
     archive_directory = args.archive_out_dir or str(Path(args.out).expanduser().parent / "archives")
-    unknown = []
+    unresolved = []
     for thread in state.execute('SELECT id,source,title,name,rollout_path FROM threads'):
         report['threads_seen'] += 1
         if thread['source'] != 'cli':
@@ -102,17 +122,40 @@ def extract(args):
             continue
         path = Path(thread['rollout_path']).expanduser().resolve()
         # Only read the actual session directory, not arbitrary paths from a DB row.
-        if not path.is_relative_to(sessions_root) or not path.is_file():
-            report['missing_or_external_rollout'] += 1
+        if not path.is_relative_to(sessions_root):
+            report['external_rollout_skipped'] += 1
             continue
+        if not path.is_file():
+            path = None
+            report['missing_rollout'] += 1
         messages = []
         method = 'history_projection'
         count_quality = 'observed'
         if history is not None:
             try:
-                for row in history.execute("SELECT created_at_ms,item_json FROM thread_items WHERE thread_id=? AND item_type='userMessage' ORDER BY created_at_ms,rollout_ordinal", (thread['id'],)):
+                rows = list(history.execute("SELECT i.*,t.started_at AS turn_started_at FROM thread_items i LEFT JOIN thread_turns t ON i.thread_id=t.thread_id AND i.turn_id=t.turn_id WHERE i.thread_id=? AND i.item_type='userMessage' ORDER BY i.rollout_ordinal", (thread['id'],)))
+                invalid_time = [row for row in rows if not row['created_at_ms'] or row['created_at_ms'] <= 0]
+                if invalid_time and len(invalid_time) == len(rows) and path is not None:
+                    # Legacy projections can contain only a suffix and use zero
+                    # times. Replace that projection with explicit original
+                    # events; never add both representations together.
+                    messages, revision, malformed = fallback(path)
+                    report['malformed_or_unfinished_lines'] += malformed
+                    if messages:
+                        method = 'legacy_explicit_user_events'
+                        count_quality = 'estimated'
+                        report['legacy_zero_time_projection_replaced'] += len(rows)
+                for row in ([] if messages else rows):
                     item = json.loads(row['item_json'])
-                    messages.append((timestamp(row['created_at_ms']), text_content(item), 'projected_user_message'))
+                    if row['created_at_ms'] and row['created_at_ms'] > 0:
+                        messages.append((timestamp(row['created_at_ms']), text_content(item), 'projected_user_message'))
+                    elif row['turn_started_at'] and row['turn_started_at'] > 0:
+                        # A turn provides a date, not an exact sending time.
+                        messages.append((timestamp(row['turn_started_at']), text_content(item), 'projected_turn_date'))
+                        report['user_messages_with_turn_date_only'] += 1
+                        method = 'history_projection_turn_date'
+                    else:
+                        raise ValueError(f"User message has no recoverable date: {thread['id']}/{row['item_id']}")
                 projection = history.execute('SELECT has_revision_controls FROM thread_history_projection_state WHERE thread_id=?', (thread['id'],)).fetchone()
                 if projection and projection['has_revision_controls']:
                     count_quality = 'estimated'
@@ -120,18 +163,25 @@ def extract(args):
                 raise ValueError('History projection schema or timestamps changed; review before importing') from error
         if not messages:
             method = 'explicit_user_event_fallback'
-            messages, revision, malformed = fallback(path)
+            messages, revision, malformed = fallback(path) if path else ([], False, 0)
             report['malformed_or_unfinished_lines'] += malformed
             count_quality = 'estimated'
             if not messages:
                 report['no_recoverable_user_messages'] += 1
+                if path:
+                    candidates = legacy_review_candidates(path, args.max_snippets, args.snippet_chars)
+                    if candidates['candidate_count']:
+                        report['legacy_threads_require_manual_review'] += 1
+                        unresolved.append({'conversation_id': thread['id'], 'rollout': str(path), 'title': thread['name'] or thread['title'], **candidates})
                 continue
         report[method + '_threads'] += 1
         days = collections.defaultdict(list)
         # A message ID can be regenerated, so de-duplicate identical original time/content.
         seen = set()
         for when, text, origin in messages:
-            key = (round(when.timestamp(), 3), hashlib.sha256(text.encode()).hexdigest())
+            # Distinct projection rows with unknown exact times must survive,
+            # even when the text and turn start happen to be identical.
+            key = ('date_only', len(seen)) if origin == 'projected_turn_date' else (round(when.timestamp(), 3), hashlib.sha256(text.encode()).hexdigest())
             if key in seen:
                 continue
             seen.add(key)
@@ -146,12 +196,13 @@ def extract(args):
             if not existing_title:
                 existing_title = '待整理的 AI 会话'
             external_id = thread['id'] + '/' + day
+            date_only = any(r[2] == 'projected_turn_date' for r in rows)
             record = {
                 'source': args.source, 'external_id': external_id, 'conversation_id': thread['id'],
                 'activity_date': day, 'timezone': args.timezone,
-                'first_activity_at': rows[0][0].isoformat(), 'last_activity_at': rows[-1][0].isoformat(),
+                'first_activity_at': None if date_only else rows[0][0].isoformat(), 'last_activity_at': None if date_only else rows[-1][0].isoformat(),
                 'user_message_count': len(rows), 'title': existing_title[:160], 'summary': '', 'tags': [], 'spans': [],
-                'quality': {'count': count_quality, 'time': 'observed_timestamps', 'topic': 'source_title'},
+                'quality': {'count': count_quality, 'time': 'date_only' if date_only else 'observed_timestamps', 'topic': 'source_title'},
                 'provenance': {'method': 'trae_' + method, 'producer': 'ai-calendar-import', 'source_ref': thread['id'], 'produced_at': dt.datetime.now(dt.timezone.utc).isoformat()},
                 'record_state': 'partial' if day >= dt.datetime.now(zone).date().isoformat() else 'final',
             }
@@ -163,12 +214,12 @@ def extract(args):
         history.close()
     payload = {'schema_version': 1, 'mode': 'insert_only', 'records': records, 'coverage': [{'source': args.source, 'from': args.start, 'to': args.end, 'status': 'partial', 'note': '按本地可恢复历史整理；投影、回退与平台历史保留可能影响完整性。'}]}
     private_write(args.out, payload)
-    private_write(args.context_out, {'review_context': contexts, 'diagnostics': dict(report), 'note': 'Local sensitive excerpts for topic review; never send this file to the calendar API or commit it.'})
+    private_write(args.context_out, {'review_context': contexts, 'unresolved_legacy_threads': unresolved, 'diagnostics': dict(report), 'note': 'Local sensitive excerpts for topic review; never send this file to the calendar API or commit it.'})
     archive_index = None
     if not args.summary_only:
         archive_index = str(Path(archive_directory) / 'index.json')
         private_write(archive_index, {'archives': archives})
-    return {'archive_index': archive_index, 'archives': len(archives), 'draft': str(Path(args.out).expanduser()), 'review_context': str(Path(args.context_out).expanduser()), 'records': len(records), 'recoverable_user_messages': sum(r['user_message_count'] for r in records), 'diagnostics': dict(report), 'upload_performed': False}
+    return {'archive_index': archive_index, 'archives': len(archives), 'draft': str(Path(args.out).expanduser()), 'review_context': str(Path(args.context_out).expanduser()), 'records': len(records), 'recoverable_user_messages': sum(r['user_message_count'] for r in records), 'requires_manual_review': len(unresolved), 'diagnostics': dict(report), 'upload_performed': False}
 
 
 def main():

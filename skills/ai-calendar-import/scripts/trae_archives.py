@@ -9,7 +9,7 @@ from archive_conversations import pack, snapshot, json_bytes
 
 
 def stamp(value):
-    if value is None: return None
+    if value is None or isinstance(value, (int, float)) and value <= 0: return None
     try:
         if isinstance(value, (int, float)):
             return dt.datetime.fromtimestamp(value / 1000 if value > 10**11 else value, dt.timezone.utc).isoformat()
@@ -64,7 +64,10 @@ def rollout_messages(path):
 def archive_thread(thread, rollout, history, source, directory, source_label=None):
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     with tempfile.TemporaryDirectory(prefix='snapshot-',dir=directory) as temp:
-        raw=Path(temp)/'trae-rollout.jsonl';snapshot(rollout,raw)
+        sources=[];names=[]
+        raw=Path(temp)/'trae-rollout.jsonl'
+        if rollout is not None:
+            snapshot(rollout,raw);sources.append(raw);names.append(Path(rollout).name)
         projection=Path(temp)/'trae-projection.jsonl';count=0
         with projection.open('x') as output:
             os.chmod(projection, 0o600)
@@ -73,7 +76,16 @@ def archive_thread(thread, rollout, history, source, directory, source_label=Non
                     output.write(json.dumps(dict(row),ensure_ascii=False)+'\n');count+=1
         # Use the projection for the readable conversation; retain both sources
         # to recover revisions/compactions and additional fields later.
+        sources.append(projection);names.append('thread-items.jsonl')
+        turns=Path(temp)/'trae-turns.jsonl'
+        with turns.open('x') as output:
+            os.chmod(turns,0o600)
+            if history is not None:
+                for row in history.execute('SELECT * FROM thread_turns WHERE thread_id=? ORDER BY rollout_ordinal',(thread['id'],)):
+                    output.write(json.dumps(dict(row),ensure_ascii=False)+'\n')
+        sources.append(turns);names.append('thread-turns.jsonl')
         messages=projection_messages(projection) if count else rollout_messages(raw)
         header={'source':source,'conversation_id':thread['id'],'title':(thread['name'] or thread['title'] or 'AI 会话')[:160],'coverage':'partial','note':'保存该会话当前可取得的全部日志和投影，包含所选日期以外的上下文；源平台已删除的内容和仅有引用的附件不能保证恢复。原始文件保留压缩、重放和未完成末行，可供后续重新解析。'}
         if source_label: header['source_label']=source_label
-        return pack(header,messages,[raw,projection],directory/(thread['id']+'.jsonl.gz'), source_names=[Path(rollout).name,'thread-items.jsonl'])
+        if rollout is None: header['note'] += ' 本机原始 rollout 已缺失，仅保存仍可取得的消息投影和轮次元数据；零值时间显示为未知。'
+        return pack(header,messages,sources,directory/(thread['id']+'.jsonl.gz'), source_names=names)
