@@ -89,6 +89,8 @@ Mermaid 使用 `codeBlock` 且 language 为 `mermaid`，不是单独节点。Mar
 
 复杂表格导出为 HTML 保留尺寸、合并与颜色，普通表格可导出 Markdown。
 
+网页编辑器支持“按内容适配列宽”：点击表格内可从悬浮工具栏调整当前表格；选中跨表格的内容可一次调整选区相交的所有表格，包含容器中的表格。按浏览器实际排版取得避免自动换行所需的列宽，保留手动换行、合并结构和行高，宽表格横向滚动，整次操作可一步撤销。它只写入既有 `colwidth`，不是持续自动调整或 `nowrap` 属性；无新增 API。Agent 直接修改 JSON 时继续按实际网格为各单元格设置一致的 `colwidth`，不要用字符数估算来承诺不换行，也不要添加 `autoFit` 等不存在的字段。
+
 ## 图片、裁切、切分与组合
 
 image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard 直接容纳 image。先 upload 获取真实 src，禁止猜内容 ID。src 是 `/assets/<32位id>.<扩展名>`，不带 `/yuyan` 前缀。
