@@ -39,6 +39,8 @@ python3 scripts/archive_conversations.py pack --file /private/task/conversation.
 
 网络失败保留文件和计划，重新执行同一个 submit。收到 400/409 时检查明确错误；不能通过改哈希、丢分块或减少计数骗过校验。503 表示服务未启用存档扩展，应完成维护后重试。
 
+批量回读清单使用 `GET /ingest/v1/archives?source=...&offset=0&limit=100`，每页最多 100 条。当前接口始终返回 `next_offset=offset+本页条数`，末页不以 null 标记结束；本页为空或少于指定 limit 时停止，否则使用返回的 next_offset。核对所有快照 ID、已提交状态、清单哈希及会话关联，修订快照不重复计作新会话。
+
 网页「聊天存档」可按快照查看消息并下载 `.jsonl.gz`。完整还原：
 
 ```sh

@@ -10,7 +10,7 @@ description: 手动整理 AI 使用历史并导入个人 AICalendar：从本地 
 ## 边界与维护源
 
 - 服务源码和 API 契约：`Crashmere/AICalendar`，通常在 `~/ali/AICalendar`。先读 [接口与客户端](references/api.md) 和 [完整聊天存档](references/archives.md)。JSON Schema 的维护源为服务 `api/import.schema.json` 和 `api/archive.schema.json`，不在技能中另存副本。
-- 读取 TraeX / traecli 时，再读 [Trae 历史](references/trae-history.md)。其他平台按用户指定文件理解字段，保留原始标识和不确定性，不套用 Trae 格式。
+- 读取 TraeX / traecli 时，再读 [Trae 历史](references/trae-history.md)；读取 ChatGPT 网页版导出时，再读 [ChatGPT 导出](references/chatgpt-export.md)。其他平台按用户指定文件理解字段，保留原始标识和不确定性，不套用 Trae 格式。
 - 只在用户要求整理时运行。不增加全局 AGENTS 上报规则、hooks、常驻进程或定时任务。
 - 标题、摘要、标签由当前 agent 归纳；时间、次数、稳定标识由确定性脚本提取。不要凭主题推测次数、耗时或日期。
 - 原始对话、临时 JSON、导入计划和凭据留在 Git 外的私有目录。用户已要求保留完整聊天：每次导入默认同时保存统一消息与原始导出资料到受认证保护的服务。不要把摘要或少量审阅片段当成完整存档。只读本地文件仍可能把选定片段带入当前模型，不把它描述为本地模型推理。
