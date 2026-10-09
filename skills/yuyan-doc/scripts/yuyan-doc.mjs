@@ -129,7 +129,7 @@ async function api() {
   const method = (o.method || 'GET').toUpperCase();
   const route = o.path.split('?')[0];
   // A bounded escape hatch for product operations; document content always uses validated commands.
-  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
+  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|stats|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
   const writes = {
     POST: /^(books|templates|docs\/batch|docs\/\d+\/(move|restore|snapshot)|books\/\d+\/restore|versions\/\d+\/restore)$/,
     PATCH: /^(books\/\d+|templates\/[a-f0-9]{32})$/,

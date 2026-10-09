@@ -10,6 +10,7 @@
 | books/ID/tree | 有序文档树，节点有 id、kind、title、children；kind 区分 doc/group |
 | book-groups | 首页知识库分组及 revision |
 | recent / titles | 最近文档 / 文档标题索引 |
+| stats | 所有存活文档的正文总字数，返回 `{chars: number}`，与首页右下角一致 |
 | search?q=关键词 | 服务端全文匹配，最多 50 项；并非无限分页搜索 |
 | link-targets | 存活文档与 H1–H6 章节，含实际 slug；不包含回收站 |
 | docs/ID/preview?heading=slug | 文档/章节摘要 |
@@ -23,6 +24,8 @@
 | attachments/CONTENT_ID/preview?name=文件名 | 素材预览类型、有限文本或压缩包目录 |
 
 标题拼音从服务端返回，可用于筛选结果；不要引入另一份拼音词典。查找同名文档时同时查看知识库和父目录，选择后返回真实链接。
+
+查询全部文档总字数用 `node "$YUYAN_DOC" api --path stats`。统计与阅读页及目录一致：非空白 Unicode 字符逐个计数，只统计当前存活正文，不含文档标题、目录分组、回收站文档/知识库、历史或模板；空库返回 `chars: 0`。
 
 ## 目录与知识库
 
