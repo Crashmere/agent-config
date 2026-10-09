@@ -38,6 +38,7 @@ description: Maintain the user's personal Linux servers and multi-application de
 
 - 先看各仓库工作区和远端提交，再通过受信的 SSH 别名连接。
 - SSH 远程命令不会自动加载远端指令；显式读取 `ssh ali 'cat /opt/AGENTS.md'`。不要把“存在 AGENTS.md”或登录提示当成所有客户端都会执行的保证。
+- 需要在浏览器或命令行查看线上真实页面时，运行 `scripts/view-tunnel.sh`，规则见[共享约定](references/conventions.md#agent-查看线上真实页面)。
 - 按任务抽查事实：监听、unit、Nginx include、目录所有者、版本、备份和健康。可在服务器运行 `bash /opt/server-context/scripts/inspect.sh` 取得不含账目的基础状态；云安全组需另行核实。
 - 文档是上次验证的快照，现场是实际状态，Git 是维护来源；不一致时调查差异，不能用文档盲目覆盖现场，也不能把意外漂移直接宣布为新约定。
 
