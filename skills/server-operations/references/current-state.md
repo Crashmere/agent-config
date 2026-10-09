@@ -55,7 +55,7 @@ Yuyan 历史快照保留 30 天，每天北京时间 03:00 由应用清理，不
 
 Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
 
-Yuyan 首页通过只读 `/api/stats` 显示存活文档的正文总字数，沿用设备认证及现有 `plain_text`，无数据库迁移、数据根或运行时变化；接口随项目门户声明发布。
+Yuyan 首页通过只读 `/api/stats` 显示存活文档的正文总字数及各知识库卡片字数，同一次查询返回全站 `chars` 与按知识库 ID 索引的 `bookChars`，空知识库为 0；沿用设备认证及现有 `plain_text`，无数据库迁移、数据根或运行时变化，接口随项目门户声明发布。
 
 ## 门户与统一认证
 

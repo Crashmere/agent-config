@@ -27,7 +27,7 @@ node "$YUYAN_DOC" doctor
 
 | 任务 | 先读 / 使用 |
 |---|---|
-| 查找文档、知识库或目录；统计正文总字数；链接和反向链接 | [API 与知识库操作](references/api.md)，`api` / `read`；总字数用 `api --path stats` |
+| 查找文档、知识库或目录；统计全站及各知识库正文总字数；链接和反向链接 | [API 与知识库操作](references/api.md)，`api` / `read`；字数用 `api --path stats` |
 | 新建、润色、补写、重组、改样式 | [读写流程与局部修改](references/editing.md) |
 | 富文本、代码、公式、表格、分栏、图片与附件 | [文档格式](references/format.md)，按所需小节读取；`schema --node TYPE` 核对属性 |
 | 生成/上传/修改可编辑画板、技术图模板 | [可编辑画板](references/drawing.md)，`drawing` / `upload --kind drawing` |
