@@ -41,7 +41,7 @@ Common: --repo PATH (default YUYAN_REPO or ~/ali/Yuyan)
         --timeout MS (default 120000; 0 removes the total deadline)
                      Preview: 45000; setup: 180000; drawing: 60000; all require 1000–600000
         --dry-run (validate and preview writes without sending them)
-        --confirm (only after the user's deletion/restore/dissolve request is clear)
+        --confirm (only after the user's deletion/restore/dissolve/extract request is clear)
 FILE may be - for stdin except upload/snapshot. Output files must not exist.
 Patches use text, attrs, replace, splice; see references/editing.md.
 JSON success on stdout; JSON error on stderr with nonzero exit. Never retry writes blindly.
@@ -131,7 +131,7 @@ async function api() {
   // A bounded escape hatch for product operations; document content always uses validated commands.
   const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|stats|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
   const writes = {
-    POST: /^(books|templates|docs\/batch|docs\/\d+\/(move|dissolve|restore|snapshot)|books\/\d+\/restore|versions\/\d+\/restore)$/,
+    POST: /^(books|templates|docs\/batch|docs\/\d+\/(move|dissolve|extract|restore|snapshot)|books\/\d+\/restore|versions\/\d+\/restore)$/,
     PATCH: /^(books\/\d+|templates\/[a-f0-9]{32})$/,
     PUT: /^(books\/order|book-groups)$/,
     DELETE: /^(books\/\d+|docs\/\d+|templates\/[a-f0-9]{32}|trash(?:\/(?:books|docs)\/\d+)?)$/,
@@ -143,11 +143,12 @@ async function api() {
   if ((route === 'book-groups' && method === 'PUT') || (/^templates\//.test(route) && method !== 'GET') || /^versions\/\d+\/restore$/.test(route)) {
     assert(Number.isSafeInteger(body?.baseRevision) && body.baseRevision >= 0, 'This operation requires the current baseRevision.');
   }
-  if (/^docs\/\d+\/dissolve$/.test(route)) {
-    assert(Number.isSafeInteger(body?.bookId) && body.bookId > 0 && Object.hasOwn(body, 'parentId') && (body.parentId === null || (Number.isSafeInteger(body.parentId) && body.parentId > 0)) && Array.isArray(body.childIds) && body.childIds.every(id => Number.isSafeInteger(id) && id > 0), 'Dissolving a group requires its current bookId, parentId, and ordered direct childIds (an empty array for an empty group).');
+  if (/^docs\/\d+\/(dissolve|extract)$/.test(route)) {
+    assert(Number.isSafeInteger(body?.bookId) && body.bookId > 0 && Object.hasOwn(body, 'parentId') && (body.parentId === null || (Number.isSafeInteger(body.parentId) && body.parentId > 0)) && Array.isArray(body.childIds) && body.childIds.every(id => Number.isSafeInteger(id) && id > 0), 'Dissolving/extracting a group requires its current bookId, parentId, and ordered direct childIds (an empty array for an empty group).');
+    if (route.endsWith('/extract')) assert(typeof body.title === 'string' && body.title.trim() !== '' && new Set(body.childIds).size === body.childIds.length, 'Extracting a group also requires its current title and unique childIds.');
   }
-  const destructive = method === 'DELETE' || /\/(restore|dissolve)$/.test(route) || (route === 'docs/batch' && body?.action === 'trash');
-  if (destructive && !o['dry-run']) assert(o.confirm, 'Deletion/restoration/dissolution requires an explicit user request; then pass --confirm.', 'confirmation_required');
+  const destructive = method === 'DELETE' || /\/(restore|dissolve|extract)$/.test(route) || (route === 'docs/batch' && body?.action === 'trash');
+  if (destructive && !o['dry-run']) assert(o.confirm, 'Deletion/restoration/dissolution/extraction requires an explicit user request; then pass --confirm.', 'confirmation_required');
   if (o['dry-run']) return { dryRun: true, method, path: o.path, body };
   await service();
   if (method === 'POST' && route === 'templates') await checkMedia(body.content);
