@@ -21,8 +21,8 @@
 - [yt-dlp-download](./skills/yt-dlp-download/SKILL.md)：使用 yt-dlp 搜索和完整下载 YouTube 视频，保存音轨、章节和字幕，处理大文件并行下载与安全续传，并核验最终媒体。
 - [mscd-music-download](./skills/mscd-music-download/SKILL.md)：使用 Mscd 配置的接口解析网易云歌单、分析重叠并按差集下载音乐，优先无损，嵌入歌词封面并核验文件。
 - [yuyan-doc](./skills/yuyan-doc/SKILL.md)：直接查找、创建和局部修改个人 Yuyan 文档，保留丰富格式与素材，支持可编辑画板生成、模板、目录、历史、单篇导出和按需本地排版预览。
-- [game-guide](./skills/game-guide/SKILL.md)：从多语言网络资料全面收集游戏攻略，统一为简体中文版术语，按主题整理并通过 yuyan-doc 存入“游戏攻略”知识库。
-- [game-novelization](./skills/game-novelization/SKILL.md)：贴合原作风格，以容量受控的批次完整细看视频并保存续接点，忠实改编游戏主线、安排详略，写作、续写与续修已有稿件，让没玩过游戏的读者看懂并减轻攻略感与模板腔，最终只交付小说正文。
+- [game-guide](./skills/game-guide/SKILL.md)：从多语言网络资料全面收集游戏攻略，统一为简体中文版术语，按主题整理并通过 yuyan-doc 存入首页“游戏攻略”分组下该游戏的独立知识库。
+- [game-novelization](./skills/game-novelization/SKILL.md)：贴合原作风格，以容量受控的批次完整细看视频并保存续接点，忠实改编游戏主线、安排详略，写作、续写与续修已有稿件，让没玩过游戏的读者看懂并减轻攻略感与模板腔，最终只交付小说正文；指定语燕时定位首页“游戏小说”分组下的独立作品知识库。
 - [pdf-to-word](./skills/pdf-to-word/SKILL.md)：以内容质量和可编辑性为优先转换 PDF 为 Word，结合本地 OCR、结构重建与渲染复核，并持续沉淀新经验和通用工具。
 - [translate-pdf](./skills/translate-pdf/SKILL.md)：结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。
 - [comfyui-operations](./skills/comfyui-operations/SKILL.md)：跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖模型部署、工作流、API、缓存和图像异常。

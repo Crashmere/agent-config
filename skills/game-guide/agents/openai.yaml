@@ -1,4 +1,4 @@
 interface:
   display_name: "游戏攻略收集"
-  short_description: "多语言检索游戏攻略，整理为简体中文并写入 Yuyan 游戏攻略知识库"
-  default_prompt: "请用 $game-guide 尽可能全面收集这款游戏的攻略，按简体中文版统一术语，并通过 yuyan-doc 写入“游戏攻略”知识库的对应分组。"
+  short_description: "多语言检索游戏攻略，整理为简体中文并写入 Yuyan 首页游戏攻略分组下的独立游戏知识库"
+  default_prompt: "请用 $game-guide 尽可能全面收集这款游戏的攻略，按简体中文版统一术语，并通过 yuyan-doc 核对当前结构后，写入首页“游戏攻略”分组下该游戏的独立知识库，默认按主题放在库内根目录。"
