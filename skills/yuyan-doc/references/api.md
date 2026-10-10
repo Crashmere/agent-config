@@ -31,7 +31,7 @@
 
 | 方法与 path | body |
 |---|---|
-| POST books | name、description |
+| POST books | name、description，可选 groupId；创建与归入指定分组在一个事务保存 |
 | PATCH books/ID | 仅发送需要修改的 name / description 字段 |
 | PUT books/order | ids，完整知识库顺序 |
 | PUT book-groups | baseRevision、groups: [{id,name,bookIds}]，可选 bookOrder（全部存活知识库 ID 的顺序）；分组与顺序在一个事务保存 |
@@ -39,6 +39,8 @@
 | POST docs/batch | bookId、ids、action: copy / move / trash；copy/move 另带 targetBookId、parentId |
 
 batch 一次最多 5000 项，选父项时必须包含其全部存活后代；先读树展开选择。服务端校验并在一个事务内完成，目录变化时 409 后重新读取。copy 会复制所选结构、重写复制范围内文档链接并共享原素材。移动禁止放进自己的子树。成功后读取目标树确认位置及数量。
+
+在指定分组新建知识库时，先读 `book-groups` 取得目标 ID，再 POST `books`，例如 body 为 `{"name":"新知识库","description":"","groupId":"目标分组ID"}`。创建与追加归属在同一事务完成，新知识库位于该组末尾；无需再发一次移组请求。省略 `groupId` 或传空字符串时创建到“未分组”。非空目标不存在返回 404 且不创建记录，先刷新分组再根据用户意图处理，不静默改到未分组。该接口只向最新配置追加新 ID，保留既有归属与顺序，不需要 baseRevision；归组成功递增 revision，旧 revision 的完整分组写入仍会冲突。成功后合并读取一次 `books` 与 `book-groups` 核对新 ID、归属和末尾位置；失败时先确认是否已创建，不自动重试非幂等请求。网页分组菜单的“新建知识库”使用同一操作。
 
 移动知识库并指定组内位置时，先读取 `books` 和 `book-groups`。保留其他分组及回收站知识库的既有归属，只将目标 ID 从原组的 `bookIds` 移到新组；移至“未分组”则从各组移除。`bookIds` 只决定归属，实际显示顺序由 `books` 返回的全局顺序决定，不能只调整 `bookIds` 数组。
 

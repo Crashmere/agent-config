@@ -31,7 +31,7 @@ node "$YUYAN_DOC" doctor
 | 新建、润色、补写、重组、改样式 | [读写流程与局部修改](references/editing.md) |
 | 富文本、代码、公式、表格、分栏、图片与附件 | [文档格式](references/format.md)，按所需小节读取；`schema --node TYPE` 核对属性 |
 | 生成/上传/修改可编辑画板、技术图模板 | [可编辑画板](references/drawing.md)，`drawing` / `upload --kind drawing` |
-| 模板、片段、历史、恢复、复制/移动/删除；知识库移组并指定组内位置 | [API 与知识库操作](references/api.md) |
+| 模板、片段、历史、恢复、复制/移动/删除；在指定分组新建知识库、知识库移组并指定组内位置 | [API 与知识库操作](references/api.md) |
 | 下载素材、导出单篇 | [读写流程与局部修改](references/editing.md#素材与导出) |
 | 本次布局需要截图核对、图片窄屏比例、公式/图表排版 | [本地阅读页预览](references/preview.md)，`preview`；首次准备或代码更新时 `preview-setup` |
 
