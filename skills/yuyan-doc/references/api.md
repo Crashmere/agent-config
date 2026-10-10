@@ -34,11 +34,17 @@
 | POST books | name、description |
 | PATCH books/ID | 仅发送需要修改的 name / description 字段 |
 | PUT books/order | ids，完整知识库顺序 |
-| PUT book-groups | baseRevision、groups: [{id,name,bookIds}]；先读取当前配置并保留其他分组 |
+| PUT book-groups | baseRevision、groups: [{id,name,bookIds}]，可选 bookOrder（全部存活知识库 ID 的顺序）；分组与顺序在一个事务保存 |
 | POST docs/ID/move | bookId、parentId（根用 null）、index（目标位置） |
 | POST docs/batch | bookId、ids、action: copy / move / trash；copy/move 另带 targetBookId、parentId |
 
 batch 一次最多 5000 项，选父项时必须包含其全部存活后代；先读树展开选择。服务端校验并在一个事务内完成，目录变化时 409 后重新读取。copy 会复制所选结构、重写复制范围内文档链接并共享原素材。移动禁止放进自己的子树。成功后读取目标树确认位置及数量。
+
+移动知识库并指定组内位置时，先读取 `books` 和 `book-groups`。保留其他分组及回收站知识库的既有归属，只将目标 ID 从原组的 `bookIds` 移到新组；移至“未分组”则从各组移除。`bookIds` 只决定归属，实际显示顺序由 `books` 返回的全局顺序决定，不能只调整 `bookIds` 数组。
+
+从全部存活知识库的有序 ID 列表中取出待移动 ID，插到目标卡片之前或之后（放到组末尾时插在该组最后一个存活 ID 之后），将完整列表作为 `bookOrder` 与更新后的 `groups`、原 `baseRevision` 一起 PUT。例如全局顺序为 `[1,2,3,4]`，将知识库 1 移入包含 2、3 的组并放在两者之间，发送 `bookOrder: [2,1,3,4]`，同时保留知识库 4 的归属。空目标组只有新移入的一项，无须改变它在全局列表的位置。
+
+`bookOrder` 必须恰好包含所有存活知识库，包括其他组和未分组，不含回收站；遗漏、重复、未知或已删除 ID 返回 400，旧 revision 返回 409，归属和顺序均不部分保存。省略 `bookOrder` 保持既有顺序，旧调用仍兼容。失败后重新读取并根据用户意图重建请求，不换新 revision 强行提交旧快照；成功后读取一次 `books` 与 `book-groups` 核对归属、组内顺序及其他组保持情况。网页拖放会立即预览落点，失败时恢复已确认状态。
 
 ## 模板与片段
 
