@@ -47,4 +47,6 @@ python3 scripts/archive_conversations.py pack --file /private/task/conversation.
 python3 scripts/archive_conversations.py unpack --archive /private/download.jsonl.gz --out /private/new-directory
 ```
 
-输出合并长消息后的 messages.jsonl、逐份原始文件 original-NNN.bin 和文件名/类型/哈希映射 sources.json；原始文件逐份核验。输出目录必须不存在，不跟随来源文件名写任意路径。服务没有自动清理完整存档或删除原文的接口；每日 SQLite 备份包含存档、上传分块和索引。
+输出合并长消息后的 messages.jsonl、逐份原始文件 original-NNN.bin 和文件名/类型/哈希映射 sources.json；原始文件逐份核验。输出目录必须不存在，不跟随来源文件名写任意路径。服务没有自动清理完整存档或删除原文的接口。
+
+上传保存不等于已做备份。备份范围以服务 [运维文档](https://github.com/Crashmere/AICalendar/blob/main/docs/OPERATIONS.md) 为准：当前每日 SQLite 备份只包含活动与导入审计数据，不包含完整聊天、原始资料及其上传分块和索引。需要长期保留的原始资料应由用户另行保存，不因上传成功就自行删除本地原件。
