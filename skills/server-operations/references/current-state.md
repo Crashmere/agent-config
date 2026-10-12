@@ -57,6 +57,8 @@ Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确
 
 Yuyan 首页通过只读 `/api/stats` 显示存活文档的正文总字数及各知识库卡片字数，同一次查询返回全站 `chars` 与按知识库 ID 索引的 `bookChars`，空知识库为 0；沿用设备认证及现有 `plain_text`，无数据库迁移、数据根或运行时变化，接口随项目门户声明发布。
 
+Yuyan 阅读页“最近修改”使用只读 `/api/docs/{id}/recent-changes` 返回最近编辑/恢复前的历史基线，支持可选 revision 校验；紫色标记为浏览器独立浮层，不写入正文。沿用 30 天历史保留、设备认证和原生备份，无数据库迁移、数据根或共享 Nginx 变化，接口随项目资源声明发布；交互及比较边界见 Yuyan DESIGN 13.2。
+
 ## 门户与统一认证
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。

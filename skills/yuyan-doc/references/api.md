@@ -16,6 +16,7 @@
 | docs/ID/preview?heading=slug | 文档/章节摘要 |
 | docs/ID/backlinks | 反向链接及来源上下文 |
 | docs/ID/view | 阅读 HTML、目录、邻接文档和图片尺寸 |
+| docs/ID/recent-changes?revision=N | 最近修改的历史基线与摘要；revision 可选，详见历史说明 |
 | templates / templates/ID | 模板/片段列表 / 完整内容与预览 |
 | docs/ID/versions / versions/ID | 历史列表 / 某个历史的原生内容 |
 | versions/ID/view | 历史阅读 HTML 与元信息 |
@@ -82,6 +83,9 @@ node "$YUYAN_DOC" create --book 1 --title '新笔记' --template TEMPLATE_ID
 PATCH templates/ID 只支持重命名：name、baseRevision。DELETE 同样要求 baseRevision 和 --confirm。服务尚无原地修改模板正文接口；用户要求变更模板内容时可新建修订模板，确认替代范围后再删除旧模板，不伪造 PATCH 正文功能。
 
 ## 历史与删除
+
+- 阅读页“最近修改”开关用紫色双线与边标显示最新编辑会话的变化，浏览器记住开关；这是独立显示层，不是正文 highlight mark，不会写入、复制或导出为文档格式。可用上一处/下一处定位并展开隐藏内容，删除项在摘要和“查看完整差异”中查看。
+- `GET docs/ID/recent-changes?revision=N` 只读返回 `{revision, baseline, summary?}`；baseline 为 `{id, revision, title, html}` 或 null。优先使用本次“编辑前”/“恢复前”快照，跨过同次编辑的自动快照；无会话边界的旧客户端回退到最近不同快照。无保留基线时返回 null，不能把整篇当作新增。可选 revision 与当前不符返回 409，应重新读取当前文档。基线原生 JSON 仍通过 `versions/基线ID` 读取；HTML 仅用于阅读比较，不作为正文写回。示例：`node "$YUYAN_DOC" api --path 'docs/123/recent-changes?revision=7'`。
 
 - 改正文使用 edit，它会同事务保存编辑前内容，并在完成后补记结果快照；历史保留 30 天，不保底保留一条。GET versions 返回的历史 ID 不等同于文档 revision。
 - POST versions/VERSION_ID/restore，body 为当前文档的 baseRevision；使用 --confirm。先查看该历史正文和当前版本，明确恢复目标。服务同事务保留恢复前快照。恢复后重新读取文档和历史确认。
