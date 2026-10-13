@@ -85,9 +85,9 @@ PATCH templates/ID 只支持重命名：name、baseRevision。DELETE 同样要�
 ## 历史与删除
 
 - 阅读页顶部栏的“最近修改”开关用浅紫底色加虚线针脚的“补丁”显示最新编辑会话的变化，相邻修改合并为一块，补丁内改动的字加深底色，浏览器记住开关；这是独立显示层，不是正文 highlight mark，不会写入、复制或导出为文档格式。删除的内容由浏览器把基线渲染的副本临时放回原处，套玫红虚线框：整块删除标“已删除”，部分删除在新版前显示标“修改前”的旧版并划去删掉的字，代码只列失去的行。副本不可选中，不出现在 `docs/ID/view` 的 HTML、正文 JSON、复制或导出中，也不能当作正文写回。底部悬浮栏的“修改”“删除”可单独或同时显示，可上一处/下一处定位并展开隐藏内容；精确改动仍以“完整差异”为准。
-- `GET docs/ID/recent-changes?revision=N` 只读返回 `{revision, baseline, summary?}`；baseline 为 `{id, revision, title, html}` 或 null。优先使用本次“编辑前”/“恢复前”快照，跨过同次编辑的自动快照；无会话边界的旧客户端回退到最近不同快照。无保留基线时返回 null，不能把整篇当作新增。可选 revision 与当前不符返回 409，应重新读取当前文档。基线原生 JSON 仍通过 `versions/基线ID` 读取；HTML 仅用于阅读比较，不作为正文写回。示例：`node "$YUYAN_DOC" api --path 'docs/123/recent-changes?revision=7'`。
+- `GET docs/ID/recent-changes?revision=N` 只读返回 `{revision, baseline, summary?}`；baseline 为 `{id, revision, title, html}` 或 null。优先使用本次“编辑前”/“恢复前”快照；本次沿用上一条“编辑结束”“恢复”或“新建”快照作基线时使用该快照；跨过同次编辑的自动快照；无会话边界的旧客户端回退到最近不同快照。无保留基线时返回 null，不能把整篇当作新增。可选 revision 与当前不符返回 409，应重新读取当前文档。基线原生 JSON 仍通过 `versions/基线ID` 读取；HTML 仅用于阅读比较，不作为正文写回。示例：`node "$YUYAN_DOC" api --path 'docs/123/recent-changes?revision=7'`。
 
-- 改正文使用 edit，它会同事务保存编辑前内容，并在完成后补记结果快照；历史保留 30 天，不保底保留一条。GET versions 返回的历史 ID 不等同于文档 revision。
+- 改正文使用 edit，它会同事务把编辑前内容留在历史中（最新快照已是相同 revision、标题和正文的会话边界且距过期超过一周时直接沿用，不再重复记录），并在完成后补记结果快照；历史保留 30 天，不保底保留一条。GET versions 返回的历史 ID 不等同于文档 revision。
 - POST versions/VERSION_ID/restore，body 为当前文档的 baseRevision；使用 --confirm。先查看该历史正文和当前版本，明确恢复目标。服务同事务保留恢复前快照。恢复后重新读取文档和历史确认。
 - POST docs/ID/snapshot 手动补记当前正文，用于完成阶段失败后的修复；不能把它当作数据库备份。
 - DELETE docs/ID、DELETE books/ID 是移入回收站；POST 相应的 /restore 恢复。知识库/目录操作会影响其内容，先核对树。
