@@ -11,7 +11,7 @@
 | book-groups | 首页知识库分组及 revision |
 | recent / titles | 最近文档 / 文档标题索引 |
 | stats | 全站及各知识库正文总字数，返回 `{chars: number, bookChars: {[bookId: string]: number}}`，与首页及各卡片右下角一致 |
-| search?q=关键词 | 服务端全文匹配，最多 50 项；并非无限分页搜索 |
+| search?q=关键词 | 服务端全文匹配，空格分开的多个词须都出现在标题或正文中（最多取前 10 个不同的词），标题含词多的在前；最多 50 项，并非无限分页搜索 |
 | link-targets | 存活文档与 H1–H6 章节，含实际 slug；不包含回收站 |
 | docs/ID/preview?heading=slug | 文档/章节摘要 |
 | docs/ID/backlinks | 反向链接及来源上下文 |
