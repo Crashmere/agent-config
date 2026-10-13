@@ -1,6 +1,6 @@
 # API 与知识库操作
 
-`api --path` 使用相对 `/api/` 的路径。默认 GET；JSON body 从 `--input file.json` 读取，支持 `-` stdin。命令只允许下表已知接口；创建和修改正文必须走 create/edit，不用泛用 API 绕过格式与冲突检查。查询值按 URL 编码，不把凭据写进 URL。
+`api --path` 使用相对 `/api/` 的路径。默认 GET；JSON body 从 `--input file.json` 读取，支持 `-` stdin。脚本自动为 JSON body 设置 `Content-Type: application/json`；服务端对缺少它的 JSON 写入返回 400，对浏览器跨站写入返回 403 `cross_origin`，自行发请求时同样遵守。命令只允许下表已知接口；创建和修改正文必须走 create/edit，不用泛用 API 绕过格式与冲突检查。查询值按 URL 编码，不把凭据写进 URL。
 
 ## 查找与关系
 
