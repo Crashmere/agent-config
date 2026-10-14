@@ -24,6 +24,8 @@
 | trash | 回收站 |
 | attachments/CONTENT_ID/preview?name=文件名 | 素材预览类型、有限文本或压缩包目录 |
 
+渲染 HTML 超过 256 KiB 的文档在阅读页分段载入：网页另用 `docs/ID/view?segments=1`、`docs/ID/segments` 和 `docs/ID/segments/matches` 按版本标记取段，文档修改或服务重启后旧标记返回 409。脚本读取 HTML 一律用不带参数的 `docs/ID/view`，结果始终是整篇。分段文档在阅读页标记最近修改、打印或页内查找前会先载入全文。
+
 标题拼音从服务端返回，可用于筛选结果；不要引入另一份拼音词典。查找同名文档时同时查看知识库和父目录，选择后返回真实链接。
 
 查询全站及各知识库的字数用 `node "$YUYAN_DOC" api --path stats`：`chars` 为全站总数，`bookChars` 按知识库 ID 的字符串索引，每个存活知识库都有一项，空知识库为 0；例如 ID 为 12 的知识库读取 `bookChars["12"]`。统计与阅读页及目录一致：非空白 Unicode 字符逐个计数，只统计当前存活正文，不含文档标题、目录分组、回收站文档/知识库、历史或模板；无知识库时返回 `{chars: 0, bookChars: {}}`。
