@@ -83,13 +83,17 @@ def validate(data, app):
         inside(r["path"], root)
         require(r["path"] not in paths, "duplicate resource path")
         paths.add(r["path"])
-        require(r["kind"] in ("data", "media", "backups", "releases", "config", "binaries", "documents", "secret"),
-                "unknown resource kind")
+        require(r["kind"] in ("data", "media", "cache", "backups", "releases", "config", "binaries", "documents",
+                              "secret"), "unknown resource kind")
         require(type(r["browse"]) is bool and type(r["cleanup"]) is bool, "permissions must be booleans")
         top = r["path"][len(root) + 1:].split("/")[0]
         require(not r["browse"] or (top in ("data", "backups", "releases", "docs") and
                 r["kind"] not in ("secret", "config", "binaries")), "sensitive material cannot be browsed")
         require(r["kind"] != "documents" or top == "docs", "documents must stay under the application docs directory")
+        # Portal packages leave caches out, so a cache can never cover the data root or the database.
+        require(r["kind"] != "cache" or (top == "data" and r["path"] != root + "/data" and
+                not (a["database"] + "/").startswith(r["path"] + "/")),
+                "a cache must be a data subdirectory without the database")
         require(not r["cleanup"] or (r["id"] in ("backups", "releases") and
                 r["path"] == root + "/" + r["id"] and r["kind"] == r["id"]),
                 "cleanup is restricted to the application's backups/releases roots")
