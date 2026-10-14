@@ -59,6 +59,8 @@ Yuyan 首页通过只读 `/api/stats` 显示存活文档的正文总字数及各
 
 Yuyan 阅读页“最近修改”使用只读 `/api/docs/{id}/recent-changes` 返回最近编辑/恢复前的历史基线，支持可选 revision 校验；“补丁”标记为浏览器独立浮层，删除内容以浏览器临时插入的基线副本显示，均不写入正文。沿用 30 天历史保留、设备认证和原生备份，无数据库迁移、数据根或共享 Nginx 变化，接口随项目资源声明发布；交互及比较边界见 Yuyan DESIGN 13.2。
 
+Yuyan 数据库记录表布局版本（`meta.layout`/`min_layout`，与正文格式版本分开）：程序打开旧布局时按步骤迁移，`backup`/`daily` 原样复制。第 2 步把 docs、doc_versions 的正文列移到最后，2026-10-14 随 4cc06f4 发布，由新程序在 before-deploy 备份之后的 `check` 中完成（4.5 秒）；此前的程序兼容新布局，回退不需要恢复数据库。迁移后 yuyan.db 约 322 MB，其中约 129 MB 为空闲页，由后续写入复用，备份不包含。无数据根、接口、unit 或备份格式变化；设计与运维见 Yuyan DESIGN 26.1、OPERATIONS“数据库布局迁移”。
+
 ## 门户与统一认证
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
