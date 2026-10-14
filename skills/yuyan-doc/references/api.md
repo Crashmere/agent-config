@@ -7,7 +7,7 @@
 | GET path | 用途 |
 |---|---|
 | books / books/ID | 知识库列表 / 详情 |
-| books/ID/tree | 有序文档树，节点有 id、kind、title、children；kind 区分 doc/group |
+| books/ID/tree | 有序文档树，节点有 id、kind、title、children；kind 区分 doc/group，网页编辑较慢的文档带 `heavy: true`（见下） |
 | book-groups | 首页知识库分组及 revision |
 | recent / titles | 最近文档 / 文档标题索引 |
 | stats | 全站及各知识库正文总字数，返回 `{chars: number, bookChars: {[bookId: string]: number}}`，与首页及各卡片右下角一致 |
@@ -25,6 +25,8 @@
 | attachments/CONTENT_ID/preview?name=文件名 | 素材预览类型、有限文本或压缩包目录 |
 
 渲染 HTML 超过 256 KiB 的文档在阅读页分段载入：网页另用 `docs/ID/view?segments=1`、`docs/ID/segments` 和 `docs/ID/segments/matches` 按版本标记取段，文档修改或服务重启后旧标记返回 409。脚本读取 HTML 一律用不带参数的 `docs/ID/view`，结果始终是整篇。分段文档在阅读页标记最近修改、打印或页内查找前会先载入全文。
+
+编辑负载（正文节点数，含文字节点，加字数 ÷ 100）达到 40,000 的文档在目录树中带 `heavy: true`：网页进入编辑前提示打开较慢并建议拆分，直接打开 `/docs/ID/edit` 会先转到阅读页确认。这只影响网页编辑器，脚本的 read/create/edit 不受限制；规划超长文档时可据此向用户说明网页编辑的代价。
 
 标题拼音从服务端返回，可用于筛选结果；不要引入另一份拼音词典。查找同名文档时同时查看知识库和父目录，选择后返回真实链接。
 
