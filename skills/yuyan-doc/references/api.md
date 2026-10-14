@@ -15,7 +15,7 @@
 | link-targets | 存活文档与 H1–H6 章节，含实际 slug；不包含回收站 |
 | docs/ID/preview?heading=slug | 文档/章节摘要 |
 | docs/ID/backlinks | 反向链接及来源上下文 |
-| docs/ID/view | 阅读 HTML、目录、邻接文档和图片尺寸 |
+| docs/ID/view | 阅读 HTML、目录、邻接文档和图片尺寸；`images` 按素材 ID 给出原图 `[宽, 高]`，有显示版本时为 `[宽, 高, 文件列表]` |
 | docs/ID/recent-changes?revision=N | 最近修改的历史基线与摘要；revision 可选，详见历史说明 |
 | templates / templates/ID | 模板/片段列表 / 完整内容与预览 |
 | docs/ID/versions / versions/ID | 历史列表 / 某个历史的原生内容 |

@@ -93,7 +93,7 @@ Mermaid 使用 `codeBlock` 且 language 为 `mermaid`，不是单独节点。Mar
 
 ## 图片、裁切、切分与组合
 
-image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard 直接容纳 image。先 upload 获取真实 src，禁止猜内容 ID。src 是 `/assets/<32位id>.<扩展名>`，不带 `/yuyan` 前缀。
+image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard 直接容纳 image。先 upload 获取真实 src，禁止猜内容 ID。src 是 `/assets/<32位id>.<扩展名>`，不带 `/yuyan` 前缀。网页另按屏幕载入较窄的显示版本 `/assets/<id>-<宽>.<jpg|png>`；它们可随时重建或消失，不写入 src，下载、核对和导出一律用原图。
 
 - 基础属性：src、alt、title、width、height、caption、shadow、blockAlign。caption 为可见说明，与 alt/title 独立；shadow 为可选布尔阴影边框。
 - crop：`{x,y,width,height}`，相对原图的 0–1 范围；x+width、y+height 不超过 1；null 表示整图。sourceWidth/sourceHeight 保存原始像素尺寸，width/height 为显示尺寸。裁切后同步合理的显示宽高比例，原始素材不变。
