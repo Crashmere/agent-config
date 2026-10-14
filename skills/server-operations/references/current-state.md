@@ -61,6 +61,8 @@ Yuyan 阅读页“最近修改”使用只读 `/api/docs/{id}/recent-changes` �
 
 Yuyan 数据库记录表布局版本（`meta.layout`/`min_layout`，与正文格式版本分开）：程序打开旧布局时按步骤迁移，`backup`/`daily` 原样复制。第 2 步把 docs、doc_versions 的正文列移到最后，2026-10-14 随 4cc06f4 发布，由新程序在 before-deploy 备份之后的 `check` 中完成（4.5 秒）；此前的程序兼容新布局，回退不需要恢复数据库。迁移后 yuyan.db 约 322 MB，其中约 129 MB 为空闲页，由后续写入复用，备份不包含。无数据根、接口、unit 或备份格式变化；设计与运维见 Yuyan DESIGN 26.1、OPERATIONS“数据库布局迁移”。
 
+Yuyan 阅读页对渲染 HTML 超过 256 KiB 的文档分段载入：只读 `/api/docs/{id}/segments` 按版本标记返回连续几段 HTML 与图片尺寸（immutable 缓存），`/api/docs/{id}/segments/matches` 列出含搜索词的段号；`/view` 不带参数仍返回整篇。切分随渲染缓存保存在内存，无数据库迁移、数据根、运行时或共享 Nginx 变化，沿用设备认证，接口随项目门户声明发布。2026-10-14 随 ba6c941 上线后，最长文档的页面由 15 MB（gzip 2.4 MB）降为 214 KB（gzip 49 KB）；设计见 Yuyan DESIGN 26.2。
+
 ## 门户与统一认证
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
