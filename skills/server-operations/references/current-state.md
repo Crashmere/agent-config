@@ -65,6 +65,8 @@ Yuyan 阅读页对渲染 HTML 超过 256 KiB 的文档分段载入：只读 `/ap
 
 Yuyan 网页按显示宽度和屏幕密度载入图片显示版本：128 KiB 以上的位图在 `data/derived/images` 生成 640/1280/1920 宽的副本，照片类无损原图通过 SSIM 检查时改用 JPEG；2 倍及以上屏幕另有一套档位，截图按 2×2 平均后通过检查的 JPEG（`.hidpi.jpg`）逐档替换更大的无损版本。原图不变，导出、原生备份和查看原图仍用原图。该目录是可删除的派生缓存，在门户声明中登记为 cache，原生备份和门户备份包都不收集；恢复或删除后由服务单线程补齐，最多占半个 CPU。版本文件沿用 `/yuyan/assets/` 路由和设备认证，无数据库迁移、unit、Nginx 或权限变化。清单版本号变化时启动即清空重建。2026-10-14 随 26003ce 升级为版本 2，约 10 分钟补齐 653 张：628 张有版本，其中 167 张有高密度屏档位，版本共 195 MiB；补齐读写的图片进入页缓存，MemoryPeak 到达 384M 上限，anon 最高约 86 MiB，无 OOM。诊断用 `yuyan images --data`，设计见 Yuyan DESIGN 26.3。
 
+Yuyan 全文搜索在服务进程内存中扫描小写全文，按 `revision/created_at` 只重读改过的文档，`serve` 启动后预热；接口、结果与摘要不变，无数据库迁移、数据根、运行时或共享 Nginx 变化。2026-10-14 随 c19a48f 发布：启动日志 `search index ready` 显示 526 篇、17.9 MiB、201 ms，anon 启动后约 80 MiB，搜索由 90–143 ms 降为 4–13 ms。设计见 Yuyan DESIGN 26.4。
+
 ## 门户与统一认证
 
 ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。资源声明可登记 cache 类型（不含数据库的 data 子目录），2026-10-14 起（d5ee4a2）备份包在任何范围都跳过这些目录，目前只有 Yuyan 的 data/derived（约 168 MiB）。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
