@@ -23,6 +23,14 @@
 - Keep changes safe, scoped, and relevant to the task.
 - Explain destructive actions and ask for confirmation before running them.
 
+## Testing and investigation discipline
+
+- Minimize unnecessary tests and test runs. Before adding or running a test, identify the concrete behavior or failure it would check, whether that situation can realistically occur, how likely it is, and whether detecting it justifies the effort. Skip tests without a meaningful answer.
+- Do not add tests merely to increase coverage or demonstrate that testing happened. Avoid unit tests that mirror the implementation, trivial assertions, hash or snapshot comparisons without a real integrity requirement, and elaborate fixtures for impossible or extremely unlikely states.
+- During normal development, treat sufficiently unlikely hypothetical failures as acceptable risk. Consider them briefly, then move on instead of spending time on speculative tests or deep investigation. Examine unusual conditions and implementation details thoroughly when an actual failure, reproducible symptom, or concrete evidence makes that investigation relevant.
+- Prefer the smallest check that verifies the requested behavior, reusing existing checks when useful. Simple documentation, cosmetic, and other reversible low-impact changes do not automatically need tests. Add regression tests only when they protect against a plausible recurrence of a real problem.
+- Stop once the relevant checks pass. Expand or repeat testing only when new changes, failures, or unresolved concrete concerns justify it. Honor explicit test requests and mandatory project checks within their applicable scope.
+
 ## Web keyboard and focus policy
 
 - For all web services developed or maintained for the user, block ordinary Tab and Shift+Tab from moving focus between page controls by default, including menus, forms, dialogs, and dynamically loaded pages. Change this only when the user explicitly requests a different behavior.
