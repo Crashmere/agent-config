@@ -1,44 +1,49 @@
-# 门户与资源声明维护
+<a id="门户与资源声明维护"></a>
+# Portal and Resource Declaration Maintenance
 
-ServerPortal（Crashmere/ServerPortal，工作区 ~/ali/ServerPortal）负责应用门户、设备认证、只读资源、受限清理和备份。运行在 /opt/serverportal、回环 18085、/portal/，公网根路径跳转门户。共享认证覆盖业务公网页面/API；AICalendar 的 `/aicalendar/ingest/v1/` 使用独立导入 Bearer 凭据，支持日历摘要导入/核验和完整聊天存档的上传、查询、下载，其浏览器页面/API 继续继承门户认证；ACME、本机发布检查和服务间调用保留。存档复用 AICalendar SQLite；原生快照只含日历记录、注释与导入审计，用户确认完整聊天存档不备份，无需增加门户备份类型。
+ServerPortal (Crashmere/ServerPortal, workspace ~/ali/ServerPortal) provides the application portal, device authentication, read-only resources, restricted cleanup, and backups. It runs at /opt/serverportal, loopback port 18085, and /portal/; the public root path redirects to the portal. Shared authentication covers public business pages/APIs. AICalendar's `/aicalendar/ingest/v1/` uses a separate import Bearer credential and supports calendar-summary import/verification and full conversation archive upload, queries, and downloads; its browser pages/APIs continue to inherit portal authentication. ACME, local release checks, and service-to-service calls remain available. Archives reuse AICalendar SQLite; native snapshots contain only calendar records, annotations, and import audits. The user confirmed that full conversation archives are not backed up, so no additional portal backup type is needed.
 
-## 所有权与注册目录
+<a id="所有权与注册目录"></a>
+## Ownership and registry directory
 
-- 各应用只在自己的 deploy/portal.json 维护名称、图标、仓库、入口、端口、用户、unit、数据库、备份类型、目录用途和主要 API；生产文件为 /opt/<app>/config/portal.json，由 root 管理。
-- 门户展示名称 name 一律使用英文品牌名（例如 Yuyan），不拼接中文名称；新服务从首次接入即遵循。资源的中文用途名称和 description 继续保留在声明中，门户应用列表不展示 description。
-- 门户使用 registryDir=/opt/serverportal/registry.d，每个 <app>.json 是指向 /opt/<app>/config/portal.json 的 root 管理链接。首次声明发布创建链接，无需维护中央 registry 路径数组。旧 registry 数组仅兼容迁移，不能与 registryDir 同时配置。
-- 门户按请求检测声明变化，普通请求最多缓存 2 秒；/registry 生效检查强制重读。整组声明全部有效才替换内存快照，同时失效概览缓存与未执行清理预览。错误时保留运行中的上一份有效配置并显示提示；重启时仍要求磁盘声明有效。
-- 自动发现的范围是注册目录。应用文件、数据库表和运行状态从现场读取；目录用途、API 说明、服务归属与浏览/清理边界必须显式维护，不能靠扫描猜测。
+- Each application maintains its name, icon, repository, entry point, port, user, units, databases, backup types, directory purposes, and main APIs only in its own deploy/portal.json. The production file is /opt/<app>/config/portal.json, managed by root.
+- Portal display names in name must use English brand names (for example, Yuyan), without appending Chinese names; new services follow this from initial integration. Keep Chinese resource-purpose names and description in declarations; the portal application list does not display description.
+- The portal uses registryDir=/opt/serverportal/registry.d, with each <app>.json a root-managed link to /opt/<app>/config/portal.json. The first declaration release creates the link; no central array of registry paths needs maintenance. The old registry array exists only for migration compatibility and cannot be configured together with registryDir.
+- The portal checks for declaration changes on requests, caching ordinary requests for at most 2 seconds; /registry activation checks force a reread. It replaces the in-memory snapshot only when the entire declaration set is valid, also invalidating the overview cache and unexecuted cleanup previews. On error, it keeps the last valid configuration running and displays a notice; restarting still requires valid declarations on disk.
+- Automatic discovery is limited to the registry directory. Application files, database tables, and runtime status are read from the live system; directory purposes, API descriptions, service ownership, and browsing/cleanup boundaries must be explicitly maintained, not guessed by scanning.
 
-API 条目须对照项目实际路由与接口文档核对；同步成功不代表内容正确。完整核对方法见 [门户 API 列表与服务不一致](common-issues.md#门户-api-列表与服务不一致)。
+Check API entries against the project's actual routes and API documentation; successful synchronization does not prove content correctness. For the full verification method, see [Portal API list does not match the service](common-issues.md#portal-api-list-does-not-match-the-service).
 
-上传与大文档请求的大小由各业务 location 和程序限制；共享内部认证子请求单独关闭 body 大小检查且不转发请求体，避免继承默认 1 MiB 限制造成 500。原因、影响范围和验证见 [统一认证误拦大请求](common-issues.md#统一认证误拦大请求)。
+Each business location and program limits upload and large-document request sizes. Body-size checks are disabled only for the shared internal authentication subrequest, which does not forward request bodies, avoiding 500 errors caused by inheriting the default 1 MiB limit. For the cause, affected scope, and validation, see [Shared authentication rejects large requests](common-issues.md#shared-authentication-rejects-large-requests).
 
-## 共用校验和发布协议
+<a id="共用校验和发布协议"></a>
+## Shared validation and release protocol
 
-校验维护源只有 scripts/validate-portal.py（Python 3 标准库）。维护电脑从受信 agent-config checkout 执行它；服务器从 /opt/server-context/scripts/validate-portal.py 使用同一规则。更新契约时同步该脚本、ServerPortal 适配和本地共享工具，并验证已有声明。服务器不需要 Go/Node 或额外 Python 包。
+The sole maintained validation source is scripts/validate-portal.py (Python 3 standard library). The maintenance computer runs it from a trusted agent-config checkout; the server uses the same rules through /opt/server-context/scripts/validate-portal.py. When updating the contract, synchronize this script, the ServerPortal integration, and local shared tools, and validate existing declarations. The server needs neither Go/Node nor additional Python packages.
 
-每个应用保留独立发布身份和最小 sudo 范围，authorized_keys 登记当前维护电脑的公钥。root 管理的 deploy-ssh.sh / deploy-release.sh 支持两种声明命令：
+Each application retains a separate deployment identity and minimal sudo scope, with the current maintenance computer's public key in authorized_keys. The root-managed deploy-ssh.sh / deploy-release.sh support two declaration commands:
 
-- portal-check <source-commit> <declaration-sha256>：stdin 为最多 1 MiB JSON，校验声明归属、整体注册冲突和 SHA-256，不写文件；在替换业务程序之前执行。
-- portal <source-commit> <declaration-sha256>：同样校验，取得本应用发布锁和注册锁，原子安装声明并建立受控链接，强制门户重新加载并核对实际 SHA-256。失败恢复原声明/链接；成功记录 config/portal-source.json。
+- portal-check <source-commit> <declaration-sha256>: accepts at most 1 MiB of JSON on stdin, validates declaration ownership, conflicts across the registry, and SHA-256 without writing files; run before replacing the business program.
+- portal <source-commit> <declaration-sha256>: performs the same validation, acquires this application's deployment lock and the registry lock, atomically installs the declaration and creates a controlled link, forces portal reload, and verifies the actual SHA-256. Restores the previous declaration/link on failure; records config/portal-source.json on success.
 
-这两个命令都通过该应用已有的固定 root 发布脚本调用 ServerPortal，应用名由脚本固定。不能上传校验器或发布脚本，不能指定其他应用、目录或任意命令。声明固定自身 root、运行用户和 URL 前缀，unit 必须属于本应用，资源不能越出自身目录，配置/秘密不能改为网页可读，清理仅允许自身 backups/releases。
+Both commands invoke ServerPortal through the application's existing fixed root release script, which fixes the application name. They cannot upload validators or release scripts, or specify other applications, directories, or arbitrary commands. Declarations fix their own root, runtime user, and URL prefix; units must belong to the application, resources must stay within its directories, configuration/secrets cannot become web-readable, and cleanup is limited to its own backups/releases.
 
-本机发布将同提交 portal.json 与程序放入同一本地版本目录，先预检，程序成功发布后再同步声明。声明同步失败会使本机命令失败；已成功发布的程序不自动回退，运维先检查 source marker 和门户回执，再修正声明。程序健康走服务器回环；公网 HTTPS 无凭据应返回 401。
+Local releases place portal.json and the program from the same commit in the same local version directory, run a preflight check, then synchronize the declaration after successful program deployment. Declaration synchronization failure causes the local command to fail; a successfully deployed program is not automatically rolled back. First inspect the source marker and portal receipt, then correct the declaration. Program health checks use server loopback; public HTTPS without credentials should return 401.
 
-只更新门户元数据时，提交并推送源码后在项目运行 `make portal`。此命令预检声明、同步并核对回执，不构建或重启业务程序。声明来源在 portal-source.json，程序来源在 current-commit。
+To update only portal metadata, commit and push the source, then run `make portal` in the project. This command preflights and synchronizes the declaration and verifies the receipt without building or restarting the business program. Declaration provenance is in portal-source.json; program provenance is in current-commit.
 
-## 新服务与日常维护
+<a id="新服务与日常维护"></a>
+## New services and routine maintenance
 
-1. 按共享重建规则准备服务、受限发布身份、文档和 Nginx location，继承公网认证，并默认完成 [网站图标约定](conventions.md#网站图标与手机桌面入口) 的图标、精确公开规则及自动检查；当前自动接入约定为 /opt/<id>、同名运行用户、单个 SQLite 与原生 backup 接口。不同存储/部署形态先实现明确适配。
-2. 在项目中添加 deploy/portal.json、AGENTS 同步规则，本地发布接入共享校验与上述发布协议；更新共享应用清单。首次声明发布会自动登记服务。
-3. 数据根、接口、unit、端口、访问路径或备份契约变化，同一提交维护声明及对应 docs。普通文件、照片、备份文件和数据库记录增减不需要改声明。可整体删除、由应用自动重建的派生数据登记为 `kind: "cache"`：只能是不含数据库的 data 子目录，门户备份包在任何范围都不收集，存储页单独显示其占用。
-4. 发布后核对门户加载回执、目录用途、只读数据表和未知目录提示。备份契约变化需要相应的隔离样例验证；真实恢复演练按用户安排，不自动恢复已暂缓任务。
-5. 文档仍由 sync-docs.sh 同步，本机程序发布不发布 docs；新增/改名/退役服务的共享架构和真实数据处置按 SKILL 授权表。
+1. Prepare the service, restricted deployment identity, documentation, and Nginx location under the shared rebuild rules. Inherit public authentication and, by default, complete the icons, exact public-access rules, and automated checks required by the [Website icon conventions](conventions.md#website-icons-and-home-screen-shortcuts). The current automatic integration contract is /opt/<id>, a runtime user with the same name, a single SQLite database, and a native backup interface. Implement an explicit adapter first for different storage/deployment models.
+2. Add deploy/portal.json and AGENTS synchronization rules to the project, integrate shared validation and the above release protocol into local releases, and update the shared application inventory. The first declaration release automatically registers the service.
+3. When data roots, APIs, units, ports, access paths, or backup contracts change, maintain the declaration and corresponding docs in the same commit. Adding or removing ordinary files, photos, backup files, or database records does not require declaration changes. Register derived data that can be deleted in full and automatically rebuilt by the application as `kind: "cache"`: it must be a data subdirectory containing no database, is excluded from portal backup packages at every scope, and has its usage shown separately on the storage page.
+4. After deployment, verify the portal loading receipt, directory purposes, read-only data tables, and unknown-directory notices. Backup contract changes require corresponding isolated example validation; schedule real restoration drills according to the user, and do not automatically resume deferred tasks.
+5. Continue synchronizing documentation with sync-docs.sh; local program releases do not publish docs. Follow the SKILL authorization table for shared architecture and real-data handling when adding/renaming/retiring services.
 
-## 安全与备份
+<a id="安全与备份"></a>
+## Security and backups
 
-设备凭据由服务器生成，使用 Secure/HttpOnly/SameSite=Strict Cookie。服务端授权不自动过期；浏览器 Cookie 以 400 天有效期随有效访问续期，实际保留受浏览器限制。门户启动将旧的仍有效授权迁移为无期限，已过期和撤销的凭据不复活。门户请求直接续期，业务应用由共享 Nginx 转发续期头；继承规则与新增应用验证见 [统一认证的 Cookie 续期](common-issues.md#统一认证的-cookie-续期)。网页浏览只读，清理必须预览并确认。根采集器仅监听本机 Unix socket，网页进程独立用户；不开放任意路径、SQL 或命令。
+The server generates device credentials using Secure/HttpOnly/SameSite=Strict cookies. Server-side authorization does not expire automatically; browser cookies renew to a 400-day validity period on valid access, with actual retention subject to browser limits. On startup, the portal migrates older authorizations that remain valid to indefinite authorization; expired and revoked credentials are not revived. Portal requests renew directly; for business applications, shared Nginx forwards renewal headers. See [Cookie renewal with shared authentication](common-issues.md#cookie-renewal-with-shared-authentication) for inheritance rules and new-application validation. Web browsing is read-only; cleanup requires a preview and confirmation. The root collector listens only on a local Unix socket, and the Web process uses a separate user; arbitrary paths, SQL, and commands are not exposed.
 
-用户已选择简化门户备份：新包为不加密 .tar.gz，网页默认创建当前恢复集的独立完整包，无需密钥或增量基线。可选包含历史的 all 和仅文档的 docs；旧加密包/增量链继续兼容。备份包含一致性应用快照、程序/运行配置、发布公钥、共享配置、证书、AGENTS/docs、门户状态与 registry.d 链接。仅旧加密包仍需原恢复私钥；云账号/安全组和本机 SSH 私钥独立保管。备份格式、真实恢复验收状态与重建顺序以 ServerPortal docs/RESTORE.md、docs/VERIFICATION.md 为准。
+The user chose simplified portal backups: new packages are unencrypted .tar.gz files; the web UI defaults to a standalone full package of the current recovery set, without keys or an incremental baseline. Optional scopes are all, including history, and docs, containing only documentation; older encrypted packages/incremental chains remain compatible. Backups include consistent application snapshots, programs/runtime configuration, deployment public keys, shared configuration, certificates, AGENTS/docs, portal state, and registry.d links. Only older encrypted packages still require the original recovery private key; cloud accounts/security groups and local SSH private keys are managed separately. ServerPortal docs/RESTORE.md and docs/VERIFICATION.md are authoritative for backup formats, actual restoration acceptance status, and rebuild order.

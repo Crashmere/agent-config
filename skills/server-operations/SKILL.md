@@ -3,57 +3,65 @@ name: server-operations
 description: Maintain the user's personal Linux servers and multi-application deployments, including SSH host ali, shared Nginx/systemd infrastructure, application inventory, cross-project architecture changes, reproducible rebuilding, and current-state documentation. Use before inspecting, deploying, changing, or troubleshooting these servers or their hosted projects such as Ledger, and when adding another application or updating server maintenance context.
 ---
 
-# 服务器与多应用维护
+<a id="服务器与多应用维护"></a>
+# Server and Multi-Application Maintenance
 
-把本技能作为共享运维上下文的入口，不依赖之前的聊天。保持实现简单、可阅读、可重建；根据真实需求改进架构，不把今天的方案当成永久限制。
+Use this skill as the entry point for shared operations context, without relying on earlier conversations. Keep implementations simple, readable, and reproducible; improve the architecture to meet real needs rather than treating today's design as a permanent constraint.
 
-## 先读什么
+<a id="先读什么"></a>
+## What to read first
 
-1. 每次先读 [共享约定](references/conventions.md) 和 [当前服务器与应用清单](references/current-state.md)。
-2. 读取目标项目的 `AGENTS.md`、`docs/README.md`、`docs/OPERATIONS.md`，按任务补读架构/API/发布文档。清单给出仓库和服务器文档位置。
-3. 发布、构建或测试策略先读 [本机发布与按需验证](references/release.md)。变更、部署、补文档时必须读 [变更与文档闭环](references/maintenance.md)；新增应用、迁移或换服务器时再读 [重建与新增应用](references/rebuild.md)。
-4. 发布失败或排障时先查 [共性问题与全局方案](references/common-issues.md)，已有方案直接按其执行。
-5. 涉及技能本身或个人指令仓库结构，用 `personal-skill-management`；安装/更新软件用 `software-installation`；Python 环境操作用 `python-environment`。不要复制这些技能的完整流程。
-6. 公网 HTTPS、IP 证书、自动续期或来源校验，读 [共享 HTTPS](references/https.md)，统一处理全部应用。
+1. Always start with [Shared conventions](references/conventions.md) and [Current server and application inventory](references/current-state.md).
+2. Read the target project's `AGENTS.md`, `docs/README.md`, and `docs/OPERATIONS.md`, then read architecture/API/release documentation as the task requires. The inventory lists repository and server documentation locations.
+3. For release, build, or testing strategy, first read [Local releases and on-demand validation](references/release.md). For changes, deployments, or documentation updates, you must read [Completing changes and documentation](references/maintenance.md); for new applications, migrations, or server replacement, also read [Rebuilding and adding applications](references/rebuild.md).
+4. For release failures or troubleshooting, first consult [Common issues and shared solutions](references/common-issues.md) and directly follow any existing solution.
+5. Use `personal-skill-management` for the skill itself or the personal instruction repository structure; `software-installation` for software installation/updates; and `python-environment` for Python environment operations. Do not duplicate their full workflows.
+6. For public HTTPS, IP certificates, automatic renewal, or origin validation, read [Shared HTTPS](references/https.md) and handle all applications consistently.
 
-7. 门户、统一设备认证、资源声明、整机材料备份或新增数据目录，读 [门户维护](references/portal.md)，同时维护受影响应用的 deploy/portal.json。
-8. 发布材料自动清理、保留数量、失败批次或清理锁，读 [发布材料自动保留](references/retention.md)。
-9. 新增网站或修改图标、构建路径、统一认证时，默认落实 [网站图标约定](references/conventions.md#网站图标与手机桌面入口)，运行通用图标检查；无需等用户另外提出手机图标需求。
+7. For the portal, shared device authentication, resource declarations, backups of whole-server materials, or new data directories, read [Portal maintenance](references/portal.md) and update the affected applications' deploy/portal.json files as well.
+8. For automatic cleanup of release materials, retention counts, failed batches, or cleanup locks, read [Automatic retention of release materials](references/retention.md).
+9. When adding a website or changing icons, build paths, or shared authentication, apply the [Website icon conventions](references/conventions.md#website-icons-and-home-screen-shortcuts) by default and run the shared icon check; do not wait for a separate request for mobile icons.
 
-## 授权：改完告知，还是先确认
+<a id="authorization"></a>
+<a id="授权改完告知还是先确认"></a>
+## Authorization: proceed and report or confirm first
 
-这是唯一的授权规则，项目文档只链接这里。默认直接做完再告知用户，只有下面“先确认”一栏才停下来问。
+This is the sole authorization rule; project documentation should only link here. By default, complete the work and then report to the user. Stop to ask only for items in the "Confirm first" column below.
 
-| 直接做，结束时告知 | 先确认 |
+| Proceed and report when finished | Confirm first |
 | --- | --- |
-| 只读检查：状态、日志、配置、哈希、网络连通与测速 | 删除、覆盖或恢复真实数据和备份；选择恢复时点；数据库迁移 |
-| 所有项目与 agent-config 的文档：修改、提交、推送、同步服务器副本 | 公网暴露、鉴权、密钥、发布身份或 sudo 权限变化 |
-| 清理已知垃圾：失败发布残留、暂存目录、`._*` 等非数据文件 | 修改 root 管理的发布脚本、共享 Nginx server 或其他应用的配置 |
-| 用户要求实现或部署时：本次功能验证、提交、推送 main、本机发布 | 其他应用停机、主机重启、额外费用 |
-| 修复自己本次操作引入的问题 | 用户只要求查看或诊断时，部署、重启或修复生产 |
+| Read-only checks: status, logs, configuration, hashes, network connectivity, and speed tests | Deleting, overwriting, or restoring real data and backups; choosing a recovery point; database migrations |
+| Documentation for all projects and agent-config: editing, committing, pushing, and synchronizing server copies | Changes to public exposure, authentication, keys, deployment identities, or sudo permissions |
+| Cleaning known junk: failed release leftovers, staging directories, and non-data files such as `._*` | Changes to root-managed release scripts, the shared Nginx server, or other applications' configuration |
+| When the user requests implementation or deployment: validating the current feature, committing, pushing main, and releasing from the local machine | Downtime for other applications, host reboots, or additional costs |
+| Fixing problems introduced by your own actions in the current task | Deploying, restarting, or fixing production when the user only requested inspection or diagnosis |
 
-不确定属于哪一栏时，可逆且不碰真实数据就按左栏处理。完成后在报告里列出做了什么、结果和遗留项。
+If the applicable column is unclear, use the left column when the action is reversible and does not touch real data. After completion, report the actions taken, results, and remaining items.
 
-## 开始工作
+<a id="开始工作"></a>
+## Getting started
 
-- 先看各仓库工作区和远端提交，再通过受信的 SSH 别名连接。
-- SSH 远程命令不会自动加载远端指令；显式读取 `ssh ali 'cat /opt/AGENTS.md'`。不要把“存在 AGENTS.md”或登录提示当成所有客户端都会执行的保证。
-- 需要在浏览器或命令行查看线上真实页面时，运行 `scripts/view-tunnel.sh`，规则见[共享约定](references/conventions.md#agent-查看线上真实页面)。
-- 按任务抽查事实：监听、unit、Nginx include、目录所有者、版本、备份和健康。可在服务器运行 `bash /opt/server-context/scripts/inspect.sh` 取得不含账目的基础状态；云安全组需另行核实。
-- 文档是上次验证的快照，现场是实际状态，Git 是维护来源；不一致时调查差异，不能用文档盲目覆盖现场，也不能把意外漂移直接宣布为新约定。
+- Inspect each repository's working tree and remote commits before connecting through a trusted SSH alias.
+- Remote SSH commands do not automatically load remote instructions; explicitly read `ssh ali 'cat /opt/AGENTS.md'`. Neither the existence of AGENTS.md nor a login notice guarantees that every client will follow it.
+- To view real production pages in a browser or from the command line, run `scripts/view-tunnel.sh`; see the [Shared conventions](references/conventions.md#agents-viewing-live-pages).
+- Spot-check facts relevant to the task: listeners, units, Nginx includes, directory owners, versions, backups, and health. Run `bash /opt/server-context/scripts/inspect.sh` on the server for basic status without accounting records; verify cloud security groups separately.
+- Documentation is a snapshot of the last verification, the live system is the actual state, and Git is the maintenance source. Investigate discrepancies rather than blindly overwriting the live system from documentation or declaring unexpected drift a new convention.
 
-## 实施与收尾
+<a id="实施与收尾"></a>
+## Implementation and completion
 
-- 应用内部改动留在该项目；共享层改动先检查清单中全部应用，列出受影响的配置、代码、数据、发布、文档、验证与回退点。可以在任务范围内改进设计。
-- 在任一项目遇到可能影响其他应用的共性问题（主机、网络、共享 Nginx、共同的发布/备份模式、运行时依赖等），解决方案一律写入 [common-issues](references/common-issues.md)，覆盖全部受影响应用；项目 docs 只保留本项目参数和链接，不各自维护副本。
-- 收尾按 [maintenance](references/maintenance.md) 的完成条件：更新所有受影响项目与共享文档（覆盖过时内容，历史交给 Git），推送后运行 `scripts/sync-docs.sh`。分阶段迁移时写明真实共存状态，同步受阻时写明未完成项，不报告完全完成。
+- Unless the user explicitly requests another language, write agent-authored specifications and maintenance documents in English, including `AGENTS.md`, project and server documentation, technical plans, operational runbooks, decision records, and handoff documents. Preserve exact source-language names, UI labels, quotations, matching literals, fixtures, and required user-facing content when translation would change meaning or behavior. This default does not determine the language of conversation, product copy, creative work, or other user-requested deliverables.
+- Keep application-internal changes in that project. Before changing a shared layer, inspect every application in the inventory and list the affected configuration, code, data, releases, documentation, validation, and rollback points. Improve the design within the task's scope as needed.
+- When any project encounters a common issue that may affect other applications (host, network, shared Nginx, common release/backup patterns, runtime dependencies, etc.), always document the solution in [common-issues](references/common-issues.md), covering every affected application. Project docs should retain only their own parameters and links, without maintaining separate copies.
+- Complete the criteria in [maintenance](references/maintenance.md): update all affected project and shared documentation, replacing outdated content and leaving history to Git, then run `scripts/sync-docs.sh` after pushing. For staged migrations, describe the actual coexistence of old and new components. If synchronization is blocked, state what remains unfinished rather than reporting full completion.
 
-## 来源与发现入口
+<a id="来源与发现入口"></a>
+## Sources and discovery entry points
 
-- 共享源：`Crashmere/agent-config` 的 `skills/server-operations/`。本地通常为 `~/agent-config`，不能假设所有电脑都是 `/Users/bytedance`。
-- 服务器共享副本：`/opt/server-context/`；`SOURCE` 记录来源仓库、提交和同步时间，不是第二个可独立演进的源。
-- 服务器入口：`/opt/AGENTS.md`，root 登录目录中的 `/root/AGENTS.md` 链接到它；各应用 `/opt/<app>/AGENTS.md` 指向项目文档。
-- 交互 SSH 的提示由 `/etc/update-motd.d/30-server-context` 提供。不要改 sshd、shell 全局启动输出或受限发布强制命令来强制提示，这可能破坏非交互传输。
-- 本地全局 AGENTS 路由到本技能；各项目入口补上离线/远端路径，避免只能从一个客户端发现。
+- Shared source: `skills/server-operations/` in `Crashmere/agent-config`. The local checkout is usually `~/agent-config`; do not assume every computer uses `/Users/bytedance`.
+- Shared server copy: `/opt/server-context/`. Its `SOURCE` records the source repository, commit, and synchronization time; it is not a second source that can evolve independently.
+- Server entry point: `/opt/AGENTS.md`, linked from `/root/AGENTS.md` in root's login directory. Each application's `/opt/<app>/AGENTS.md` points to its project documentation.
+- `/etc/update-motd.d/30-server-context` provides the interactive SSH notice. Do not force notices through sshd, global shell startup output, or restricted deployment forced commands; this can break noninteractive transfers.
+- The local global AGENTS routes to this skill. Add offline/remote paths to each project entry point so discovery does not depend on one client.
 
-共享配置模板在 [assets/nginx-apps.conf](assets/nginx-apps.conf)，服务器指令入口在 [assets/AGENTS.md](assets/AGENTS.md)，登录提示在 [assets/30-server-context](assets/30-server-context)。文档副本由 `scripts/sync-docs.sh` 同步；Nginx 模板改动属于授权表中的先确认事项，读取技能本身不会安装或重载它们。
+The shared configuration template is [assets/nginx-apps.conf](assets/nginx-apps.conf), the server instruction entry point is [assets/AGENTS.md](assets/AGENTS.md), and the login notice is [assets/30-server-context](assets/30-server-context). `scripts/sync-docs.sh` synchronizes documentation copies. Changes to the Nginx template fall under "Confirm first" in the authorization table; reading the skill itself does not install or reload these files.

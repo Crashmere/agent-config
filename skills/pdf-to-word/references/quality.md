@@ -1,54 +1,54 @@
-# 质量检查与交付
+# Quality checks and delivery
 
-## 独立检查不同问题
+## Check different problems independently
 
-| 检查 | 可以发现 | 不能证明 |
+| Check | Can detect | Cannot establish |
 | --- | --- | --- |
-| OOXML/XSD | 非法结构、子元素顺序等 | 排版和内容正确 |
-| 实际渲染与页数 | 无法打开、溢出、额外分页 | 无缺字、顺序正确 |
-| 逐页Word到预览文字 | 序列化丢字、文字未渲染 | 源文字提取或OCR正确 |
-| 源字形覆盖 | 原生文本在图片/表格外遗漏 | 字符计数相同即阅读顺序正确 |
-| 单元格字符、数字序列化 | 单元格错误、部分数值错位或丢失 | 字体映射绝对正确、所有符号语义正确 |
-| 双引擎OCR比较 | 识别分歧、单引擎漏区域 | 两引擎共同遗漏、全文零错误 |
-| 全页缩略图与放大检查 | 图像缺失、裁剪、字号、错位、表格异常 | 没有逐字校对时的全文精确性 |
+| OOXML/XSD | Invalid structure, child-element order, and similar issues | Correct layout and content |
+| Actual rendering and page count | Files that cannot open, overflow, extra page breaks | No missing characters and correct order |
+| Per-page text from Word to preview | Characters lost during serialization, text not rendered | Correct source extraction or OCR |
+| Source glyph coverage | Native text omitted outside images or tables | Correct reading order from matching character counts |
+| Cell-character and numeric serialization | Incorrect cells, some misplaced or missing values | Completely correct font mapping or semantics for every symbol |
+| Comparison between two OCR engines | Recognition disagreements, regions missed by one engine | Omissions shared by both engines or zero errors throughout the text |
+| Thumbnails of every page and enlarged inspection | Missing images, crop errors, font-size issues, misalignment, table anomalies | Exact text without character-by-character proofreading |
 
-不要把同一路径生成的期望文本和输出文本比较当成独立源校验。对数字和专业符号高风险区域，回到源PDF或源图取证。
+Comparing expected text and output text generated through the same path is not independent source verification. Return to the source PDF or image for evidence in high-risk areas containing numbers and specialized symbols.
 
-## 视觉和内容复核
+## Visual and content review
 
-1. 查看全部页面缩略图，检查空白、页序、图表、内容密度、边距和分页。
-2. 放大最密集表格、公式、原图保留区域、低置信文本和所有自动检查异常；核对完整裁剪边界、图例、单位和上下标。
-3. 对照原图检查专业符号、变量大小写、人名、标准号、数字范围与小数点；不能根据合理性猜测。
-4. 看见文字层与可见内容不一致时改变分流；矢量图可能不在图片列表，必须人工补入保留区域。
-5. 核查阅读顺序、表格列关系、跨页句子和边缘标记。字体或尺寸归一化后重新检查。
-6. 修复内容、坐标、公式或排版后重新生成相关Word、渲染并检查；不复用失效的人工复核记录。
+1. Inspect thumbnails of every page for blank areas, page order, figures and tables, content density, margins, and pagination.
+2. Enlarge the densest tables, formulas, retained source-image regions, low-confidence text, and all anomalies flagged by automated checks. Check full crop boundaries, legends, units, subscripts, and superscripts.
+3. Compare specialized symbols, variable case, names, standard identifiers, numeric ranges, and decimal points against the source images; do not guess based on plausibility.
+4. Change the extraction route when the text layer disagrees with visible content. Vector figures may not appear in the image list and must be manually added to retained regions.
+5. Check reading order, relationships between table columns, cross-page sentences, and edge markers. Recheck after normalizing fonts or dimensions.
+6. After fixing content, coordinates, formulas, or layout, regenerate the affected Word files, render them, and check again; do not reuse invalidated manual-review records.
 
-对于新版式，扩大代表页试转范围；对于尚未验证的支持，记录限制，不把整个文件贴图当作完成可编辑需求。
+For unfamiliar layouts, expand the representative-page trial. Record limitations for unverified capabilities; turning the entire file into images does not fulfill an editable-document requirement.
 
-## 记录真实复核范围
+## Record the actual review scope
 
-任务目录work/batch/<文件名>/中保存audit.json、checks.json、coverage.json及可选scan-review.json。审计和检查仍含源内容，属于任务数据，不进入技能仓库。
+Store audit.json, checks.json, coverage.json, and optional scan-review.json in `work/batch/<filename>/` under the task directory. Audits and checks still contain source content and are task data; keep them out of the skill repository.
 
-实际完成视觉或内容复核后，可写manual-review.json：
+After actually performing visual or content review, optionally write manual-review.json:
 
 ~~~json
 {
-  "source_sha256": "当前源文件哈希",
-  "word_sha256": "当前Word哈希",
-  "preview_sha256": "当前预览哈希",
+  "source_sha256": "current source file hash",
+  "word_sha256": "current Word file hash",
+  "preview_sha256": "current preview hash",
   "status": "reviewed",
-  "scope": "实际查看和核对的范围",
-  "notes": ["尚存限制或保留图片的理由"]
+  "scope": "scope actually inspected and checked",
+  "notes": ["remaining limitations or reasons for retaining images"]
 }
 ~~~
 
-只记录做过的检查。没有记录时打包工具标记not_recorded；不会自动声称已人工复核。当前文件哈希不匹配时修复流程并复查，而不是修改哈希假装已有复核仍有效。
+Record only checks that were performed. Without a record, the packaging tool marks manual review as not_recorded; it does not claim review automatically. If current file hashes do not match, correct the workflow and review again rather than changing hashes to pretend an earlier review is still valid.
 
-## 交付
+## Delivery
 
-- 交付可编辑Word、由最终Word导出的PDF预览，以及按文件说明的可编辑内容/保留图片范围。
-- 报告已执行的检查及实际结果，注明剩余OCR、阅读顺序、字体替换或编辑限制。重要差错未解决时明确说明，不用“检查通过”概括未通过部分。
-- 说明图片文字不可直接编辑、批量正文按物理行组织会影响大段重排，以及其他办公软件可能有分页差异。
-- 如需压缩包，在完成复核后运行package_results.py；它核验当前哈希并生成output/quality-report.json和delivery.zip，不替代人工检查。
-- 本技能默认保留源文件；用户要求清理时准确界定并删除文档及内容缓存，保留可复用工具与脱敏经验。删除后不能留下失效的样本复用代码或硬编码文档配置。
-- 完成当前任务后回顾可复用新发现，按SKILL.md的持续完善要求写回仓库。
+- Deliver the editable Word file, a PDF preview exported from the final Word file, and a per-file explanation of editable content and retained images.
+- Report the checks performed and their actual results, including remaining OCR, reading-order, font-substitution, or editing limitations. State unresolved significant errors explicitly; do not summarize failed areas as having passed checks.
+- Explain that image text cannot be edited directly, that organizing batch body text by physical lines affects extensive reflow, and that other office applications may paginate differently.
+- If an archive is needed, run package_results.py after review. It verifies current hashes and generates output/quality-report.json and delivery.zip; it does not replace manual inspection.
+- This skill preserves source files by default. When the user requests cleanup, precisely identify and delete the documents and content caches while retaining reusable tools and sanitized lessons. Do not leave broken sample-reuse code or hard-coded document settings after deletion.
+- After completing the current task, review reusable new findings and write them back to the repository under the continuous-improvement requirements in SKILL.md.

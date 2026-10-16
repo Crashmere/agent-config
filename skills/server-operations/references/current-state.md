@@ -1,155 +1,175 @@
-# 当前服务器与应用清单
+<a id="当前服务器与应用清单"></a>
 
-AICalendar 网页改版与备份范围调整最后核对：2026-10-09；全部七站健康与认证入口最后核对：2026-10-07（北京时间）。主机基础清单核对：2026-09-28，主机、五个业务应用、ServerPortal 及共享 HTTPS 入口均已现场复查，用户已确认正式设备登录成功。网页键盘与焦点策略于 2026-09-30 更新并发布，见下方共享配置。备份与数据保留于 2026-10-01 只读复核，另确认已运行的阿里云 Cloud Backup，见下方云备份。这是可覆盖更新的当前快照，不是历史日志。易变版本和状态须重新查；未列出的资源不能视为不存在。
+# Current Server and Application Inventory
 
-## 主机
+AICalendar's web redesign and backup scope changes were last checked on 2026-10-09; health and authentication entry points for all seven sites were last checked on 2026-10-07 (Beijing time). The baseline host inventory was checked on 2026-09-28: the host, five business applications, ServerPortal, and shared HTTPS entry point were all rechecked in the live environment, and the user confirmed successful login on the actual device. The web keyboard and focus policy was updated and deployed on 2026-09-30; see shared configuration below. Backups and data retention were reviewed read-only on 2026-10-01, also confirming that Alibaba Cloud Backup was already running; see cloud backup below. This is a current snapshot that may be overwritten with updates, not a historical log. Recheck volatile versions and states; unlisted resources must not be assumed absent.
 
-| 项目 | 当前状态 |
+<a id="主机"></a>
+
+## Host
+
+| Item | Current state |
 | --- | --- |
-| 连接 | 本地 OpenSSH 别名 `ali`；管理员 root，端口 22；真实地址从受信 SSH 配置取得，不写入公开仓库 |
-| 平台 | Alibaba Cloud ECS / KVM，x86_64，Ubuntu 26.04.1 LTS |
-| 资源 | 2 vCPU，约 1.7 GiB 可见内存，40 GiB ext4 根盘；无 swap，无独立应用数据挂载盘 |
-| 内核 | 核对时 7.0.0-30-generic；不是重建时必须固定的版本 |
-| 时间 | Asia/Shanghai；chrony 提供时间同步，NTP 已同步 |
-| SSH | 公钥认证开启、密码认证关闭、允许 root 登录 |
-| HTTPS | Nginx 1.28.3，443 TLS 1.2/1.3 + HTTP/2；Let’s Encrypt 可信公网 IPv4 证书，无域名。80 提供 ACME 并 308 跳转；仅回环保留 HTTP 代理检查 |
-| 主机防火墙 | UFW inactive；不能据此推断所有 netfilter 规则或云侧防护 |
-| 云安全组 | SSH/HTTP/HTTPS 已从外网验证可达，未通过云 API 审计完整规则；未来改规则前另行核实 |
-| 包源 | Ubuntu 签名仓库，当前使用阿里云内网镜像；换供应商时不要照抄该镜像地址 |
+| Connection | Local OpenSSH alias `ali`; administrator root, port 22; obtain the real address from trusted SSH configuration and do not put it in the public repository |
+| Platform | Alibaba Cloud ECS / KVM, x86_64, Ubuntu 26.04.1 LTS |
+| Resources | 2 vCPU, approximately 1.7 GiB visible memory, 40 GiB ext4 root disk; no swap or separate application-data mount |
+| Kernel | 7.0.0-30-generic when checked; not a version that must be pinned when rebuilding |
+| Time | Asia/Shanghai; chrony provides time synchronization, NTP synchronized |
+| SSH | Public-key authentication enabled, password authentication disabled, root login allowed |
+| HTTPS | Nginx 1.28.3, port 443 TLS 1.2/1.3 + HTTP/2; trusted Let's Encrypt public IPv4 certificate, no domain. Port 80 serves ACME and 308 redirects; HTTP proxy inspection remains available only on loopback |
+| Host firewall | UFW inactive; this does not establish the state of all netfilter rules or cloud-side protection |
+| Cloud security group | SSH/HTTP/HTTPS reachability verified externally; complete rules have not been audited through the cloud API. Verify separately before future rule changes |
+| Package sources | Signed Ubuntu repositories, currently using Alibaba Cloud's internal mirror; do not copy that mirror address when changing providers |
 
-## 已部署应用（共享变更必须逐行核对）
+<a id="已部署应用共享变更必须逐行核对"></a>
 
-| 应用 / 源码 | URL 前缀 → 本机监听 | 目录 / 身份 | systemd | 文档与验证 |
+## Deployed Applications (Check Every Row for Shared Changes)
+
+| Application / source | URL prefix → local listener | Directory / identity | systemd | Documentation and verification |
 | --- | --- | --- | --- | --- |
-| Ledger / [Crashmere/Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` → `127.0.0.1:18080` | `/opt/ledger`；运行 `ledger`，发布 `ledger-deploy` | `ledger.service`、`ledger-backup.service`、`ledger-backup.timer` | `/opt/ledger/docs/README.md`；直连 `/healthz`、代理 `/ledger/healthz`、深链接 `/ledger/search` |
-| FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`；运行 `feetable`，发布 `feetable-deploy` | `feetable.service`、`feetable-backup.service`、`feetable-backup.timer` | `/opt/feetable/docs/README.md`；直连 `/healthz`、代理 `/feetable/healthz`、路由壳 `/feetable/tables/1`（浏览器验收用实际存在的月表或首页） |
-| FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`；运行 `fabricworld`，发布 `fabricworld-deploy` | `fabricworld.service`、`fabricworld-backup.service`、`fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`；直连 `/healthz`、代理 `/fabricworld/healthz`、深链接 `/fabricworld/new` |
-| RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`；运行 `recipebox`，发布 `recipebox-deploy` | `recipebox.service`、`recipebox-backup.service`、`recipebox-backup.timer` | `/opt/recipebox/docs/README.md`；直连 `/healthz`、代理 `/recipebox/healthz`、深链接 `/recipebox/new` |
-| Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`；运行 `yuyan`，发布 `yuyan-deploy` | `yuyan.service`、`yuyan-backup.service`、`yuyan-backup.timer` | `/opt/yuyan/docs/README.md`；直连 `/healthz`、代理 `/yuyan/healthz`、深链接 `/yuyan/search` |
-| ServerPortal / [Crashmere/ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` → `127.0.0.1:18085` | `/opt/serverportal`；Web 用户 `serverportal`、root Unix socket 采集器 | `serverportal.service`、`serverportal-agent.service` | `/opt/serverportal/docs/README.md`；回环 `/healthz`；公网根跳转、登录与受保护 API |
-| AICalendar / [Crashmere/AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` → `127.0.0.1:18086` | `/opt/aicalendar`；运行 `aicalendar`，发布 `aicalendar-deploy` | `aicalendar.service`、`aicalendar-backup.service`、`aicalendar-backup.timer` | `/opt/aicalendar/docs/README.md`；直连 `/healthz`、代理 `/aicalendar/healthz`、页面 `/aicalendar/` |
+| Ledger / [Crashmere/Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` → `127.0.0.1:18080` | `/opt/ledger`; runtime `ledger`, deployment `ledger-deploy` | `ledger.service`, `ledger-backup.service`, `ledger-backup.timer` | `/opt/ledger/docs/README.md`; direct `/healthz`, proxied `/ledger/healthz`, deep link `/ledger/search` |
+| FeeTable / [Crashmere/FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` → `127.0.0.1:18081` | `/opt/feetable`; runtime `feetable`, deployment `feetable-deploy` | `feetable.service`, `feetable-backup.service`, `feetable-backup.timer` | `/opt/feetable/docs/README.md`; direct `/healthz`, proxied `/feetable/healthz`, route shell `/feetable/tables/1` (use an existing monthly table or the home page for browser acceptance) |
+| FabricWorld / [Crashmere/FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` → `127.0.0.1:18082` | `/opt/fabricworld`; runtime `fabricworld`, deployment `fabricworld-deploy` | `fabricworld.service`, `fabricworld-backup.service`, `fabricworld-backup.timer` | `/opt/fabricworld/docs/README.md`; direct `/healthz`, proxied `/fabricworld/healthz`, deep link `/fabricworld/new` |
+| RecipeBox / [Crashmere/RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` → `127.0.0.1:18083` | `/opt/recipebox`; runtime `recipebox`, deployment `recipebox-deploy` | `recipebox.service`, `recipebox-backup.service`, `recipebox-backup.timer` | `/opt/recipebox/docs/README.md`; direct `/healthz`, proxied `/recipebox/healthz`, deep link `/recipebox/new` |
+| Yuyan / [Crashmere/Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` → `127.0.0.1:18084` | `/opt/yuyan`; runtime `yuyan`, deployment `yuyan-deploy` | `yuyan.service`, `yuyan-backup.service`, `yuyan-backup.timer` | `/opt/yuyan/docs/README.md`; direct `/healthz`, proxied `/yuyan/healthz`, deep link `/yuyan/search` |
+| ServerPortal / [Crashmere/ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` → `127.0.0.1:18085` | `/opt/serverportal`; Web user `serverportal`, root Unix socket collector | `serverportal.service`, `serverportal-agent.service` | `/opt/serverportal/docs/README.md`; loopback `/healthz`; public root redirect, login, and protected APIs |
+| AICalendar / [Crashmere/AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` → `127.0.0.1:18086` | `/opt/aicalendar`; runtime `aicalendar`, deployment `aicalendar-deploy` | `aicalendar.service`, `aicalendar-backup.service`, `aicalendar-backup.timer` | `/opt/aicalendar/docs/README.md`; direct `/healthz`, proxied `/aicalendar/healthz`, page `/aicalendar/` |
 
-| 应用 | 数据 | 每日备份（北京时间，+0–5 分钟随机，留 14 份） | 发布 | 其他 |
+| Application | Data | Daily backup (Beijing time, +0–5 minute randomized delay, retain 14) | Deployment | Other |
 | --- | --- | --- | --- | --- |
-| Ledger | SQLite | 03:00，一致性快照 | 本机 make deploy | — |
-| FeeTable | SQLite | 03:15，一致性快照 | 本机 make deploy | — |
-| FabricWorld | SQLite + 照片 | 03:30，快照 + 照片硬链接 + SHA-256 清单 | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M；隔离恢复演练用 19082 |
-| RecipeBox | SQLite + 照片 | 03:45，同 FabricWorld | 本机 make deploy | libvips；CPUQuota=100%、MemoryMax=640M、照片配额 5 GiB；演练用 19083 |
-| Yuyan | SQLite（含文档模板/内容片段）+ 画板包、图片与附件 | 04:00，同 FabricWorld；清单 v2 覆盖全部登记素材，恢复兼容 v1 图片备份 | 本机 make deploy（gzip） | CPUQuota=100%、MemoryMax=384M（GOMEMLIMIT=320MiB，MemoryCurrent 含页缓存）；演练用 19084 |
-| ServerPortal | 设备状态 JSON、私有配置；整机材料压缩归档 | 网页手动创建独立完整包，默认 recovery，可选 all/docs；导出包不自动轮换或由门户异机同步 | 本机构建，管理员发布 | 新包无需密钥；本机保留旧包所需 age 私钥；无任意 SQL/命令接口 |
-| AICalendar | SQLite（活动、注释、导入批次、完整聊天与原始资料分块/索引） | 04:15，核心三表一致性快照，保留 14 份；用户确认完整聊天存档不备份 | 本机 make deploy | MemoryMax=192M、GOMEMLIMIT=144MiB；独立手动导入凭据；演示用 19086 |
+| Ledger | SQLite | 03:00, consistent snapshot | Local make deploy | — |
+| FeeTable | SQLite | 03:15, consistent snapshot | Local make deploy | — |
+| FabricWorld | SQLite + photos | 03:30, snapshot + photo hard links + SHA-256 manifest | Local make deploy | libvips; CPUQuota=100%, MemoryMax=640M; isolated recovery drill uses 19082 |
+| RecipeBox | SQLite + photos | 03:45, same as FabricWorld | Local make deploy | libvips; CPUQuota=100%, MemoryMax=640M, photo quota 5 GiB; drill uses 19083 |
+| Yuyan | SQLite (including document templates/content snippets) + drawing packages, images, and attachments | 04:00, same as FabricWorld; manifest v2 covers all registered media, recovery supports v1 image backups | Local make deploy (gzip) | CPUQuota=100%, MemoryMax=384M (GOMEMLIMIT=320MiB, MemoryCurrent includes page cache); drill uses 19084 |
+| ServerPortal | Device-state JSON, private configuration; compressed archives of whole-server materials | Manually create independent full packages from the web page, default recovery, optional all/docs; export packages are not automatically rotated or synchronized off-host by the portal | Local build, administrator deployment | New packages need no key; the age private key needed by old packages is retained locally; no arbitrary SQL/command interface |
+| AICalendar | SQLite (activities, annotations, import batches, full conversations, and original-material chunks/indexes) | 04:15, consistent snapshot of the three core tables, retain 14; user confirmed full conversation archives are not backed up | Local make deploy | MemoryMax=192M, GOMEMLIMIT=144MiB; separate manual-import credential; demo uses 19086 |
 
-六个业务应用的浏览器页面/API 已接入统一设备认证；授权设备可执行各自支持的数据操作。各用独立数据库、运行和发布身份，自动备份均在同盘；2026-09-27 已另取一份全应用数据归档下载到维护电脑并校验（见下方手工数据归档），应用脚本不主动异机同步，主机另有阿里云文件备份（见下方云备份）；before-deploy 备份和发布历史按 [发布材料自动保留](retention.md) 清理：最近 5 份完整备份、最近 3 次成功发布及当前版本/对应备份保护。`server-context` 是文档包，不是应用。精确流程与限制以项目 docs 为准。
+The six business applications' browser pages/APIs use shared device authentication; authorized devices can perform each application's supported data operations. Each has an independent database and runtime/deployment identity, and all automatic backups reside on the same disk. On 2026-09-27, a separate data archive of all applications was downloaded to the maintenance computer and verified (see manual data archives below). Application scripts do not proactively synchronize off-host; the host also has Alibaba Cloud file backup (see cloud backup below). before-deploy backups and deployment history are cleaned under [Automatic Retention of Deployment Materials](retention.md): the latest 5 complete backups and latest 3 successful deployments are retained, with the current version and its corresponding backup protected. `server-context` is a documentation package, not an application. Project docs govern exact procedures and limits.
 
-AICalendar 正式库已开始保存手动导入的真实历史与完整存档；实际来源和覆盖范围通过导入客户端 `status` 与查询接口核对，不在共享文档中保存私人统计。浏览器沿用门户认证，只有 `/aicalendar/ingest/v1/` 使用本应用的独立 Bearer 凭据；服务端保存 SHA-256，令牌原文和客户端配置仅在维护电脑 Git 外的 `~/.config/aicalendar/`。导入凭据支持日历摘要导入/核验，以及完整聊天分块上传、查询和下载，不提供日历摘要 export 或网页注释编辑。手动 skill `ai-calendar-import` 在本地整理，默认先保存完整会话和原始资料、再导入摘要，并保留用户指定的来源标签；不配置自动采集。
+AICalendar's production database has begun storing manually imported real history and complete archives. Check actual sources and coverage through the import client's `status` and query interfaces; do not keep private statistics in shared documentation. The browser uses portal authentication; only `/aicalendar/ingest/v1/` uses this application's separate Bearer credential. The server stores SHA-256, while the plaintext token and client configuration reside only in `~/.config/aicalendar/` on the maintenance computer, outside Git. The import credential supports calendar-summary import/verification and full-conversation chunk upload, query, and download; it does not provide calendar-summary export or web-annotation editing. The manual `ai-calendar-import` skill organizes data locally, saving complete conversations and original materials before importing summaries by default, and preserving user-specified source labels. It does not configure automatic collection.
 
-完整存档 gzip 按 384 KiB 分块上传；同内容去重，内容变化保留新旧快照，消息全文和原始字节可取回，原文不自动过期。所有块及阅读索引仍在同一 SQLite，无新数据根或 Nginx 限制变更。核心 schema 1 保持，archive_schema 1 已显式追加；升级前旧程序备份、迁移后新旧程序 check 及旧数据不变检查通过。旧程序可回退并完整备份该库，只是不提供存档 API。每日备份、发布前快照和发布保留沿用原契约；更新后的资源声明由门户动态加载。
+Full archives are gzip-compressed and uploaded in 384 KiB chunks. Identical content is deduplicated; changed content retains both old and new snapshots. Full message text and original bytes are retrievable, and original text does not automatically expire. All chunks and reading indexes remain in the same SQLite database, with no new data root or changes to Nginx limits. Core schema 1 remains unchanged, and archive_schema 1 has been explicitly added. The old program's pre-upgrade backup, post-migration check by both old and new programs, and checks that existing data was unchanged all passed. The old program can be rolled back to and can fully back up this database; it simply does not offer the archive API. Daily backups, pre-deployment snapshots, and deployment retention follow the original contract; the portal dynamically loads the updated resource declaration.
 
-Yuyan 附件上传已改为流式接收且不设文件大小上限；仅其 /yuyan/api/attachments 子 location 关闭大小检查和请求体缓冲，继承认证，其余请求保留原限制。临时上传写入既有 data/assets，无新数据根；图片与附件连续一小时未被正文（含回收站）、历史、模板/片段或媒体链接引用后自动回收，每分钟扫描，重新引用/上传重置计时。状态复用 meta；备份/上传共享目录锁与回收排他锁跨进程协调，已有备份硬链接保留。旧版备份程序不可与新版回收并行，诊断使用 gc --dry-run。附件阅读预览使用只读 `/api/attachments/{id}/preview`（类型、文本与压缩包目录）和 `/attachments/{id}/content`（受限位图/PDF/音视频），延续设备认证，下载接口仍强制下载。PDF.js 资源内嵌程序并按需加载，压缩包不解压落盘；无新服务器运行时、数据目录或备份契约，接口登记随项目 portal.json 发布，详细格式与限制见 Yuyan DESIGN 23.8。
+Yuyan attachment uploads now use streaming reception with no file-size limit. Only its /yuyan/api/attachments sub-location disables size checks and request-body buffering; it inherits authentication, and other requests retain their original limits. Temporary uploads go to the existing data/assets, with no new data root. Images and attachments are automatically collected only after a continuous hour without references from document bodies (including the recycle bin), history, templates/snippets, or media links. Scans run every minute; new references/uploads reset the timer. State reuses meta; shared directory locks for backup/upload and exclusive collection locks coordinate across processes, while existing backup hard links remain. Old backup programs must not run concurrently with the new collector; use gc --dry-run for diagnosis. Attachment reading previews use read-only `/api/attachments/{id}/preview` (types, text, and archive listings) and `/attachments/{id}/content` (restricted bitmap/PDF/audio/video formats), retaining device authentication; the download interface still forces downloads. PDF.js assets are embedded in the program and loaded on demand, and archives are not extracted to disk. There is no new server runtime, data directory, or backup contract; interface registrations ship with the project's portal.json. See Yuyan DESIGN 23.8 for detailed formats and limits.
 
-新增应用必须在两张表中各加一行，并写明健康验证。退役后从当前清单删除，仍在迁移中的旧实例必须明确标注用途，不假装已经下线。
+Add one row to each table for every new application, including health verification. Remove retired applications from the current inventory; explicitly label the purpose of old instances still being migrated rather than pretending they are already offline.
 
-Yuyan 已实现 Excalidraw 文档画板：包和预览复用 assets/.bin，`POST/GET /api/drawings` 与 `/drawings/{id}/preview|file` 登记于项目门户声明，沿用设备认证和普通请求大小限制，包限 12 MiB。正文/历史/模板保护包并展开图片依赖，未引用包宽限期内也保护图片；v2 备份覆盖全部素材，未知或损坏包让当轮 GC 保守停止。前端和字体随 Go 发布，不增 Node/浏览器运行时、数据根或数据库迁移。旧客户端编辑保护、导入导出与程序回退约束见 Yuyan WHITEBOARD.md。
+Yuyan has implemented Excalidraw document drawings: packages and previews reuse assets/.bin, and `POST/GET /api/drawings` and `/drawings/{id}/preview|file` are registered in the project's portal declaration. They retain device authentication and ordinary request-size limits, with a 12 MiB package limit. Document bodies/history/templates protect packages and expand their image dependencies; unreferenced packages also protect images during their grace period. v2 backups cover all media, and unknown or damaged packages conservatively stop that GC run. The frontend and fonts ship with Go, adding no Node/browser runtime, data root, or database migration. See Yuyan WHITEBOARD.md for old-client editing protections, import/export, and program rollback constraints.
 
-Yuyan 历史快照保留 30 天，每天北京时间 03:00 由应用清理，不保底保留；成功状态持久化，停机后启动补跑。当前正文、回收站正文、模板与片段不受影响，历史最后引用移除后媒体重新开始一小时宽限期。编辑前与恢复前快照同样适用 30 天，历史 ID 不重用；无数据库迁移或额外系统任务，诊断使用 history-gc --dry-run。已有备份仍按各自策略保留，隔离恢复后若要提取更早历史，先只读查看、不要启动自动清理服务，详见 Yuyan OPERATIONS。
+Yuyan history snapshots are retained for 30 days and cleaned by the application daily at 03:00 Beijing time, with no minimum number retained. Successful cleanup state is persisted, and startup catches up after downtime. Current document bodies, recycle-bin bodies, templates, and snippets are unaffected. When history's final reference is removed, media begin a new one-hour grace period. Pre-edit and pre-restore snapshots also follow the 30-day policy, and history IDs are not reused. There is no database migration or additional system task; use history-gc --dry-run for diagnosis. Existing backups follow their own retention policies. To extract older history after an isolated restore, inspect it read-only first and do not start the automatic cleanup service; see Yuyan OPERATIONS.
 
-Ledger → FabricWorld 联动：新建“副业 / 纺织”支出后由用户确认，Ledger 服务端通过本机 18082 的 /api/integrations/ledger 创建布料；成功可跳转同源布料编辑页。LEDGER_FABRICWORLD_URL 归 Ledger 配置，默认本机地址；FabricWorld operations 持久记录交易来源，避免重试重复创建。两个服务仍独立数据库、备份与发布，不共享数据库权限。更新先发布 FabricWorld 再发布 Ledger；长期回退旧版 FabricWorld 前需停用联动，避免旧清理逻辑删除来源记录。精确接口、验证和恢复限制见两项目 docs。FeeTable 和共享 Nginx 不受影响。
+Ledger → FabricWorld integration: after creating a “副业 / 纺织” expense and obtaining user confirmation, the Ledger server creates fabric through /api/integrations/ledger on local port 18082. On success, the user can open the same-origin fabric editing page. LEDGER_FABRICWORLD_URL belongs to Ledger configuration and defaults to the local address; FabricWorld operations persist the transaction source to prevent duplicate creation on retries. The two services still have independent databases, backups, and deployments and do not share database permissions. Deploy FabricWorld before Ledger for updates; disable the integration before a long-term rollback to an old FabricWorld version, so its old cleanup logic does not delete source records. See both projects' docs for exact interfaces, verification, and recovery limits. FeeTable and shared Nginx are unaffected.
 
-Yuyan 首页通过只读 `/api/stats` 显示存活文档的正文总字数及各知识库卡片字数，同一次查询返回全站 `chars` 与按知识库 ID 索引的 `bookChars`，空知识库为 0；沿用设备认证及现有 `plain_text`，无数据库迁移、数据根或运行时变化，接口随项目门户声明发布。
+Yuyan's home page uses read-only `/api/stats` to display total body character counts for live documents and character counts on each knowledge-base card. A single query returns site-wide `chars` and `bookChars` indexed by knowledge-base ID; empty knowledge bases return 0. It retains device authentication and the existing `plain_text`, with no database migration, data-root change, or runtime change. The interface ships with the project's portal declaration.
 
-Yuyan 阅读页“最近修改”使用只读 `/api/docs/{id}/recent-changes` 返回最近编辑/恢复前的历史基线，支持可选 revision 校验；“补丁”标记为浏览器独立浮层，删除内容以浏览器临时插入的基线副本显示，均不写入正文。沿用 30 天历史保留、设备认证和原生备份，无数据库迁移、数据根或共享 Nginx 变化，接口随项目资源声明发布；交互及比较边界见 Yuyan DESIGN 13.2。
+The Yuyan reading page's “最近修改” feature uses read-only `/api/docs/{id}/recent-changes` to return the historical baseline from before the latest edit/restore, with optional revision validation. “补丁” markers are independent browser overlays; deleted content is displayed through baseline copies temporarily inserted by the browser. Neither is written into the document body. The feature retains 30-day history retention, device authentication, and native backups, with no database migration, data-root change, or shared Nginx change. The interface ships with the project's resource declaration; see Yuyan DESIGN 13.2 for interaction and comparison boundaries.
 
-Yuyan 数据库记录表布局版本（`meta.layout`/`min_layout`，与正文格式版本分开）：程序打开旧布局时按步骤迁移，`backup`/`daily` 原样复制。第 2 步把 docs、doc_versions 的正文列移到最后，2026-10-14 随 4cc06f4 发布，由新程序在 before-deploy 备份之后的 `check` 中完成（4.5 秒）；此前的程序兼容新布局，回退不需要恢复数据库。迁移后 yuyan.db 约 322 MB，其中约 129 MB 为空闲页，由后续写入复用，备份不包含。无数据根、接口、unit 或备份格式变化；设计与运维见 Yuyan DESIGN 26.1、OPERATIONS“数据库布局迁移”。
+Yuyan records the database table-layout version (`meta.layout`/`min_layout`, separate from the document-body format version). When opening an old layout, the program migrates it step by step; `backup`/`daily` copy it unchanged. Step 2 moves the body columns in docs and doc_versions to the end. It shipped with 4cc06f4 on 2026-10-14 and was completed by the new program during `check` after the before-deploy backup (4.5 seconds). Earlier programs are compatible with the new layout, so rollback does not require database restoration. After migration, yuyan.db was approximately 322 MB, including approximately 129 MB of free pages available for subsequent writes and excluded from backups. There are no data-root, interface, unit, or backup-format changes; see Yuyan DESIGN 26.1 and OPERATIONS “数据库布局迁移” for design and operations.
 
-Yuyan 阅读页对渲染 HTML 超过 256 KiB 的文档分段载入：只读 `/api/docs/{id}/segments` 按版本标记返回连续几段 HTML 与图片尺寸（immutable 缓存），`/api/docs/{id}/segments/matches` 列出含搜索词的段号；`/view` 不带参数仍返回整篇。切分随渲染缓存保存在内存，无数据库迁移、数据根、运行时或共享 Nginx 变化，沿用设备认证，接口随项目门户声明发布。2026-10-14 随 ba6c941 上线后，最长文档的页面由 15 MB（gzip 2.4 MB）降为 214 KB（gzip 49 KB）；设计见 Yuyan DESIGN 26.2。
+Yuyan's reading page loads documents in segments when rendered HTML exceeds 256 KiB. Read-only `/api/docs/{id}/segments` returns several consecutive HTML segments and image dimensions keyed by version marker (immutable caching); `/api/docs/{id}/segments/matches` lists segment numbers containing search terms. `/view` without parameters still returns the whole document. Segmentation is held in memory with the rendering cache, with no database migration, data-root, runtime, or shared Nginx changes. It retains device authentication, and the interfaces ship with the project's portal declaration. After deployment with ba6c941 on 2026-10-14, the longest document's page decreased from 15 MB (gzip 2.4 MB) to 214 KB (gzip 49 KB); see Yuyan DESIGN 26.2.
 
-Yuyan 网页按显示宽度和屏幕密度载入图片显示版本：128 KiB 以上的位图在 `data/derived/images` 生成 640/1280/1920 宽的副本，照片类无损原图通过 SSIM 检查时改用 JPEG；2 倍及以上屏幕另有一套档位，截图按 2×2 平均后通过检查的 JPEG（`.hidpi.jpg`）逐档替换更大的无损版本。原图不变，导出、原生备份和查看原图仍用原图。该目录是可删除的派生缓存，在门户声明中登记为 cache，原生备份和门户备份包都不收集；恢复或删除后由服务单线程补齐，最多占半个 CPU。版本文件沿用 `/yuyan/assets/` 路由和设备认证，无数据库迁移、unit、Nginx 或权限变化。清单版本号变化时启动即清空重建。2026-10-14 随 26003ce 升级为版本 2，约 10 分钟补齐 653 张：628 张有版本，其中 167 张有高密度屏档位，版本共 195 MiB；补齐读写的图片进入页缓存，MemoryPeak 到达 384M 上限，anon 最高约 86 MiB，无 OOM。诊断用 `yuyan images --data`，设计见 Yuyan DESIGN 26.3。
+Yuyan web pages load image display variants according to display width and screen density. Bitmaps larger than 128 KiB produce 640/1280/1920-wide copies in `data/derived/images`; photographic lossless originals use JPEG when they pass an SSIM check. Screens at 2× density and above have an additional set of size tiers; for screenshots, JPEGs that pass checks after 2×2 averaging (`.hidpi.jpg`) replace larger lossless variants at each tier. Originals remain unchanged and are still used for export, native backups, and viewing the original image. This directory is a deletable derived cache, registered as cache in the portal declaration and excluded from both native backups and portal backup packages. After restoration or deletion, the service regenerates it on one thread, using at most half a CPU. Variant files retain the `/yuyan/assets/` route and device authentication, with no database migration, unit, Nginx, or permission changes. A manifest version change clears and rebuilds the cache at startup. The upgrade to version 2 shipped with 26003ce on 2026-10-14 and processed 653 images in approximately 10 minutes: 628 had variants, including 167 with high-density-screen tiers; variants totaled 195 MiB. Images read and written during regeneration entered the page cache; MemoryPeak reached the 384M limit, while anon peaked at approximately 86 MiB, with no OOM. Use `yuyan images --data` for diagnosis; see Yuyan DESIGN 26.3.
 
-Yuyan 全文搜索在服务进程内存中扫描小写全文，按 `revision/created_at` 只重读改过的文档，`serve` 启动后预热；接口、结果与摘要不变，无数据库迁移、数据根、运行时或共享 Nginx 变化。2026-10-14 随 c19a48f 发布：启动日志 `search index ready` 显示 526 篇、17.9 MiB、201 ms，anon 启动后约 80 MiB，搜索由 90–143 ms 降为 4–13 ms。设计见 Yuyan DESIGN 26.4。
+Yuyan full-text search scans lowercase full text in the service process's memory, rereads only changed documents according to `revision/created_at`, and warms up after `serve` starts. Interfaces, results, and snippets are unchanged, with no database migration, data-root, runtime, or shared Nginx changes. Deployed with c19a48f on 2026-10-14: the startup log `search index ready` showed 526 documents, 17.9 MiB, and 201 ms; anon was approximately 80 MiB after startup, and search time decreased from 90–143 ms to 4–13 ms. See Yuyan DESIGN 26.4.
 
-## 门户与统一认证
+<a id="门户与统一认证"></a>
 
-ServerPortal 已上线 /portal/ 与回环 18085；公网根路径跳转到门户。六个业务应用的 deploy/portal.json 已安装到各自 config 目录。用户口令只存 bcrypt 哈希，设备凭据使用 Secure/HttpOnly/SameSite=Strict Cookie；服务端授权永久有效，现有仍有效的授权已迁移，撤销仍立即生效。Cookie 设置 400 天且随门户或业务应用的有效请求续期，浏览器实际保留时间仍受自身限制。新备份为不加密 .tar.gz；旧加密包所需恢复私钥仍在维护电脑的 Git 目录之外。资源声明可登记 cache 类型（不含数据库的 data 子目录），2026-10-14 起（d5ee4a2）备份包在任何范围都跳过这些目录，目前只有 Yuyan 的 data/derived（约 168 MiB）。共享认证 include 来自 assets/nginx-portal-auth.conf，并已转发认证子请求的 Set-Cookie；未授权页面跳转登录，API/媒体返回 401，认证故障拒绝访问。ACME 与本机发布检查继续正常。未执行生产清理。门户真实完整包和增量已生成；用户暂缓完整包下载与恢复验收，部分下载文件保留且等待进程已停止，没有自动续传任务。备份覆盖、恢复验证与当前限制见 ServerPortal docs/VERIFICATION.md 和 docs/RESTORE.md；维护规则见 [门户维护](portal.md)。
+## Portal and Shared Authentication
 
-门户永久授权与紧凑布局已上线。实际程序来源从 current-commit 与 releases/metadata 读取，文档版本由 docs/SOURCE 记录。
+ServerPortal is deployed at /portal/ and loopback port 18085; the public root redirects to the portal. The six business applications' deploy/portal.json files are installed in their respective config directories. User passwords are stored only as bcrypt hashes, and device credentials use Secure/HttpOnly/SameSite=Strict cookies. Server-side authorization is permanent; existing valid authorizations have been migrated, and revocation still takes effect immediately. Cookies are set for 400 days and renewed on valid portal or business-application requests; actual browser retention remains subject to browser limits. New backups are unencrypted .tar.gz files; the recovery private key needed by old encrypted packages remains outside Git directories on the maintenance computer. Resource declarations can register the cache type (data subdirectories containing no database). Since 2026-10-14 (d5ee4a2), backup packages skip these directories in every scope; currently only Yuyan's data/derived (approximately 168 MiB). The shared authentication include comes from assets/nginx-portal-auth.conf and forwards the authentication subrequest's Set-Cookie. Unauthorized pages redirect to login; APIs/media return 401, and authentication failures deny access. ACME and local deployment checks continue to work. No production cleanup was performed. Real portal full and incremental packages have been generated; the user deferred full-package download and recovery acceptance. Partial downloads are retained, waiting processes have stopped, and there is no automatic resume task. See ServerPortal docs/VERIFICATION.md and docs/RESTORE.md for backup coverage, recovery verification, and current limitations; see [Portal Maintenance](portal.md) for maintenance rules.
 
-2026-10-01 已修复共享认证子请求误拦大请求的问题：仅在 `/_portal_device_check` 设置 `client_max_body_size 0`，继续禁止转发请求体，各应用 Nginx 与程序大小上限保持。RecipeBox、FabricWorld、Yuyan 的大图片、Yuyan 的大文档及 Ledger 的 1–2 MiB 请求不再被认证层默认 1 MiB 上限误拦；FeeTable 正常输入与门户自身认证不受原问题影响。全部 location 的 48 项隔离检查、线上 51 项只读 HTTP 检查和六站图标 GET/HEAD 检查通过；Nginx 平滑重载，各应用未重启、未写入合成业务数据。根因与维护方法见 [统一认证误拦大请求](common-issues.md#统一认证误拦大请求)。
+Permanent portal authorization and the compact layout are deployed. Actual program provenance is read from current-commit and releases/metadata; the documentation version is recorded in docs/SOURCE.
 
-门户已改用 /opt/serverportal/registry.d 的受控链接动态加载服务，共享校验器已安装到 /opt/server-context/scripts/validate-portal.py。六个业务应用的 root 发布脚本已支持 portal-check/portal 协议；更新不再需要手改中央 registry 数组或重启采集器。声明非法时保留上一份有效配置并报错。常规本机发布同步同提交声明，make portal 只更新门户信息；各业务应用通过本机 make portal 同步声明。
+The shared authentication subrequest's erroneous blocking of large requests was fixed on 2026-10-01: `client_max_body_size 0` is set only in `/_portal_device_check`, request-body forwarding remains disabled, and each application's Nginx and program size limits remain unchanged. Large images in RecipeBox, FabricWorld, and Yuyan, large documents in Yuyan, and Ledger requests of 1–2 MiB are no longer incorrectly blocked by the authentication layer's default 1 MiB limit. Normal FeeTable input and the portal's own authentication were unaffected by the original issue. All 48 isolated checks across every location, 51 live read-only HTTP checks, and icon GET/HEAD checks for six sites passed. Nginx was gracefully reloaded; no applications were restarted and no synthetic business data was written. For the root cause and maintenance procedure, see [Shared Authentication Incorrectly Blocks Large Requests](common-issues.md#shared-authentication-incorrectly-blocks-large-requests).
 
-## 共享配置与所有权
+The portal now dynamically loads services through controlled links in /opt/serverportal/registry.d, and the shared validator is installed at /opt/server-context/scripts/validate-portal.py. Root deployment scripts for the six business applications support the portal-check/portal protocol; updates no longer require manually editing a central registry array or restarting the collector. Invalid declarations retain the last valid configuration and report an error. Normal local deployments synchronize the declaration from the same commit; make portal updates only portal information. Each business application synchronizes its declaration through local make portal.
 
-七站均按[网页键盘与焦点约定](conventions.md#网页键盘与焦点)维护。FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal 和 AICalendar 已上线普通 Tab / Shift+Tab 拦截并取消控件焦点高亮，覆盖页面、表单、菜单和弹窗。Ledger 保持用户认可的现有快捷键与焦点行为；Yuyan 保留正文/代码缩进和表格单元格导航。五站本地 Chromium 与 WebKit 的页面、弹窗、窄屏及深色模式检查通过，编辑例外与菜单按键另行验证；全局 AGENTS 和七个项目入口均记录默认规则。
+<a id="共享配置与所有权"></a>
 
-七站都已提供独立的 favicon 和 180×180 apple-touch-icon；业务站点只对明确品牌图标（Ledger 含公开 manifest）开放匿名 GET/HEAD，页面、API 和用户媒体继续认证。AICalendar 已通过 Chromium 桌面与 375×667 窄屏交互检查，全部七站图标匿名 GET/HEAD 检查通过；真机添加桌面的最终效果待用户确认。新增网站从首次交付起遵循 conventions 的网站图标约定。
+## Shared Configuration and Ownership
 
-| 实际位置 | 维护源 / 含义 |
+All seven sites follow the [Web Keyboard and Focus Conventions](conventions.md#web-keyboard-and-focus). FeeTable, FabricWorld, RecipeBox, Yuyan, ServerPortal, and AICalendar have deployed ordinary Tab / Shift+Tab interception and removed control focus highlights across pages, forms, menus, and dialogs. Ledger retains its existing user-approved shortcuts and focus behavior; Yuyan preserves document/code indentation and table-cell navigation. Local Chromium and WebKit checks passed for pages, dialogs, narrow screens, and dark mode on five sites; editing exceptions and menu keys were verified separately. The global AGENTS and all seven project entry points record the default rule.
+
+All seven sites provide their own favicon and 180×180 apple-touch-icon. Business sites allow anonymous GET/HEAD only for explicit brand icons (Ledger also includes a public manifest); pages, APIs, and user media retain authentication. AICalendar passed Chromium desktop and 375×667 narrow-screen interaction checks, and anonymous icon GET/HEAD checks passed for all seven sites. The final result of adding to the home screen on a real device awaits user confirmation. New websites follow the website icon conventions from their first delivery.
+
+| Actual location | Maintained source / meaning |
 | --- | --- |
-| `/etc/nginx/nginx.conf` | Ubuntu 包基础配置，改动需记录；不是业务项目所有 |
-| `/etc/nginx/sites-available/apps` | 本技能 `assets/nginx-apps.conf` 渲染公网 IPv4，共享 80/443 与回环检查 server |
-| `/etc/nginx/sites-enabled/apps` | 指向上面的启用链接 |
-| `/etc/nginx/app-locations/ledger.conf` | 指向 `/opt/ledger/config/nginx-location.conf`，源在 Ledger deploy |
-| `/etc/nginx/app-locations/feetable.conf` | 指向 `/opt/feetable/config/nginx-location.conf`，源在 FeeTable deploy |
-| `/etc/nginx/app-locations/fabricworld.conf` | 指向 `/opt/fabricworld/config/nginx-location.conf`，源在 FabricWorld deploy |
-| `/etc/nginx/app-locations/recipebox.conf` | 指向 `/opt/recipebox/config/nginx-location.conf`，源在 RecipeBox deploy |
-| `/etc/nginx/app-locations/yuyan.conf` | 指向 `/opt/yuyan/config/nginx-location.conf`，源在 Yuyan deploy |
-| `/etc/nginx/app-locations/serverportal.conf` | 指向 `/opt/serverportal/config/nginx-location.conf`，源在 ServerPortal deploy |
-| `/etc/nginx/app-locations/aicalendar.conf` | 指向 `/opt/aicalendar/config/nginx-location.conf`，源在 AICalendar deploy |
-| `/etc/nginx/snippets/portal-auth.conf` | 本技能 assets/nginx-portal-auth.conf，仅在公网 443 server 引用 |
-| `/opt/serverportal/registry.d/<app>.json` | 指向应用自己的 config/portal.json；受限发布协议创建和校验 |
-| `/opt/server-context/scripts/validate-portal.py` | 本技能脚本，维护电脑与服务器共用的资源声明策略 |
-| `/var/log/nginx/access.log`、`error.log` | 共享 HTTP/HTTPS 请求日志；journal 主要反映 Nginx 生命周期 |
-| `/opt/server-context/` | 本技能的文档/模板/检查脚本副本，root 管理 |
-| `/opt/AGENTS.md` | 本技能 assets/AGENTS.md 的副本 |
-| `/root/AGENTS.md` | 指向 `/opt/AGENTS.md`，便于在 root 登录目录发现 |
-| `/etc/update-motd.d/30-server-context` | 交互登录提示；非交互 SSH 不依赖它 |
+| `/etc/nginx/nginx.conf` | Ubuntu package baseline configuration; record changes. Not owned by a business project |
+| `/etc/nginx/sites-available/apps` | This skill's `assets/nginx-apps.conf` rendered with the public IPv4; shared 80/443 and loopback inspection servers |
+| `/etc/nginx/sites-enabled/apps` | Enablement link pointing to the above |
+| `/etc/nginx/app-locations/ledger.conf` | Points to `/opt/ledger/config/nginx-location.conf`; source in Ledger deploy |
+| `/etc/nginx/app-locations/feetable.conf` | Points to `/opt/feetable/config/nginx-location.conf`; source in FeeTable deploy |
+| `/etc/nginx/app-locations/fabricworld.conf` | Points to `/opt/fabricworld/config/nginx-location.conf`; source in FabricWorld deploy |
+| `/etc/nginx/app-locations/recipebox.conf` | Points to `/opt/recipebox/config/nginx-location.conf`; source in RecipeBox deploy |
+| `/etc/nginx/app-locations/yuyan.conf` | Points to `/opt/yuyan/config/nginx-location.conf`; source in Yuyan deploy |
+| `/etc/nginx/app-locations/serverportal.conf` | Points to `/opt/serverportal/config/nginx-location.conf`; source in ServerPortal deploy |
+| `/etc/nginx/app-locations/aicalendar.conf` | Points to `/opt/aicalendar/config/nginx-location.conf`; source in AICalendar deploy |
+| `/etc/nginx/snippets/portal-auth.conf` | This skill's assets/nginx-portal-auth.conf, included only in the public port 443 server |
+| `/opt/serverportal/registry.d/<app>.json` | Points to the application's own config/portal.json; created and validated by the restricted deployment protocol |
+| `/opt/server-context/scripts/validate-portal.py` | This skill's script; resource-declaration policy shared by the maintenance computer and server |
+| `/var/log/nginx/access.log`, `error.log` | Shared HTTP/HTTPS request logs; the journal mainly reflects the Nginx lifecycle |
+| `/opt/server-context/` | Copies of this skill's documentation/templates/check scripts, managed by root |
+| `/opt/AGENTS.md` | Copy of this skill's assets/AGENTS.md |
+| `/root/AGENTS.md` | Points to `/opt/AGENTS.md` for discovery in root's login directory |
+| `/etc/update-motd.d/30-server-context` | Interactive-login notice; non-interactive SSH does not rely on it |
 
-`SOURCE` 分别位于 `/opt/server-context/` 与每个项目的 `/opt/<app>/docs/`，记录各自来源提交和同步时间。应用的 `current-commit` 记录运行程序版本，`config/portal-source.json` 记录声明来源提交与 SHA-256，两者都不代表 docs 版本；只同步文档或声明不应改写程序版本。
+`SOURCE` exists in `/opt/server-context/` and each project's `/opt/<app>/docs/`, recording each source commit and synchronization time. An application's `current-commit` records the running program version, while `config/portal-source.json` records the declaration's source commit and SHA-256. Neither represents the docs version; synchronizing only documentation or declarations must not rewrite the program version.
 
-## 手工数据归档
+<a id="手工数据归档"></a>
 
-2026-09-27 已按用户要求生成五个应用的当前一致性数据快照，汇总为 `ali-data-<UTC时间>.tar.gz`，通过 SSH 下载到维护电脑的 `~/ali/backups/`（位于各项目 Git 仓库之外，目录 0700、文件 0600）。这是一次手工下载，不是持续同步到维护电脑；主机另有下述阿里云文件备份。准确生成时间、各应用运行提交、校验和与恢复说明在归档旁的 metadata、verification、SHA-256 和 README 文件中；实际数据及这些清单不进入公开仓库。
+## Manual Data Archives
 
-归档含五个数据库、所有已登记照片/知识库图片、数据库内历史与回收站内容，并保留 Ledger 数据目录内的历史迁移快照。各应用通过自身 backup 命令生成独立在线一致性快照；不是五个应用的同一事务时点。没有运行 daily 清理或轮换，也没有停止服务。下载后核对整包 SHA-256、全部文件清单、三个图片应用的原生 manifest、六个数据库的完整性/外键及数据库登记图片的覆盖。
+On 2026-09-27, current consistent data snapshots of five applications were generated at the user's request, combined into `ali-data-<UTC-time>.tar.gz`, and downloaded over SSH to `~/ali/backups/` on the maintenance computer (outside all project Git repositories; directory permissions 0700, file permissions 0600). This was a manual download, not continuous synchronization to the maintenance computer; the host also has the Alibaba Cloud file backup described below. Exact generation times, each application's running commit, checksums, and recovery instructions are in the metadata, verification, SHA-256, and README files beside the archive. Neither the actual data nor these manifests go into the public repository.
 
-服务器单应用快照保留在各自 `/opt/<app>/backups/manual-ali-data-*`，汇总包和解包目录位于 root 私有的 `/opt/backup-exports/`；它们不自动轮换。打包使用 tar --hard-dereference，让归档内图片成为独立文件。只下载已完成归档，传输先保留 .part 名称，通过整包校验后再改为正式文件名；恢复先解到全新隔离目录并按包内说明验证，正式恢复另行确认。归档为数据备份，应用程序、运行配置与凭据仍按各自重建流程维护。
+The archive contains five databases, all registered photos/knowledge-base images, history and recycle-bin content within the databases, and historical migration snapshots from Ledger's data directory. Each application generated its own independent online consistent snapshot through its backup command; these are not a single transactional point in time across all five applications. No daily cleanup or rotation ran, and no services were stopped. After download, verification covered the full-package SHA-256, the complete file listing, native manifests for the three image applications, integrity/foreign keys for six databases, and coverage of database-registered images.
 
-## 云备份
+Individual application snapshots remain on the server under their respective `/opt/<app>/backups/manual-ali-data-*`; the combined package and unpacked directory are in root-private `/opt/backup-exports/`. They are not automatically rotated. Packaging uses tar --hard-dereference so images are independent files inside the archive. Download only completed archives; keep the .part name during transfer and rename to the final filename only after full-package verification. For recovery, first extract into a new isolated directory and verify according to the package's instructions; production restoration requires separate confirmation. This archive backs up data; application programs, runtime configuration, and credentials remain maintained through their respective rebuilding procedures.
 
-2026-10-01 从现场进程与客户端任务日志确认：阿里云 Cloud Backup 的 `hbrclient.service` 与 `hbrclientupdater.service` 已运行，目录为 `/opt/alibabacloud/hbrclient`。它独立于五个应用的 daily timer 和 ServerPortal 下载流程；不能再将“应用脚本不主动上传”表述为整机没有自动异机备份。
+<a id="云备份"></a>
 
-- 最近三个任务均于北京时间约 01:44 开始；最新任务成功完成增量备份。此时间来自运行日志，控制台计划配置未核对。
-- 文件备份目标为 `/`，排除系统程序、虚拟文件系统及客户端自身；现场排除列表未排除应用的 `/opt` 目录，应用数据、daily/manual/before-deploy、releases 和门户 exports 都在扫描范围内。
-- 任务记录的保留期为 30 天，快照到期时间与之相符。云端已用空间、账单、保留策略的控制台配置以及实际到期删除结果尚未独立核对；日志中的逻辑扫描量不等于云端物理占用。
-- 客户端启动日志显示本地旧元数据按 15 天清理；成功任务结束时回收旧文件缓存，最新日志保留最近两代缓存。客户端目录是第三方受管数据，不按应用垃圾处理。
-- 云端保留期不会删除服务器源文件。未轮换的 releases/备份持续进入新快照，增量去重不能替代源目录保留策略。云端直接扫描活跃 SQLite/WAL 也不等于应用一致性快照；恢复仍优先使用已完成的原生备份，并按项目契约验证。
+## Cloud Backup
 
-## 其他软件、后台任务和已知问题
+Confirmed from live processes and client job logs on 2026-10-01: Alibaba Cloud Backup's `hbrclient.service` and `hbrclientupdater.service` were running from `/opt/alibabacloud/hbrclient`. This is independent of the five applications' daily timers and ServerPortal's download workflow. Do not continue describing "application scripts do not proactively upload" as meaning the whole server has no automatic off-host backup.
 
-- FabricWorld 与 RecipeBox 共用图片运行依赖：Ubuntu 官方签名源 libvips-tools/libvips42t64 8.18.0 与 libheif-plugin-libde265 1.21.2。/tmp 为约 868 MiB tmpfs，图片数据与容量验证放 /opt 的持久磁盘，不能按根盘余量推断 /tmp 容量。
-- 已有工具：Git 2.53.0、root 的 `/root/.local/bin/uv` 0.12.15。它们不是任何应用的运行依赖，也不要因为应用不需要就删除。PATH 中没有 Node、Go、Docker、sqlite3，也没有数据库服务或自托管 Actions runner。
-- Ubuntu 的 nodejs、npm 及随它们安装的依赖（共 492 个包，含 eslint、webpack 和一批 X11/Mesa/Perl 库）已于 2026-09-26 按用户要求卸载：Node 不是任何应用的依赖，却常让开发 agent 误以为可以在服务器上构建。卸载后四个应用的直连、代理与深链接健康正常，libvips 可用。
-- 系统/厂商服务包含 `aliyun`（Aliyun Assist）、`hbrclient` / `hbrclientupdater`（阿里云 Cloud Backup）、chrony、cron、sshd、journald/rsyslog、resolved、networkd、tuned、ModemManager、multipathd 等，不是应用创建的。云备份详情见上节。
-- `aegis.service`（Aegis Service，阿里云安全组件）重启前长期 failed（Result=signal），2026-09-24 重启后恢复 running；若再次失败，不要归因于应用。
-- 系统 timer 包括 apt-daily/upgrade、logrotate、sysstat、fstrim、文件系统检查、fwupd、MOTD/update notifier 等；unattended-upgrades 会自动装安全更新，没有配置自动重启。
-- 2026-09-24 已重启以应用 libc6 更新：四个应用、Nginx 与备份 timer 均自动恢复，直连与代理健康正常，约 25 秒恢复 SSH。以后出现 /var/run/reboot-required 时，按同样方法先检查没有发布/备份在运行，重启后逐项验证。
-- 发布历史与发布前快照由 `ali-release-retention.timer` 每天北京时间 05:00 自动清理，保留最近 3 次成功发布和最近 5 份完整发布前备份，并保护当前版本、对应备份及待核对失败批次。每日备份共用清理锁，业务 daily 仍保留 14 份；手工/迁移备份和门户 exports 不在自动范围。配置、私有回执目录及验收见 [发布材料自动保留](retention.md)。
-- Certbot 5.8.0 使用 Certbot Project 官方 snap（latest/stable），snap 自动更新；IP 证书 apps-ip 约 160 小时有效，snap.certbot.renew.timer 自动续期，deploy hook 验证配置后重载 Nginx。首次签发、续期演练和实际 timer service 检查已通过，配置与重建见 [共享 HTTPS](https.md)。
-- 没有外部可用性或证书到期告警；inspect.sh 检查证书是否至少还有 48 小时有效。
+- The latest three jobs all started at approximately 01:44 Beijing time; the latest job successfully completed an incremental backup. This time comes from runtime logs; the schedule configuration in the console has not been checked.
+- The file-backup target is `/`, excluding system programs, virtual filesystems, and the client itself. The live exclusion list did not exclude the applications' `/opt` directory, so application data, daily/manual/before-deploy backups, releases, and portal exports are all within the scan scope.
+- Job records specify a 30-day retention period, consistent with snapshot expiration times. Cloud space used, billing, retention-policy configuration in the console, and actual deletion after expiration have not been independently checked. Logical scan volume in logs is not physical cloud storage usage.
+- Client startup logs show local old metadata being cleaned after 15 days; old file caches are reclaimed after successful jobs, and the latest logs retain the most recent two cache generations. The client directory is third-party managed data, not application junk.
+- Cloud retention does not delete server source files. Unrotated releases/backups keep entering new snapshots; incremental deduplication does not replace source-directory retention policies. Direct cloud scans of active SQLite/WAL files are also not equivalent to consistent application snapshots. Prefer completed native backups for recovery and verify them according to project contracts.
 
-## 重新核对
+<a id="其他软件后台任务和已知问题"></a>
+
+## Other Software, Background Tasks, and Known Issues
+
+- FabricWorld and RecipeBox share image runtime dependencies: libvips-tools/libvips42t64 8.18.0 and libheif-plugin-libde265 1.21.2 from Ubuntu's official signed repositories. /tmp is an approximately 868 MiB tmpfs; use persistent storage under /opt for image data and capacity verification. Do not infer /tmp capacity from free space on the root disk.
+- Existing tools: Git 2.53.0 and root's `/root/.local/bin/uv` 0.12.15. They are not runtime dependencies of any application, but do not delete them simply because applications do not need them. Node, Go, Docker, and sqlite3 are absent from PATH; there is no database service or self-hosted Actions runner.
+- Ubuntu's nodejs, npm, and dependencies installed with them (492 packages in total, including eslint, webpack, and a set of X11/Mesa/Perl libraries) were uninstalled at the user's request on 2026-09-26. Node was not a dependency of any application, but often led development agents to believe they could build on the server. After removal, direct, proxied, and deep-link health checks for four applications were normal, and libvips remained available.
+- System/vendor services include `aliyun` (Aliyun Assist), `hbrclient` / `hbrclientupdater` (Alibaba Cloud Backup), chrony, cron, sshd, journald/rsyslog, resolved, networkd, tuned, ModemManager, multipathd, and others; they were not created by the applications. See the preceding section for cloud backup details.
+- `aegis.service` (Aegis Service, Alibaba Cloud security component) had long been failed before reboot (Result=signal); it returned to running after the 2026-09-24 reboot. Do not attribute a recurrence to the applications.
+- System timers include apt-daily/upgrade, logrotate, sysstat, fstrim, filesystem checks, fwupd, MOTD/update notifier, and others. unattended-upgrades automatically installs security updates; automatic reboot is not configured.
+- The host was rebooted on 2026-09-24 to apply a libc6 update: four applications, Nginx, and backup timers all recovered automatically, direct and proxied health checks were normal, and SSH returned in approximately 25 seconds. When /var/run/reboot-required appears in the future, follow the same method: first check that no deployment/backup is running, then verify each item after reboot.
+- Deployment history and pre-deployment snapshots are automatically cleaned daily at 05:00 Beijing time by `ali-release-retention.timer`. It retains the latest 3 successful deployments and latest 5 complete pre-deployment backups, protecting the current version, its corresponding backup, and failed batches pending review. Daily backups share the cleanup lock; business daily backups still retain 14. Manual/migration backups and portal exports are outside the automatic scope. For configuration, the private receipt directory, and acceptance, see [Automatic Retention of Deployment Materials](retention.md).
+- Certbot 5.8.0 uses the Certbot Project's official snap (latest/stable), with automatic snap updates. The IP certificate apps-ip is valid for approximately 160 hours; snap.certbot.renew.timer renews it automatically, and the deploy hook validates configuration before reloading Nginx. Initial issuance, the renewal drill, and checks of the actual timer service passed; see [Shared HTTPS](https.md) for configuration and rebuilding.
+- There are no external availability or certificate-expiration alerts; inspect.sh checks whether the certificate has at least 48 hours remaining.
+
+<a id="重新核对"></a>
+
+## Rechecking
 
 ```sh
 ssh ali 'cat /opt/AGENTS.md'
 ssh ali 'bash /opt/server-context/scripts/inspect.sh'
-~/agent-config/skills/server-operations/scripts/sync-docs.sh --check    # 在本地运行：各文档副本是否与仓库一致
+~/agent-config/skills/server-operations/scripts/sync-docs.sh --check    # Run locally: check whether documentation copies match the repository
 ssh ali 'for a in ledger feetable fabricworld recipebox yuyan aicalendar; do echo "$a $(cat /opt/$a/current-commit)"; done'
 ```
 
-2026-10-07 七个应用服务均健康，AICalendar 每日备份首跑与完整性检查成功，其余备份的最近完整核对仍为 2026-10-01；failed 列表另有旧的 systemd-run 身份/快照诊断单元，不应混为当前业务或定时备份失败。出现应用或备份 unit 时先查其 journal。检查脚本不访问业务数据库、私钥或账目 API。完整命令输出可能包含公网地址、主机名、PID；只保留必要结论，不能把原始输出直接提交到公开仓库。
+On 2026-10-07, all seven application services were healthy, and AICalendar's first daily backup and integrity check succeeded. The latest complete check of the other backups remained 2026-10-01. The failed list also contained old systemd-run identity/snapshot diagnostic units; do not confuse these with current business-application or scheduled-backup failures. If an application or backup unit appears, inspect its journal first. The inspection script does not access business databases, private keys, or account APIs. Full command output may contain public addresses, hostnames, and PIDs; retain only necessary conclusions and do not commit raw output directly to the public repository.
 
-## 本机发布与验证
+<a id="本机发布与验证"></a>
 
-七个应用使用 [本机发布](release.md)：GitHub Actions 关闭，只备份源码与配置。原 production Secrets 和旧 CI 公钥已移除，业务发布身份信任维护电脑专用发布公钥；门户沿用管理员 SSH。历史回归套件退役，本次功能在本地按需验证，不默认保留永久测试。构建、上传与健康/备份保护由脚本执行。
+## Local Deployment and Validation
 
-门户 root 私有 releases/ 与 backups/ 保存旧程序及停写后的 data/config 快照，纳入共享 3/5 发布保留策略；私有清理回执目录也由 ServerPortal/deploy/portal.example.json 登记。用户暂缓的真实备份下载和恢复验收保持暂缓。
+The seven applications use [Local Deployment](release.md): GitHub Actions is disabled, and only source and configuration are backed up. Former production Secrets and old CI public keys have been removed. Business deployment identities trust dedicated deployment public keys from the maintenance computer; the portal continues to use administrator SSH. Historical regression suites are retired; verify the current functionality locally as needed without retaining permanent tests by default. Scripts handle builds, uploads, and health/backup protections.
+
+The portal's root-private releases/ and backups/ retain old programs and data/config snapshots taken after writes stop, and follow the shared 3/5 deployment retention policy. The private cleanup-receipt directory is also registered by ServerPortal/deploy/portal.example.json. The user's deferral of real backup download and recovery acceptance remains in effect.

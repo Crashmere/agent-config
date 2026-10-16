@@ -1,10 +1,10 @@
-# 查询、计划与下载
+# Queries, Planning, and Downloads
 
-导航：[准备目录](#1-准备本次工作目录) · [查询](#2-查用户与完整曲目) · [差集](#3-分析重叠与生成差集) · [下载与替代](#4-下载与受控替代) · [续传与交付](#5-续传输出和交付)
+Navigation: [Prepare the directory](#1-prepare-the-task-directory) · [Query](#2-find-users-and-complete-track-lists) · [Set difference](#3-analyze-overlap-and-build-the-set-difference) · [Download and substitute](#4-download-and-controlled-substitution) · [Resume and deliver](#5-resuming-output-and-delivery)
 
-## 1. 准备本次工作目录
+## 1. Prepare the task directory
 
-使用已有 Node.js 20+、curl、ffmpeg 与 ffprobe。示例采用 POSIX shell；脚本由 `node` 调用，不需要上游仓库安装或启动网页服务。
+Use existing Node.js 20+, curl, ffmpeg, and ffprobe. Examples use a POSIX shell; invoke scripts with `node`, without installing the upstream repository or starting a web service.
 
 ```bash
 mscd_skill="$HOME/agent-config/skills/mscd-music-download"
@@ -14,11 +14,11 @@ node "$mscd_skill/scripts/library.mjs" --help
 node "$mscd_skill/scripts/download.mjs" --help
 ```
 
-选择本次音乐输出目录，优先沿用用户明确给出的位置。工作目录保存查询快照、计划与替代规则；最终输出内的 `.mscd` 保存续传所需状态。结束时保留用户需要的快照和报告，不把它们提交到技能仓库。
+Choose the music output directory for this task, preferring the location explicitly specified by the user. The work directory stores query snapshots, plans, and substitution rules; `.mscd` inside the final output stores the state needed to resume. Retain snapshots and reports the user needs at completion, without committing them to the skill repository.
 
-## 2. 查用户与完整曲目
+## 2. Find users and complete track lists
 
-以下变量填入本次核实的值，不把个人账号写进 skill：
+Fill the variables below with values verified for this task; do not write personal accounts into the skill:
 
 ```bash
 node "$mscd_skill/scripts/library.mjs" search-users "$mscd_nickname" --out "$mscd_work/users.json"
@@ -27,11 +27,11 @@ node "$mscd_skill/scripts/library.mjs" playlist "$mscd_playlist_id" --out "$mscd
 node "$mscd_skill/scripts/library.mjs" playlist "$mscd_liked_id" --out "$mscd_work/liked.json"
 ```
 
-从 `users.json` 选出匹配的数字 UID，不将昵称当 UID。`createdByUser` 区分创建/收藏；喜欢的歌单名称随用户而变，不凭固定名称或历史数量选取。指定了几个字符歌单时，逐一读取其 ID 并保存快照。
+Select the matching numeric UID from `users.json`; do not use a nickname as a UID. `createdByUser` distinguishes created and saved playlists. Liked-playlist names vary by user; do not choose one based on a fixed name or historical count. When the user specifies playlists named with a few characters, retrieve their IDs individually and save snapshots.
 
-`playlist` 以 `trackIds` 的顺序补齐 `/song/detail`，保留 `declaredCount`、`returnedIds`、`unresolvedIds`、`countGap`。它不自动使用所有交叉核对接口；出现缺口时读取 API 故障说明并检查。所有查询命令的 `--out` 都拒绝覆盖已有文件；刷新时用新的文件名。
+`playlist` fills in `/song/detail` in `trackIds` order and preserves `declaredCount`, `returnedIds`, `unresolvedIds`, and `countGap`. It does not automatically use every cross-check API; when gaps appear, read the API troubleshooting reference and investigate. `--out` in all query commands refuses to overwrite existing files; use a new filename to refresh.
 
-## 3. 分析重叠与生成差集
+## 3. Analyze overlap and build the set difference
 
 ```bash
 node "$mscd_skill/scripts/library.mjs" overlap \
@@ -42,30 +42,30 @@ node "$mscd_skill/scripts/library.mjs" plan \
   --exclude "$mscd_work/liked.json" --out "$mscd_work/plan.json"
 ```
 
-- 重复 `--snapshot` 添加目标，重复 `--exclude` 添加排除歌单。单歌单下载只需一个 `--snapshot`，不需要排除时省略 `--exclude`。
-- `overlap.json` 的矩阵顺序与 `playlists` 一致，单元格是共同歌曲 ID 数组；`unique` 是唯一 ID 数，`records` 是各列表记录总数。
-- 计划中 `items` 按 ID 合并目标歌单，`memberships` 保留每个原位置，`skipped` 记录排除原因。
-- `versionCandidates` 只比较目标与排除歌单：歌名和艺人匹配、时长相差不超过 20 ms、ID 不同。默认仍下载；用户明确接受这种元数据匹配去重时再用 `--dedupe-versions`。它不能证明录音相同，也不合并目标歌单内不同 ID 的发行。
-- `--exclude` 根据歌单成员关系排除，不扫描本地磁盘。若用户要按本地实际文件排除，先核验清单和文件；只把确实有效的原/替代 ID 加入工作计划，保留可追溯的排除记录。
-- 不完整快照默认阻止计划生成。排查后仍少 ID 时可用 `--allow-partial` 下载已解析部分；此标志不消除缺失，最终报告必须列出。排除快照中已知 ID 即使无详情也会被排除，但接口未返回的 ID 无法推断。
+- Repeat `--snapshot` to add targets and `--exclude` to add excluded playlists. A single-playlist download needs only one `--snapshot`; omit `--exclude` when no exclusions are needed.
+- The matrix in `overlap.json` follows the order of `playlists`, with each cell an array of shared song IDs; `unique` counts unique IDs, and `records` is the total number of records across lists.
+- The plan's `items` merges target playlists by ID, `memberships` preserves every original position, and `skipped` records exclusion reasons.
+- `versionCandidates` compares only target and excluded playlists: matching titles and artists, duration differences of at most 20 ms, and different IDs. Download these by default; use `--dedupe-versions` only when the user explicitly accepts deduplication based on this metadata match. It does not prove identical recordings or merge releases with different IDs within target playlists.
+- `--exclude` excludes by playlist membership and does not scan local disks. If the user wants exclusions based on actual local files, verify manifests and files first; add only genuinely valid original/substitute IDs to the working plan and retain traceable exclusion records.
+- Incomplete snapshots block plan generation by default. If IDs remain missing after investigation, use `--allow-partial` to download the resolved portion; this flag does not eliminate gaps, which must appear in the final report. Known IDs in exclusion snapshots are excluded even without details, but IDs omitted by the API cannot be inferred.
 
-## 4. 下载与受控替代
+## 4. Download and controlled substitution
 
 ```bash
 node "$mscd_skill/scripts/download.mjs" \
   --plan "$mscd_work/plan.json" --out "$mscd_output" --jobs 3
 ```
 
-用户允许有损补齐时加 `--allow-mp3`。脚本先尝试 Meting 无损，再尝试网易云兼容的无损/旧版地址和 Meting 320；首个有效 FLAC 优先。没有 FLAC 时比较实际 MP3 码率，可能只有 192 或 128 kbps，不能写成 320。此流程不搜索所有平台，也不保证在多个 FLAC 之间找最高采样率。
+Add `--allow-mp3` when the user permits lossy fallback. The script first tries Meting lossless, then NetEase-compatible lossless/legacy URLs and Meting 320; the first valid FLAC takes priority. Without FLAC, compare actual MP3 bitrates, which may be only 192 or 128 kbps and must not be reported as 320. This workflow does not search every platform or guarantee the highest sample rate among multiple FLACs.
 
-失败条目需要其他发行时，先搜索再获取候选的规范化详情：
+When failed entries need another release, search first, then retrieve normalized candidate details:
 
 ```bash
 node "$mscd_skill/scripts/library.mjs" search-songs "$mscd_search_text" --out "$mscd_work/candidates.json"
 node "$mscd_skill/scripts/library.mjs" song "$mscd_candidate_id" --out "$mscd_work/candidate.json"
 ```
 
-在本次 `replacements.json` 中用原 ID 作为键，`song` 填入候选完整对象，`note` 写明核对过的差异与替代理由：
+In this task's `replacements.json`, use the original ID as the key, put the complete candidate object in `song`, and describe verified differences and the substitution reason in `note`:
 
 ```json
 {
@@ -81,23 +81,23 @@ node "$mscd_skill/scripts/library.mjs" song "$mscd_candidate_id" --out "$mscd_wo
 }
 ```
 
-示例 ID/URL 仅解释格式，不可直接下载。使用 `--replacements "$mscd_work/replacements.json"`；后续续传和审计同样传入。脚本要求艺人匹配、时长差不超过 2 秒且有说明，歌名不同还需 `acceptTitleDifference: true`；这个布尔值只能在实际核对且获得必要授权后设置。脚本不能代替试听或版本判断。替代源若与本计划另一首或排除 ID 冲突，会提前拒绝；先调整计划或排除策略，不重复下载。
+Example IDs/URLs illustrate the format only and cannot be downloaded directly. Use `--replacements "$mscd_work/replacements.json"` and supply it again for subsequent resumes and audits. The script requires matching artists, a duration difference of at most 2 seconds, and a note; different titles also require `acceptTitleDifference: true`. Set that boolean only after actual verification and any necessary authorization. The script cannot replace listening or release judgment. A substitute source conflicting with another song or excluded ID in this plan is rejected in advance; adjust the plan or exclusion policy before proceeding, without duplicate downloads.
 
-## 5. 续传、输出和交付
+## 5. Resuming, output, and delivery
 
-重复原命令即可续传。审计使用相同计划、音质和替代参数，再加 `--audit`；审计不会获取音频、歌词或封面，但会更新核验记录和报告。移动整个输出目录后，只需改 `--out`；相对路径和 M3U 引用仍可用。
+Repeat the original command to resume. Audit with the same plan, quality, and substitution arguments, plus `--audit`; auditing fetches no audio, lyrics, or cover art, but updates verification records and reports. After moving the entire output directory, only `--out` needs to change; relative paths and M3U references remain usable.
 
-| 文件 | 用途 |
+| File | Purpose |
 | --- | --- |
-| `<歌单名> [ID]/<位置> - <歌曲> [原ID].flac/mp3` | 已核验音频；共享曲目放在第一个目标歌单目录 |
-| 每个歌单的 `playlist.m3u8` | 当前补充结果，按原顺序引用共享文件；排除歌曲不会出现在此 M3U |
-| `manifest.json`、`results.csv` | 成功/失败、实际音质、歌词、封面、源 ID、替代说明与相对路径 |
-| `.mscd/plan.json` | 固定的原始下载计划；换任务用新输出目录 |
-| `.mscd/records/<原ID>.json` | 单曲进度、哈希及核验结果 |
-| `.mscd/summary.json`、`running.lock` | 汇总和进程锁；正常结束后移除锁 |
+| `<playlist-name> [ID]/<position> - <song> [original-ID].flac/mp3` | Verified audio; shared tracks go in the first target playlist's directory |
+| Each playlist's `playlist.m3u8` | Current supplemental download results, referencing shared files in original order; excluded songs do not appear in this M3U |
+| `manifest.json`, `results.csv` | Success/failure, actual quality, lyrics, cover art, source IDs, substitution notes, and relative paths |
+| `.mscd/plan.json` | Fixed original download plan; use a new output directory for a different task |
+| `.mscd/records/<original-ID>.json` | Per-song progress, hashes, and verification results |
+| `.mscd/summary.json`, `running.lock` | Summary and process lock; the lock is removed on normal completion |
 
-退出码 `0` 表示本计划全部成功且没有歌词不可用/快照缺口；`2` 表示有单曲失败、歌词不可用或快照缺口，需读取报告分别处理；`1` 表示参数、锁或其他全局错误。纯音乐不计入歌词不可用。
+Exit code `0` means the entire plan succeeded with no unavailable lyrics or snapshot gaps; `2` means song failures, unavailable lyrics, or snapshot gaps require reading the report and handling each category; `1` means argument, lock, or other global errors. Instrumental tracks do not count as unavailable lyrics.
 
-已有成功文件的续传会检查标签、歌词哈希、时长、文件大小和音频包哈希；`--audit` 另做完整解码。歌词暂时不可用的成功音频不会因普通续传重新取词；需要按故障说明补写，不能期待无限重跑自动恢复。文件损坏时保留文件并记失败，不静默覆盖。
+Resuming existing successful files checks tags, lyric hashes, duration, file size, and audio packet hashes; `--audit` also performs full decoding. Ordinary resuming does not fetch lyrics again for successful audio whose lyrics were temporarily unavailable; follow the troubleshooting instructions to add them, rather than expecting endless reruns to recover automatically. Preserve corrupted files and mark failure instead of silently overwriting them.
 
-最终提供输出目录与清单链接，并区分“可解析计划完成”和“歌单原始总量完整”。报告实际 MP3 码率分布、歌词/纯音乐/缺失、替代发行、尚未解决的错误；不把个人账号、音乐或运行状态提交到仓库。
+Finally, provide links to the output directory and manifest, and distinguish completion of the resolvable plan from completeness against the playlist's original total. Report the actual MP3 bitrate distribution, lyrics/instrumental/missing status, substitute releases, and unresolved errors; do not commit personal accounts, music, or runtime state to the repository.

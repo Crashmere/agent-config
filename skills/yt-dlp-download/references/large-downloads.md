@@ -1,69 +1,69 @@
-# 大文件、并行下载与恢复
+# Large Files, Parallel Downloads, and Recovery
 
-## 目录
+## Contents
 
-- [定位问题](#定位问题)
-- [选择下载器并保护进度](#选择下载器并保护进度)
-- [并行音视频和最终合并](#并行音视频和最终合并)
-- [核验边界](#核验边界)
+- [Diagnose the problem](#diagnose-the-problem)
+- [Choose a downloader and preserve progress](#choose-a-downloader-and-preserve-progress)
+- [Parallel video/audio and final merging](#parallel-videoaudio-and-final-merging)
+- [Verification boundaries](#verification-boundaries)
 
-## 定位问题
+## Diagnose the problem
 
-先分清失败阶段：搜索/网页获取、播放器元数据、媒体传输、字幕/封面下载、合并或核验。保留具体错误及已完成进度，脱敏后再展示；不要把播放器网页可访问等同于所有媒体 CDN 都正常。
+First identify the failing stage: search/page retrieval, player metadata, media transfer, subtitle/thumbnail downloads, merging, or verification. Preserve the specific error and completed progress, and redact before displaying them; access to the player page does not mean every media CDN is healthy.
 
-| 现象 | 下一步 | 不据此推断 |
+| Symptom | Next step | Do not infer |
 |---|---|---|
-| `--print` 搜索长时间无输出 | 去掉安静输出观察当前阶段；设置请求超时；分别测试现有配置、`--ignore-config` 和 `--force-ipv4` | 没输出不等于未启动；组合参数成功不能定位某个单一根因 |
-| curl 可以读取页面，yt-dlp 停滞 | 对照同一地址、网络配置和 IP 族；检查版本与现有代理设置 | 不擅自改系统代理或永久禁用 IPv6 |
-| `bytes read, ... more expected` | 数据连接提前结束；观察重试是否恢复，保持格式和文件名；必要时小范围测试 HTTP 分块大小 | 不直接断言磁盘损坏、文件已完成或仅是 DNS 问题 |
-| 媒体请求 403 | 重新从稳定视频地址提取链接；检查链接时效、客户端支持和内容可访问性；需要账号时再确认适用身份方式 | 403 不总是过期，也可能涉及身份或站点客户端变化；不以反复改签名参数代替诊断 |
-| 某条 aria2 连接出现 500 | 看整体任务是否仍增长、其他连接是否存活；整项失败后保留控制文件并有限重试 | 单连接错误不等于所有数据失败，也不必立即重启健康连接 |
-| `FixupM4a` 后字节数变化 | 用轨道、时长和解码结果核验重封装后的文件 | 不把正常容器修复误判为丢失音频 |
-| 最终文件存在但仍有同任务临时文件 | 查工具退出状态、控制文件和最终媒体；确认没有活动写入者 | 不只看 `ls` 大小或已存在提示就跳过核验 |
+| Search with `--print` produces no output for a long time | Remove quiet output to observe the current stage; set request timeouts; test the existing configuration, `--ignore-config`, and `--force-ipv4` separately | No output does not mean the process never started; success with combined options does not identify one root cause |
+| curl can read the page while yt-dlp stalls | Compare the same URL, network configuration, and IP family; check versions and existing proxy settings | Do not independently change system proxies or permanently disable IPv6 |
+| `bytes read, ... more expected` | The data connection ended early; observe whether retries recover, retain format and filename, and test HTTP chunk sizes on a small scale if needed | Do not immediately conclude disk corruption, file completeness, or a DNS-only problem |
+| Media requests return 403 | Extract links again from the stable video URL; check link validity, client support, and content accessibility; confirm the applicable identity method when an account is required | A 403 is not always expiration; identity or site-client changes may be involved. Do not substitute repeated signature-parameter changes for diagnosis |
+| One aria2 connection returns 500 | Check whether overall progress continues and other connections remain alive; preserve control files and retry within limits after the whole item fails | A single-connection error does not mean all data failed or require immediately restarting healthy connections |
+| Byte count changes after `FixupM4a` | Verify the remuxed file using tracks, duration, and decoding | Do not mistake normal container repair for missing audio |
+| A final file exists while temporary files for the task remain | Inspect tool exit status, control files, and final media; confirm no active writer remains | Do not skip verification based only on `ls` size or an already-exists message |
 
-保留因果边界：成功的恢复方法可以记录为方法；只有对照实验或错误证据支持时才报告根因。公开页面不需要默认读取浏览器 Cookie。确实需要登录时遵循当前授权，避免把 Cookie 导出到仓库、报告或共享目录。
+Keep causal claims bounded: a successful recovery method can be recorded as a method; report a root cause only when supported by a controlled comparison or error evidence. Public pages do not require reading browser Cookies by default. When login is actually needed, follow current authorization and avoid exporting Cookies into the repository, reports, or shared directories.
 
-## 选择下载器并保护进度
+## Choose a downloader and preserve progress
 
-### 先决定是否值得切换
+### Decide whether switching is worthwhile
 
-原生下载器持续推进时继续使用；分段协议可考虑其原生并发能力。`--concurrent-fragments` 不会给普通单文件 HTTPS 下载增加连接。不要把 aria2 视为必装项，也不要仅为测试加速修改运行时或依赖。
+Continue using the native downloader while it keeps progressing; for segmented protocols, consider its native concurrency. `--concurrent-fragments` does not add connections to an ordinary single-file HTTPS download. Do not treat aria2 as mandatory or change runtimes or dependencies solely to test acceleration.
 
-选择 aria2 前用 `aria2c --version` 和相关 `--help` 核对本机功能。通过 `software-installation` 处理缺失工具；包管理器可能安装或升级依赖，事后报告实际变化，不能承诺“只改一个二进制”。
+Before choosing aria2, inspect local capabilities with `aria2c --version` and the relevant `--help`. Use `software-installation` for missing tools; package managers may install or upgrade dependencies, so report actual changes afterward instead of promising to change only one binary.
 
-对选中的 HTTP(S) 单文件格式，可在主流程命令上添加：
+For selected HTTP(S) single-file formats, add the following to the main workflow command:
 
 ```bash
 --downloader aria2c \
 --downloader-args 'aria2c:-x16 -s16 -k1M --continue=true --file-allocation=none --summary-interval=30 --show-console-readout=false --console-log-level=warn --retry-wait=3 --max-tries=20'
 ```
 
-按网络情况从 8～16 条连接中选择，持续变慢或请求错误增加时减少并发。它们是 aria2 参数；只有证据支持 IPv4 路径时，才同时给 yt-dlp 添加 `--force-ipv4`、给 aria2 添加 `--disable-ipv6=true`。不要默认把这些调优用于所有站点或协议。
+Choose 8–16 connections according to network conditions, reducing concurrency if sustained speed falls or request errors increase. These are aria2 arguments; add `--force-ipv4` to yt-dlp and `--disable-ipv6=true` to aria2 together only when evidence supports the IPv4 path. Do not apply these tunings to every site or protocol by default.
 
-aria2 的 `--max-tries` / `--retry-wait` 不代表所有 HTTP 错误都会重试。本次验证过的 aria2 1.37.0 没有 `--retry-on-http-error`，未来先查版本帮助，不复制其他下载器的选项。
+aria2's `--max-tries` / `--retry-wait` do not mean every HTTP error will be retried. The aria2 1.37.0 version verified here has no `--retry-on-http-error`; check version-specific help in future instead of copying another downloader's options.
 
-### 切换前保全状态
+### Preserve state before switching
 
-1. 确认当前任务拥有的 PID、父子进程、格式、目标路径和下载器。只停止本任务，不用广泛的 `pkill` 影响其他下载。
-2. 优先正常中断，让工具保存状态；等待原写入者退出后再交接。必要时为本次临时数据保留独立副本或新输出路径，不能覆盖未知文件。
-3. 原生 yt-dlp 的连续 `.part` 不等于 aria2 的分块控制状态。单写 `yt-dlp --continue` 不能保证 aria2 接续；某些版本的外部下载命令允许覆盖无控制文件的旧文件。显式传 `--continue=true`，但仍须验证实际继承进度。
-4. aria2 的 `.part` 可能从开始就有接近最终文件的逻辑长度；已完成范围由同名 `.aria2` 控制文件记录。两者一起保留，路径及格式保持一致。没有控制文件时先诊断，不能把该文件交给原生下载器按 EOF 续传。
-5. 比较交接前后的完成字节数/分块，不能用重新计算的百分比掩饰重新下载。无法证明可安全接续时，继续旧下载器或采用独立的新输出，保留原数据直至确认恢复。
+1. Identify the current task's PID, parent/child processes, formats, destination paths, and downloader. Stop only this task; do not affect other downloads with broad `pkill` commands.
+2. Prefer a normal interruption so the tool can save state; wait for the original writer to exit before handing over. If needed, preserve a separate copy of this task's temporary data or use a new output path; do not overwrite unknown files.
+3. Native yt-dlp's contiguous `.part` is not aria2's chunk control state. `yt-dlp --continue` alone does not guarantee aria2 can resume; some versions' external download commands allow overwriting an old file without a control file. Explicitly pass `--continue=true`, but still verify that progress was actually inherited.
+4. An aria2 `.part` may have a logical length close to the final size from the start; completed ranges are tracked in the matching `.aria2` control file. Preserve both together with identical paths and formats. Diagnose a missing control file before proceeding; do not hand that file to the native downloader to resume from EOF.
+5. Compare completed bytes/chunks before and after handover; do not hide a fresh download behind a recalculated percentage. If safe resuming cannot be established, continue with the old downloader or use an independent new output, retaining the original data until recovery is confirmed.
 
-### 有限刷新重试
+### Bounded refresh retries
 
-保持输出模板、格式 ID 与下载器不变，每次整项失败后通过稳定视频 URL 重新提取媒体地址，然后让下载器读取原控制文件。将外层尝试控制在合理上限，例如 3～5 次并逐次退避；反复同因失败时调整有证据支持的参数或报告缺失条件。
+Keep the output template, format IDs, and downloader unchanged. After each whole-item failure, extract fresh media URLs through the stable video URL, then let the downloader read the original control file. Bound outer attempts reasonably, for example to 3–5 with increasing backoff; repeated failures for the same reason require evidence-based parameter changes or a report of the missing conditions.
 
-单条连接报错而任务仍在增长时继续观察。不要因为每条 stderr 中出现 `ERROR` 就盲目启动第二个写入进程。不要把临时签名 URL 写进技能、持久任务配置或公开日志。
+Keep observing when one connection errors but the task continues progressing. Do not blindly start a second writer whenever stderr contains `ERROR`. Do not put temporary signed URLs into the skill, persistent task configuration, or public logs.
 
-## 并行音视频和最终合并
+## Parallel video/audio and final merging
 
-### 只让一个进程拥有每条轨道
+### Give each track a single writer
 
-先从格式表确定视频 ID 和音频 ID，不固定使用某次成功的 `299+140`。使用同一稳定模板，并从一开始分别运行两个单格式任务：
+Determine video and audio IDs from the format list first; do not hard-code a previously successful `299+140`. Use the same stable template and start two separate single-format tasks from the outset:
 
 ```bash
-# YT_VIDEO_ID 和 YT_AUDIO_ID 从当前 -F 结果设置；每条命令各自监控。
+# Set YT_VIDEO_ID and YT_AUDIO_ID from the current -F results; monitor each command separately.
 yt-dlp --no-playlist --abort-on-error --continue --no-overwrites \
   --format "$YT_VIDEO_ID" --paths "$YT_OUT" \
   --output '%(id)s.f%(format_id)s.%(ext)s' "$YT_URL"
@@ -73,17 +73,17 @@ yt-dlp --no-playlist --abort-on-error --continue --no-overwrites \
   --output '%(id)s.f%(format_id)s.%(ext)s' "$YT_URL"
 ```
 
-按主流程补齐超时、重试和经过选择的下载器参数。上述输出模板在最终合并阶段也必须保持一致：基名是视频 ID，中间轨道附加 `.f<format-id>`。
+Add timeouts, retries, and the selected downloader arguments from the main workflow. Keep the same output template during final merging: the basename is the video ID, and intermediate tracks add `.f<format-id>`.
 
-**不要**同时运行一个 `video+audio` 任务和另一个写同一音轨的任务。前者可能在视频结束或失败后开始写音轨，造成竞争。若已经如此启动，先停止重叠写入者，确认退出，再改为互不重叠的单格式任务。
+**Do not** run a `video+audio` task alongside another task writing the same audio track. The former may begin writing audio after video finishes or fails, creating a race. If already started this way, stop overlapping writers, confirm they have exited, then switch to non-overlapping single-format tasks.
 
-默认无需为了很小的音轨引入额外编排；只在大文件等待有实际收益时使用独立并行任务。所有任务完成之前不要开始合并或报告总任务成功。
+Do not add orchestration for a very small audio track by default; use independent parallel tasks only when they materially help during a large-file wait. Do not merge or report overall success before all tasks complete.
 
-### 使用已下载轨道合并
+### Merge downloaded tracks
 
-先核验两条轨道的格式与时长。对于未经后处理的原始轨道，可与本次提取的 `filesize` 比较；若工具做过 `FixupM4a`，改用媒体核验而不是原始字节数。
+First verify both tracks' formats and durations. For unprocessed original tracks, compare against the `filesize` extracted in this task; if the tool performed `FixupM4a`, use media verification instead of the original byte count.
 
-保存使用相同视频及格式选择得到的本地 `.info.json`。该文件可能包含临时签名链接，保留在任务目录，不提交仓库。两条轨道已通过检查、输出命名完全匹配时，可使用已有元数据合并并嵌入章节：
+Save local `.info.json` obtained for the same video and format selection. It may contain temporary signed links; keep it in the task directory and out of the repository. Once both tracks pass verification and output naming matches exactly, merge and embed chapters using the existing metadata:
 
 ```bash
 yt-dlp --ignore-config --continue --no-overwrites \
@@ -93,33 +93,33 @@ yt-dlp --ignore-config --continue --no-overwrites \
   --load-info-json "$INFO_FILE"
 ```
 
-以上骨架处理音视频与章节；需要字幕、封面和简介时按主流程以相同基名准备附属文件并添加相应参数。若中间文件来自其他模板，先使最终模板匹配已有轨道，不静默改名未知文件。
+This skeleton handles video, audio, and chapters; for subtitles, thumbnails, and descriptions, prepare sidecar files with the same basename and add the corresponding arguments from the main workflow. If intermediate files used a different template, first make the final template match existing tracks; do not silently rename unknown files.
 
-`--load-info-json` 本身不保证离线：缺轨道或命名不匹配时仍可能尝试下载其中的旧链接。确认日志复用的是经过核验的现有文件；确需补下时重新从稳定视频 URL 获取新元数据。`--skip-download` 不能代替合并命令。
+`--load-info-json` alone does not guarantee offline operation: missing tracks or mismatched naming may still trigger downloads from its old links. Confirm that logs show reuse of verified existing files; if additional downloads are needed, obtain fresh metadata from the stable video URL. `--skip-download` cannot replace the merge command.
 
-## 核验边界
+## Verification boundaries
 
-- 用 `ffprobe` 确认时长、编码、画面尺寸、帧率、轨道和章节。音画时长可因编码帧边界略有差别；有意义的差异要调查，不自动放宽容差。
-- 使用 `scripts/verify_media.py` 核验最终媒体。`--info-json` 提供预期时长，并在完整音视频模式比较源章节的数量、标题及起止时间；`--expect-chapters` 单独使用时只能核验数量。对于静音源视频或单独音轨，显式选择所需轨道。
-- 末尾解码加 `-progress pipe:1`，检查真实输出时长和视频帧数。只有退出码 0，仍可能是没有输出任何帧的空解码。
-- 尾段核验不证明整段每帧都无损。已出现缺片段、解码错误、截断或源时长不一致时，再定向补查或执行完整解码，不对每个十几小时的正常视频默认全片解码。
-- 合并、容器修复和嵌入元数据会改变字节数；它们不等于重新编码。保留原始编码时也不能宣称游戏素材经过内容审查或包含所有原作剧情。
+- Use `ffprobe` to confirm duration, codecs, dimensions, frame rate, tracks, and chapters. Audio/video durations may differ slightly due to encoded frame boundaries; investigate meaningful differences instead of automatically relaxing tolerances.
+- Verify final media with `scripts/verify_media.py`. `--info-json` supplies the expected duration and, in full video/audio mode, compares source chapter counts, titles, and start/end times; `--expect-chapters` alone checks only counts. Explicitly select required streams for silent source videos or separate audio tracks.
+- Add `-progress pipe:1` to tail decoding and inspect actual output duration and video frame count. Exit code 0 alone may still represent an empty decode that produced no frames.
+- Tail verification does not prove every frame throughout the video is intact. When there is evidence of missing segments, decoding errors, truncation, or source-duration mismatch, investigate the affected area or perform a full decode; do not fully decode every otherwise normal video lasting more than ten hours by default.
+- Merging, container repair, and metadata embedding change byte counts without necessarily re-encoding. Preserving original codecs also does not justify claims that game footage has undergone content review or contains the entire original story.
 
-### MP4 的章节数量正确但导航异常
+### MP4 chapter count is correct but navigation is wrong
 
-MP4 可同时保存 Nero `chpl` 列表和 QuickTime `text` 章节轨道。前者完整不保证后者正确；`ffprobe` 合并读取时可能仍显示正确总数，却出现零时长、标题错位或重复。
+MP4 can store both a Nero `chpl` list and a QuickTime `text` chapter track. A complete former does not guarantee a correct latter; `ffprobe` may still show the correct total when reading them together, while durations are zero, titles are misaligned, or entries are duplicated.
 
-先对照源章节标题和时间，再检查数据轨道的 `time_base`、样本数量及重封装警告。遇到 `Application provided duration ... is invalid`、`Packet duration ... is out of range`，检查自动选择的 movie timescale 是否让长章节超过样本时长限制。不要仅凭“超过 32 位”笼统归因于累加溢出；要用真实数值或小样本实验区分原因。
+First compare source chapter titles and times, then inspect the data track's `time_base`, sample count, and remuxing warnings. For `Application provided duration ... is invalid` or `Packet duration ... is out of range`, check whether the automatically selected movie timescale makes long chapters exceed the sample-duration limit. Do not vaguely attribute this to cumulative overflow merely because a value exceeds 32 bits; use actual values or small experiments to distinguish causes.
 
-已在 FFmpeg 9.0.2 复现：视频 timescale 为 15360、音频为 44100 时，默认自动 movie timescale 为 11289600；200 秒章节变成 2257920000 ticks，超过有符号 32 位上限，产生警告并丢失文本样本，但程序仍退出 0。显式输出 `-movie_timescale 1000` 后样本、标题和时间恢复。不要将此结论外推到所有 FFmpeg 版本；检查当前行为。
+Reproduced in FFmpeg 9.0.2: with video timescale 15360 and audio timescale 44100, the default automatic movie timescale is 11289600; a 200-second chapter becomes 2257920000 ticks, exceeding the signed 32-bit limit, producing warnings and losing text samples while the program still exits 0. Explicit output `-movie_timescale 1000` restores samples, titles, and times. Do not generalize this result to every FFmpeg version; inspect current behavior.
 
-对该环境中最终输出 MP4 的 yt-dlp 任务，在下载前给 Metadata 步骤添加下列参数，预防写入异常；这是 yt-dlp 2026.08.19 已验证的参数作用域，版本变化后核对帮助。不向 MKV 等其他容器传这个 MP4 专用选项。
+For yt-dlp tasks producing final MP4 output in that environment, add the following argument to the Metadata step before downloading to prevent incorrect writes. This argument scope was verified in yt-dlp 2026.08.19; check help after version changes. Do not pass this MP4-specific option to other containers such as MKV.
 
 ```bash
 --postprocessor-args 'Metadata+ffmpeg_o:-movie_timescale 1000'
 ```
 
-以源章节生成 UTF-8 FFmetadata，转为毫秒并正确转义标题中的反斜线、等号、分号、井号和换行。先输出独立的新文件，保留原文件。对于已确认只需保留一条视频和主音轨的文件，可以显式重建章节：
+Generate UTF-8 FFmetadata from source chapters, convert to milliseconds, and correctly escape backslashes, equals signs, semicolons, hash signs, and newlines in titles. Write a separate new file first and retain the original. For files confirmed to require only one video stream and the main audio track, explicitly rebuild chapters:
 
 ```bash
 ffmpeg -n -nostdin -i "$ORIGINAL_FILE" -f ffmetadata -i "$CHAPTERS_FILE" \
@@ -127,8 +127,8 @@ ffmpeg -n -nostdin -i "$ORIGINAL_FILE" -f ffmetadata -i "$CHAPTERS_FILE" \
   -c copy -movie_timescale 1000 -movflags +faststart "$REPAIRED_FILE"
 ```
 
-先确认当前 FFmpeg 支持 `-movie_timescale`，再使用这个修复选项。若文件有其他需保留的音轨、字幕或封面，显式追加它们，不照搬双轨映射丢弃内容，也不复制已确认损坏的旧章节数据轨道。FFmetadata 的 `TIMEBASE=1/1000` 本身不保证 MP4 输出轨道使用低 timescale。
+Confirm that the current FFmpeg supports `-movie_timescale` before using this repair option. If other audio tracks, subtitles, or cover art must be retained, map them explicitly; do not discard content by blindly copying the two-stream mapping or copy old chapter data tracks known to be corrupt. FFmetadata's `TIMEBASE=1/1000` alone does not guarantee a low timescale in MP4 output tracks.
 
-修复后重新比较每章标题、起止时间、音视频时长和尾段输出。必要时对原文件与修复文件执行 `ffmpeg -i ... -map 0:v:0 -map 0:a:0 -c copy -f streamhash -hash sha256 -`，比较压缩音视频包的摘要，确认仅改变封装。全部通过且原文件未被其他任务修改后再替换；不能以退出码 0 掩盖上述时间戳警告。
+After repair, compare every chapter's title, start/end times, video/audio durations, and tail output again. If needed, run `ffmpeg -i ... -map 0:v:0 -map 0:a:0 -c copy -f streamhash -hash sha256 -` on both original and repaired files and compare compressed audio/video packet digests to confirm only the container changed. Replace only after all checks pass and the original has not been modified by another task; do not use exit code 0 to conceal the timestamp warnings above.
 
-参数语义发生变化时，优先核对当前 `yt-dlp --help`、`aria2c --help` 及 [yt-dlp 官方文档](https://github.com/yt-dlp/yt-dlp#readme)、[aria2 官方手册](https://aria2.github.io/manual/en/html/aria2c.html)。
+When option semantics change, first check current `yt-dlp --help`, `aria2c --help`, the [official yt-dlp documentation](https://github.com/yt-dlp/yt-dlp#readme), and the [official aria2 manual](https://aria2.github.io/manual/en/html/aria2c.html).

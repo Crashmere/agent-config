@@ -1,27 +1,27 @@
-# 原生文档格式
+# Native document format
 
-目录：基础结构与文字、代码与公式、容器、表格、图片与组合、附件、链接、兼容边界。
+Contents: basic structure and text, code and formulas, containers, tables, images and compositions, attachments, links, compatibility boundaries.
 
-本文说明当前格式与常用写法，实际节点/属性以 `schema [--node TYPE]` 从 Yuyan checkout 读取的结果为准。格式源为 Yuyan 的 `web/src/schema`；修改本技能不得复制或维护另一套 schema。写入用 `validate` / `create` / `edit`，不要从 DOM HTML 反推原文。
+This reference describes the current format and common patterns. Actual nodes/attributes are defined by the output of `schema [--node TYPE]` from the Yuyan checkout. The format source is Yuyan's `web/src/schema`; do not copy or maintain a second schema when modifying this skill. Use `validate` / `create` / `edit` for writes; do not reconstruct the original body from DOM HTML.
 
-## 基础结构与文字
+## Basic structure and text
 
-文档根是 `doc`，content 至少有一个块；空文档为 `{"type":"doc","content":[{"type":"paragraph"}]}`。节点使用 `type / attrs / content / text / marks`。`text` 节点的 text 非空，不带 content。
+The document root is `doc`, whose content contains at least one block. An empty document is `{"type":"doc","content":[{"type":"paragraph"}]}`. Nodes use `type / attrs / content / text / marks`. A `text` node has nonempty text and no content.
 
-| 节点 | 内容 / 属性 |
+| Node | Content / attributes |
 |---|---|
-| paragraph | 行内内容；textAlign: null / left / center / right |
-| heading | 行内内容；level: 1–6；没有段落对齐属性 |
-| hardBreak | 行内换行，无内容 |
-| horizontalRule | 分隔线，块级 |
-| blockquote | 一个或多个块 |
-| bulletList / orderedList | 一个或多个 listItem；有序列表 start 默认 1，type 通常保留默认 null |
-| listItem | 必须以 paragraph 开始，其后可有块、嵌套列表 |
-| taskList / taskItem | taskList 内是 taskItem，内容同列表项；taskItem.checked 布尔值 |
+| paragraph | Inline content; textAlign: null / left / center / right |
+| heading | Inline content; level: 1–6; no paragraph alignment attribute |
+| hardBreak | Inline line break, no content |
+| horizontalRule | Block-level separator |
+| blockquote | One or more blocks |
+| bulletList / orderedList | One or more listItem nodes; ordered-list start defaults to 1, and type normally retains its default null |
+| listItem | Must start with paragraph, followed optionally by blocks or nested lists |
+| taskList / taskItem | taskList contains taskItem nodes, with content like list items; taskItem.checked is boolean |
 
-文字标记：`bold`、`italic`、`strike`、`underline`、`code`；`highlight` 默认无色值，对应 `==高亮==`。标记存于 text.marks，不应写成节点。
+Text marks: `bold`, `italic`, `strike`, `underline`, `code`; `highlight` has no color value by default and corresponds to `==高亮==`. Store marks in text.marks, not as nodes.
 
-原生 text 中的 `**文字**` 仍是字面正文，不会由阅读页再次解释为加粗。Markdown 导入会诊断未解析的加粗，修正边界空白、闭合或乘号歧义后再保存，见 [Markdown 加粗检查](editing.md#markdown-加粗检查)；不要靠全局删星号模拟 marks。
+`**文字**` in native text remains literal body content; the reading page does not reinterpret it as bold. Markdown import diagnoses unresolved bold; fix boundary whitespace, closing markers, or multiplication-sign ambiguity before saving. See [Markdown bold checks](editing.md#markdown-bold-checks); do not simulate marks by globally deleting asterisks.
 
 ```json
 {"type":"paragraph","content":[
@@ -30,28 +30,28 @@
 ]}
 ```
 
-文字颜色用 `textColor` 标记，attrs 为 color 与可选 gradient；文字背景用 `highlight.color`。纯色推荐 #rrggbb；不支持任意 CSS、透明背景或自定义渐变。固定文字渐变：ocean、violet、sunset、flame，配套纯色回退从 `schema` 返回的 textGradients 读取。例如 ocean 的 color 为 `#14b8a6`。同类标记只出现一次；修改颜色时保留链接、粗体等其他 marks。
+Use the `textColor` mark for text color, with color and optional gradient in attrs; use `highlight.color` for text background. Prefer #rrggbb for solid colors. Arbitrary CSS, transparent backgrounds, and custom gradients are unsupported. Fixed text gradients are ocean, violet, sunset, and flame; read their matching solid-color fallbacks from textGradients returned by `schema`. For example, ocean uses color `#14b8a6`. Each mark type appears only once; preserve links, bold, and other marks when changing colors.
 
-普通文字强调可写为 `{"type":"text","text":"性能损耗","marks":[{"type":"textColor","attrs":{"color":"#d63384"}}]}`。迁移源用行内代码模拟颜色时，确认是普通文字后移除 `code`，不能只叠加颜色；真正代码保留 `code`，混合句子拆成多个 text，见 [语义迁移](editing.md#资料迁移的语义与截图处理)。
+Ordinary text emphasis can be written as `{"type":"text","text":"性能损耗","marks":[{"type":"textColor","attrs":{"color":"#d63384"}}]}`. If a migration source uses inline code to simulate color, confirm that it is ordinary text and remove `code`; merely adding color is insufficient. Preserve `code` for actual code and split mixed sentences into multiple text nodes. See [Migration semantics](editing.md#migration-semantics-and-screenshot-handling).
 
-## 代码、Mermaid 与公式
+## Code, Mermaid, and formulas
 
-`codeBlock` 只包含无格式 text；代码放 text，保留换行和空格，不解析其中的 Markdown。attrs：language、title、titleHidden、collapsed。title 为 null 表示无标题条，空字符串表示空标题条；需要收起时提供可见标题条。
+`codeBlock` contains only unformatted text. Put code in text, preserving newlines and spaces without parsing Markdown inside it. attrs: language, title, titleHidden, collapsed. A null title means no title bar; an empty string means an empty title bar. Provide a visible title bar when the block needs to collapse.
 
 ```json
 {"type":"codeBlock","attrs":{"language":"go","title":"示例","collapsed":false,"titleHidden":false},"content":[{"type":"text","text":"fmt.Println(\"hello\")\n"}]}
 ```
 
-Mermaid 使用 `codeBlock` 且 language 为 `mermaid`，不是单独节点。Markdown 代码围栏支持 `go title="示例" collapsed`；标题/收起会保留。代码字体配色、查找、放大、编辑快捷键属于网页行为，不存成正文属性。
+Mermaid uses `codeBlock` with language set to `mermaid`, not a separate node. Markdown code fences support `go title="示例" collapsed`; title and collapse state are preserved. Code font colors, search, zoom, and editing shortcuts are web UI behavior, not body attributes.
 
-公式使用 `inlineMath`（在 paragraph 内）或 `blockMath`，表达式放 attrs.latex，无 content。JSON 中反斜线需转义，例如 `{"type":"blockMath","attrs":{"latex":"E=mc^2"}}`。不要把公式当可执行程序。
+Formulas use `inlineMath` (inside paragraph) or `blockMath`, with the expression in attrs.latex and no content. Escape backslashes in JSON, for example `{"type":"blockMath","attrs":{"latex":"E=mc^2"}}`. Do not treat formulas as executable programs.
 
-## Callout、折叠、高亮块与分栏
+## Callouts, collapsible blocks, highlighted blocks, and columns
 
-- `callout`：content 必须依次为 calloutTitle、calloutContent；前者是行内内容，后者至少一个块。attrs.type 常用 note、info、tip、warning、danger、success、question、example、quote；fold 为 `""`（不可折叠）、`"+"`（展开）、`"-"`（收起）。代码使用 codeBlock，不再新建旧 `[!code]` 样式。
-- `foldBlock`：content 依次为 foldTitle、foldContent；标题行内，正文至少一个块；attrs.collapsed 为布尔值。
-- `highlightBlock`：至少一个块；backgroundColor 使用固定色板。用 `schema` 查询十种浅色值，不使用任意色值；默认蓝色 `#e1efff`。
-- `columns`：2–4 个 column；每个 column 至少一个块。attrs.widths 是与栏数一致的正整数比例权重，每项 1–1000，null 表示等宽。例如 `[1,2]`。手机会纵向展示。
+- `callout`: content must contain calloutTitle followed by calloutContent. The former holds inline content; the latter holds at least one block. Common attrs.type values are note, info, tip, warning, danger, success, question, example, and quote. fold is `""` (not collapsible), `"+"` (expanded), or `"-"` (collapsed). Use codeBlock for code; do not create the old `[!code]` style.
+- `foldBlock`: content contains foldTitle followed by foldContent; the title is inline and the body has at least one block. attrs.collapsed is boolean.
+- `highlightBlock`: at least one block; backgroundColor uses the fixed palette. Query the ten light colors with `schema`; do not use arbitrary values. The default is blue `#e1efff`.
+- `columns`: 2–4 column nodes, each containing at least one block. attrs.widths contains positive integer proportional weights matching the column count, each 1–1000; null means equal widths. For example, `[1,2]`. Columns stack vertically on phones.
 
 ```json
 {"type":"foldBlock","attrs":{"collapsed":true},"content":[
@@ -60,20 +60,20 @@ Mermaid 使用 `codeBlock` 且 language 为 `mermaid`，不是单独节点。Mar
 ]}
 ```
 
-这些容器可容纳表格、代码、分栏等符合 schema 的块。减少栏数或取消容器时按原顺序搬出全部内容，不能只保留第一栏。保存片段时补足必要容器，无法合法闭合时扩大选择范围。
+These containers can hold tables, code, columns, and other schema-valid blocks. When reducing the number of columns or removing a container, move all content out in its original order; do not keep only the first column. Include required containers when saving a snippet; expand the selection if it cannot form a complete valid structure.
 
-## 表格
+## Tables
 
-结构：`table → tableRow → tableCell / tableHeader → block+`。表头由实际 tableHeader 节点决定；可没有表头，不强制首行。不要给 table 设置不存在的 rows、columns、width 或 height 属性。
+Structure: `table → tableRow → tableCell / tableHeader → block+`. Actual tableHeader nodes determine headers; a table may have no header, and the first row need not be one. Do not set nonexistent rows, columns, width, or height attributes on table.
 
-| 位置 | 属性 |
+| Location | Attributes |
 |---|---|
-| table | blockAlign，整表在正文中的 left / center / right |
-| tableRow | height，正数像素或 null |
-| tableCell / tableHeader | colspan、rowspan（正整数，默认 1）；colwidth（每个跨列的像素宽度数组或 null） |
-| 单元格 | align（列默认对齐）、cellAlign（本单元格覆盖）、backgroundColor（纯色或 null） |
+| table | blockAlign: left / center / right alignment of the whole table within the body |
+| tableRow | height: positive pixels or null |
+| tableCell / tableHeader | colspan, rowspan (positive integers, default 1); colwidth (pixel-width array for each spanned column, or null) |
+| Cell | align (column default alignment), cellAlign (override for this cell), backgroundColor (solid color or null) |
 
-合并后删除被覆盖的格子，保留其中全部内容；拆分时补齐真实单元格。按占据的网格核对跨度，确保各行覆盖同样列数。`colwidth` 长度等于 colspan；同一逻辑列的宽度与 align 在各行保持一致。如果已经固定列宽，新列也设置宽度。cellAlign 独立覆盖，不应通过改变整列 align 来只对齐一个格子。
+After merging, remove covered cells while preserving all their content; when splitting, add the actual cells needed. Check spans against the occupied grid so every row covers the same number of columns. `colwidth` length equals colspan; widths and align for the same logical column must be consistent across rows. If column widths are already fixed, set a width for new columns as well. cellAlign is an independent override; do not change the whole column's align to align just one cell.
 
 ```json
 {"type":"table","content":[
@@ -87,41 +87,41 @@ Mermaid 使用 `codeBlock` 且 language 为 `mermaid`，不是单独节点。Mar
 ]}
 ```
 
-复杂表格导出为 HTML 保留尺寸、合并与颜色，普通表格可导出 Markdown。
+Complex tables export as HTML to preserve dimensions, merges, and colors; ordinary tables can export as Markdown.
 
-网页编辑器支持“按内容适配列宽”：点击表格内可从悬浮工具栏调整当前表格；选中跨表格的内容可一次调整选区相交的所有表格，包含容器中的表格。按浏览器实际排版取得避免自动换行所需的列宽，保留手动换行、合并结构和行高，宽表格横向滚动，整次操作可一步撤销。它只写入既有 `colwidth`，不是持续自动调整或 `nowrap` 属性；无新增 API。Agent 直接修改 JSON 时继续按实际网格为各单元格设置一致的 `colwidth`，不要用字符数估算来承诺不换行，也不要添加 `autoFit` 等不存在的字段。
+The web editor supports “按内容适配列宽”. Click inside a table to adjust it from the floating toolbar, or select content spanning tables to adjust every table intersecting the selection, including tables in containers. Browser layout determines the column widths needed to avoid automatic wrapping, preserving manual line breaks, merges, and row heights. Wide tables scroll horizontally, and the entire operation can be undone in one step. It writes only the existing `colwidth`, not continuous auto-sizing or a `nowrap` attribute; there is no new API. When modifying JSON directly, continue to set consistent `colwidth` values for cells according to the actual grid. Do not promise no wrapping based on character-count estimates or add nonexistent fields such as `autoFit`.
 
-## 图片、裁切、切分与组合
+## Images, cropping, splitting, and composition
 
-image 为行内节点，放 paragraph 等允许 inline 的容器；imageBoard 直接容纳 image。先 upload 获取真实 src，禁止猜内容 ID。src 是 `/assets/<32位id>.<扩展名>`，不带 `/yuyan` 前缀。网页另按屏幕宽度和密度载入显示版本 `/assets/<id>-<宽>.<jpg|png|hidpi.jpg>`；它们可随时重建或消失，不写入 src，下载、核对和导出一律用原图。
+image is an inline node; put it in paragraph or another container permitting inline content. imageBoard holds image nodes directly. Obtain the real src through upload first; never guess content IDs. src is `/assets/<32-character-id>.<extension>`, without a `/yuyan` prefix. The web UI also loads display variants according to screen width and density at `/assets/<id>-<width>.<jpg|png|hidpi.jpg>`. These may be rebuilt or disappear at any time; do not write them into src. Always use original images for downloads, checks, and exports.
 
-- 基础属性：src、alt、title、width、height、caption、shadow、blockAlign。caption 为可见说明，与 alt/title 独立；shadow 为可选布尔阴影边框。
-- crop：`{x,y,width,height}`，相对原图的 0–1 范围；x+width、y+height 不超过 1；null 表示整图。sourceWidth/sourceHeight 保存原始像素尺寸，width/height 为显示尺寸。裁切后同步合理的显示宽高比例，原始素材不变。
-- 物理裁剪：提取混合截图中的独立文字后，需要从上传素材中去掉文字区时，裁剪工作副本再 upload；新图 `crop:null`，`sourceWidth/sourceHeight` 为新文件实际尺寸，显示宽度按可读性设置并用 `height:null` 保持比例。与 `crop` 的阅读遮罩不同，实际文件已变小。
-- 互补切分：复用同一 src，用不重叠 crop 矩形分割区域。例如左右两半为 `{x:0,y:0,width:0.5,height:1}` 和 `{x:0.5,y:0,width:0.5,height:1}`；原图不修改、不重新上传。已有 crop 时在当前区域内计算。
-- `imageBoard`：attrs.width、height 为画板尺寸，blockAlign 为整体位置；content 是一个或多个真实 image。每张图片的 placement 为相对画板的 `{x,y,width,height}`。列表顺序也是叠放顺序。超出画板会被裁切。
-- 改画板尺寸与整体缩放不同：前者保持图片像素位置时须按新尺寸重算 placement，后者可保持比例；根据用户意图选择。批量样式只是对所选图片合并相同 attrs，不修改无关图片。
+- Basic attributes: src, alt, title, width, height, caption, shadow, blockAlign. caption is visible explanatory text, independent of alt/title; shadow is an optional boolean shadow border.
+- crop: `{x,y,width,height}` relative to the original image, in the 0–1 range. x+width and y+height must not exceed 1; null means the whole image. sourceWidth/sourceHeight store original pixel dimensions; width/height are display dimensions. After cropping, update the display aspect ratio appropriately; the original media remains unchanged.
+- Physical cropping: after extracting separate text from a mixed screenshot, crop a working copy and upload it when the text area must be removed from the uploaded media. Set the new image's `crop:null`, use its actual dimensions for `sourceWidth/sourceHeight`, set display width for readability, and use `height:null` to preserve proportions. Unlike the reading mask provided by `crop`, this makes the actual file smaller.
+- Complementary splitting: reuse the same src and divide regions with nonoverlapping crop rectangles. For example, left and right halves are `{x:0,y:0,width:0.5,height:1}` and `{x:0.5,y:0,width:0.5,height:1}`. Do not modify or reupload the original image. If crop already exists, calculate within the current region.
+- `imageBoard`: attrs.width and height are canvas dimensions; blockAlign positions the whole board. content contains one or more actual image nodes. Each image's placement is `{x,y,width,height}` relative to the canvas. List order also determines stacking order. Content outside the canvas is clipped.
+- Resizing the canvas differs from scaling the whole composition. To preserve image pixel positions when resizing the canvas, recalculate placement for the new dimensions; scaling the whole composition can preserve proportions. Choose according to the user's intent. Batch styling only merges the same attrs into selected images and does not change unrelated images.
 
-## 可编辑画板
+## Editable drawings
 
-`drawing` 是原子块，与只包含 image 的 imageBoard 独立。attrs 为 src `/drawings/<32位ID>`、version 1、width 100–2400（首建不放大小图且不超过 800）、blockAlign left/center/right、caption，以及服务端派生的 text、previewWidth、previewHeight、previewMime。完整节点来自 `upload --kind drawing`，不能手造派生值；显示属性可局部修改，图形修改需生成并上传新包。
+`drawing` is an atomic block, separate from imageBoard, which contains only images. attrs include src `/drawings/<32-character-ID>`, version 1, width 100–2400 (on initial creation, do not enlarge small drawings or exceed 800), blockAlign left/center/right, caption, and server-derived text, previewWidth, previewHeight, and previewMime. Obtain the complete node from `upload --kind drawing`; do not fabricate derived values. Display attributes can be edited individually; graphic changes require generating and uploading a new package.
 
-支持原生形状、文字、绑定连线、自由画笔和图片，包中保留 Excalidraw 场景。Markdown 导出以 HTML figure、预览和源文件链接保留；完整导出还需包及图片文件。生成、审阅、修改和跨实例导入见 [可编辑画板](drawing.md)。
+Native shapes, text, bound connectors, freehand strokes, and images are supported; the package retains the Excalidraw scene. Markdown export preserves an HTML figure, preview, and source-file link; a complete export also needs the package and image files. See [Editable drawings](drawing.md) for generation, review, editing, and import across instances.
 
-## 附件
+## Attachments
 
-attachment 为块级节点，可嵌套于表格、分栏和折叠正文。upload --kind attachment 返回完整节点：src `/attachments/<32位id>`、name、size（非负字节数）、mime。空文件可上传；卡片改名只改 name。复制节点复用原文件，不重复上传。
+attachment is a block node that can be nested in tables, columns, and collapsible bodies. upload --kind attachment returns a complete node: src `/attachments/<32-character-id>`, name, size (nonnegative bytes), and mime. Empty files can be uploaded; renaming a card changes only name. Copying a node reuses the original file without another upload.
 
-阅读页支持位图、PDF、文本、音视频与常见压缩包目录等预览；工具可调用 preview API 获取文本/目录，复杂格式按其领域工具处理。HTML/SVG/XML 附件作为源码，不能当作网页执行。删除卡片不立即回收仍被历史、回收站或模板引用的文件。
+The reading page supports previews of bitmaps, PDFs, text, audio/video, and common archive directory listings. Tools can call the preview API for text/listings; use the relevant domain tools for complex formats. Treat HTML/SVG/XML attachments as source code, not executable web pages. Deleting a card does not immediately collect files still referenced by history, trash, or templates.
 
-## 文档与章节链接
+## Document and section links
 
-link.attrs.href 存 `/docs/<id>` 或 `/docs/<id>#<编码后的slug>`，网页前缀由服务补齐。通过 link-targets/preview 找真实章节锚点，不自行猜 slug。文档移动/改名不改变文档 ID；章节改名或同名顺序调整可能改变 slug。
+link.attrs.href stores `/docs/<id>` or `/docs/<id>#<encoded-slug>`; the service supplies the web prefix. Find real section anchors through link-targets/preview; do not guess slugs. Moving or renaming a document does not change its ID; renaming sections or reordering same-name sections may change their slugs.
 
-引用链接是普通文字的 link mark，没有飞书式 @人、评论或同步块。反向链接由存活正文推导，无需手工维护。模板/片段插入是独立内容副本，后续不会与来源自动同步。
+Reference links are ordinary text link marks, without Lark-style @mentions, comments, or synced blocks. Backlinks are derived from live bodies and need no manual maintenance. Inserted templates/snippets are independent content copies and do not automatically sync with their sources later.
 
-## 兼容与能力边界
+## Compatibility and capability boundaries
 
-原生 JSON 覆盖已实现的正文能力。Markdown 方便普通写作，超出 Markdown 的内容通过项目已有 HTML 规则保留；不接受任意网页应用、脚本或自定义 CSS。可视化代码格式化、键盘选区、悬停预览、阅读位置等 UI 临时状态无需复刻为 CLI 命令。通过改最终文档结构完成用户意图即可。
+Native JSON covers implemented body capabilities. Markdown is convenient for ordinary writing; content beyond Markdown is preserved through the project's existing HTML rules. Arbitrary web applications, scripts, and custom CSS are not accepted. Temporary UI states such as visual code formatting, keyboard selection, hover previews, and reading position need not be reproduced as CLI commands. Fulfill the user's intent by changing the final document structure.
 
-维护时对照节点、属性、marks 和实际 API，检查新增格式是否需要更新本文的示例/校验；不能仅因 schemaVersion 仍为 1 就认为能力未变。尽量调用共享 schema；只在 scripts 中维护本技能的操作编排。
+During maintenance, compare nodes, attributes, marks, and actual APIs to determine whether new formats require updates to this reference's examples/validation. An unchanged schemaVersion of 1 does not mean capabilities are unchanged. Prefer the shared schema; keep only this skill's operation orchestration in scripts.

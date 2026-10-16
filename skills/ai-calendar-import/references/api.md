@@ -1,10 +1,10 @@
-# AICalendar 接口与客户端
+# AICalendar API and Client
 
-服务契约维护源：[API 文档](https://github.com/Crashmere/AICalendar/blob/main/docs/API.md)、[JSON Schema](https://github.com/Crashmere/AICalendar/blob/main/api/import.schema.json)、[合成示例](https://github.com/Crashmere/AICalendar/blob/main/api/import-example.json)。本机 checkout 可直接读取；配置后可 GET `/ingest/v1/schema` 查看运行版本。
+Authoritative service contracts: [API documentation](https://github.com/Crashmere/AICalendar/blob/main/docs/API.md), [JSON Schema](https://github.com/Crashmere/AICalendar/blob/main/api/import.schema.json), and [synthetic example](https://github.com/Crashmere/AICalendar/blob/main/api/import-example.json). Read the local checkout directly when available; after configuration, GET `/ingest/v1/schema` to inspect the running version.
 
-## 私有配置
+## Private configuration
 
-默认 `~/.config/aicalendar/client.json`，配置和 token 文件权限必须为 0600：
+The default is `~/.config/aicalendar/client.json`; both configuration and token files must have permissions 0600:
 
 ```json
 {
@@ -13,32 +13,32 @@
 }
 ```
 
-地址和秘密不写入仓库。token 用文件读取，不放命令行、URL、对话或环境日志。客户端强制 HTTPS（本机 loopback 演示例外），禁止重定向，避免凭据转发到其他地址。
+Do not write addresses or secrets into the repository. Read the token from a file; do not put it on the command line, in URLs, conversations, or environment logs. The client enforces HTTPS (except local loopback demonstrations) and prohibits redirects to prevent forwarding credentials to other addresses.
 
-导入凭据只用于 `/ingest/v1/`：Schema、批次预览/提交、批次列表/回执、规范化记录查询，以及完整聊天存档的分块导入、查询与下载。不能编辑网页注释、使用日历摘要 export、删除数据、管理门户设备或读取其他应用。完整存档的下载不是日历摘要 export，见 [archives.md](archives.md)。
+Import credentials are limited to `/ingest/v1/`: Schema, batch preview/submission, batch lists/receipts, normalized record queries, and chunked imports, queries, and downloads of full conversation archives. They cannot edit website annotations, use calendar summary export, delete data, manage portal devices, or read other applications. Downloading a full archive is distinct from calendar summary export; see [archives.md](archives.md).
 
-## 固定计划
+## Fixed plans
 
-`prepare` 生成本次固定请求，默认每批最多 200 条且预留体积余量。`--upsert` 会先读取现存记录版本。计划包括目标地址、内容摘要、稳定幂等键和所有批次；覆盖声明放在最后，只有前面的记录成功才提交。
+`prepare` generates fixed requests for this task, with at most 200 records per batch by default and room left below the payload size limit. `--upsert` first reads existing record versions. The plan includes the destination address, content digest, stable idempotency keys, and all batches; coverage declarations go last and are submitted only after preceding records succeed.
 
-`preview` 不写业务数据；有冲突时输出完整 JSON 并以退出码 2 结束，普通错误为 1。`submit` 每批再次预览，然后提交并回读回执；失败保留计划，再次 submit 同一计划可恢复。服务以 `source + external_id` 去重，并以幂等键防止网络重试重复提交。
+`preview` does not write business data; conflicts produce full JSON output and exit code 2, while ordinary errors use 1. `submit` previews each batch again, submits it, and reads back the receipt; preserve the plan on failure and submit the same plan again to resume. The service deduplicates by `source + external_id` and uses idempotency keys to prevent duplicate submissions on network retries.
 
-已成功的旧计划重放后，当前记录可能已被后续批次更新。客户端根据回执版本区分：同版本逐条核对并计入 `verified_records`；更高版本列在 `superseded_records`，返回 `committed=true, exact_current=false`，表示原提交成功且已有更新，不是网络失败。不要为此重复重试或覆盖新版本。记录缺失、版本倒退或同版本内容不同仍以错误退出。
+When replaying an old successful plan, current records may already have been updated by later batches. The client distinguishes versions using the receipt: records at the same version are checked individually and counted in `verified_records`; higher versions appear in `superseded_records`, returning `committed=true, exact_current=false`. This means the original commit succeeded and updates now exist, rather than a network failure. Do not repeatedly retry or overwrite newer versions because of this result. Missing records, regressed versions, or different content at the same version still cause an error exit.
 
-不同请求不能共用幂等键。已有记录发生并发更新时，旧计划可能冲突；回读新版本和差异，按用户目标准备新文件、新计划。不要自行覆盖用户展示修改或减少已确认次数。
+Different requests must not share an idempotency key. Concurrent updates to existing records may cause an old plan to conflict; read back the new versions and differences, then prepare new input and a new plan according to the user's goal. Do not independently overwrite the user's presentation changes or reduce confirmed counts.
 
-JSON 文件中的数字是当前完整快照值。记录原来 6 次、新资料确认 8 次，提交 8；不能加成 14。
+Numbers in the JSON file are values for the current complete snapshot. If a record previously had 6 sends and new materials confirm 8, submit 8; do not add them to make 14.
 
-source_label 是用户指定的可选来源标签，最多 80 字，可含中文和空格，日历/存档均展示它。source 与 external_id 保持稳定；标签改名通过新计划 upsert，不能换来源或累加次数。prepare --upsert 在输入未提供 source_label 时沿用现有标签；提供非空值时使用新标签。日历查询 q 包含来源标签，tag 可精确匹配来源标签。
+source_label is an optional source label supplied by the user, up to 80 characters, allowing Chinese characters and spaces; both the calendar and archives display it. Keep source and external_id stable; rename a label through upsert with a new plan, without changing the source or accumulating counts. prepare --upsert retains the existing label when the input omits source_label and uses the new label when a nonempty value is supplied. Calendar query q includes source labels, and tag can match a source label exactly.
 
-## 常见错误
+## Common errors
 
-| 错误 | 处理 |
+| Error | Action |
 | --- | --- |
-| 401 | 检查私有配置与当前有效 token；不要尝试门户 Cookie 或关闭认证 |
-| 400 | 按运行服务 Schema 修正字段、时间范围或质量说明 |
-| 409 | 阅读逐条 reason，区分版本变化、旧快照、计数下降与幂等键复用 |
-| 网络失败 | 保留原计划重试，确认回执和回读结果 |
-| 计划摘要/目标不符 | 不修改计划绕过校验；从审阅后的输入生成新计划 |
+| 401 | Check private configuration and the currently valid token; do not try portal Cookies or disable authentication |
+| 400 | Correct fields, time ranges, or quality explanations according to the running service's Schema |
+| 409 | Read each reason and distinguish version changes, old snapshots, count reductions, and idempotency key reuse |
+| Network failure | Retry with the original plan and confirm receipts and read-back results |
+| Plan digest/destination mismatch | Do not modify the plan to bypass validation; generate a new plan from the reviewed input |
 
-服务每批事务提交；一个批次冲突则该批无写入，但前面成功批次已提交。客户端回读不仅检查批次，还比较实际记录的日期、次数、主题与标签。
+The service commits each batch transactionally; a conflict writes nothing from that batch, but earlier successful batches remain committed. Client read-back checks batches and also compares actual record dates, counts, topics, and tags.

@@ -1,74 +1,74 @@
-# 审校与交付
+# Review and delivery
 
-## 先核事实，再润色
+## Verify facts before polishing
 
-审校结论必须对应实际检查过的正文、事件和证据。自评分、文件数、字数或搜索次数不能证明忠实度。
+Review conclusions must correspond to prose, events, and evidence actually checked. Self-scores, file counts, character counts, or search counts cannot prove fidelity.
 
-| 检查 | 具体核对 |
+| Check | What to verify |
 |---|---|
-| 作品与路线 | 版本、DLC、周目、自建主角与选定分支一致；没有拼接互斥结果 |
-| 事件覆盖 | 所请求范围的必经事件均有落点；部分展开未被误记为完成；排除有路线依据 |
-| 主线因果 | 行动者、前置、选择、胜负、代价、道具获得与结局符合证据 |
-| 信息边界 | 人物知道/误信/不知道的内容正确；真相揭露不提前；原作传闻不被写成事实 |
-| 人物一致性 | 对话语义、态度、动机、关系和能力符合当时状态；未强造成长或感情线 |
-| 连续性 | 时间、路程、位置、队伍、伤势、物品归属和未履行承诺与前文连贯 |
-| 媒介转换 | 没有攻略流水账、UI 神谕、无依据的死亡读档或越级能力；保留原作内真实机制 |
-| 新读者理解 | 只读过前文的人能知道人物在哪、为何行动、物件是什么、线索如何相连；专名首次出现有着落，回想与呼应有前文铺垫，没有游戏外语汇冒充世界内名称 |
-| 全书一致 | 同一物件、地点、装备与称谓跨章叫法一致，有意区分的相似物件始终分得开；改名后已全书检索 |
-| 小说表达 | 关键场景写到行动与后果；动作空间可理解；语言自然，节奏与原作相容 |
-| 原作风格 | 文风档案有原作依据；对白、情绪和静默符合当前场景，没有被主播口吻或通用爽文套路替代 |
-| 自然叙事 | 重复动作、情绪注解、同声对白、模板句和多余总结已按作用判断；未机械禁用标点、修辞或把全文改成碎句 |
-| 润色前后 | 否定、条件、先后、判断强度、承诺、伏笔与角色认知一致；未为具体化新增动作、物件、身世或观察时点 |
-| 视频完整审阅 | 全部约定范围逐段细看；导航预览不算细看，短暂和含混细节已回看/放大/回听；未为省 token 或耗时主动降低覆盖，读取限制如实记录 |
-| 视频细节与小说详略 | 充分观察后选择细节，关键场景的有效细节进入正文；不因预计略写而漏看，也不因观察很多就把所有细节塞入小说 |
-| 交付范围 | 没越过用户停点、剧透边界和文件权限；正文没有内部编号或审校过程 |
+| Work and route | Edition, DLC, playthrough, custom protagonist, and selected branch agree; mutually exclusive outcomes are not spliced together |
+| Event coverage | Every mandatory event in the requested scope has a location; partial development is not mislabeled complete; exclusions have a route basis |
+| Main-story causality | Actors, prerequisites, choices, victory/defeat, costs, item acquisition, and ending match the evidence |
+| Information boundaries | Character knowledge, misbeliefs, and unknowns are correct; truths are not revealed early; original rumors do not become facts |
+| Character consistency | Dialogue meaning, attitude, motives, relationships, and abilities match the current state; no forced growth or romance arc |
+| Continuity | Time, travel, location, party, injuries, item ownership, and unfulfilled promises connect to preceding prose |
+| Medium conversion | No walkthrough log, UI oracle, unsupported death-and-reload sequence, or abilities beyond the established level; genuine in-world mechanisms remain |
+| New-reader comprehension | A reader who knows only preceding prose can tell where characters are, why they act, what objects are, and how clues connect; proper names are grounded on first appearance, recollections and callbacks have setup, and outside-game vocabulary does not masquerade as in-world names |
+| Whole-book consistency | Names of the same objects, places, equipment, and forms of address stay consistent across chapters; intentionally distinct similar objects remain distinct; name changes have been searched across the whole book |
+| Novelistic expression | Key scenes include action and consequences; action space is understandable; language is natural and pacing compatible with the original |
+| Original style | The style profile has original evidence; dialogue, emotion, and silence fit the current scene without being replaced by a streamer's voice or generic gratification-driven web-novel formulas |
+| Natural narration | Repeated actions, emotional annotations, identical dialogue voices, formulaic sentences, and redundant summaries have been judged by function; punctuation and rhetoric are not mechanically banned, and the whole text has not been reduced to fragments |
+| Before and after polishing | Negation, conditions, sequence, certainty, promises, foreshadowing, and character understanding remain consistent; specificity has not introduced actions, objects, backstories, or observation times |
+| Complete video review | The entire agreed scope has been examined segment by segment; navigation previews do not count as detailed viewing, brief and ambiguous details have been revisited/enlarged/reheard, coverage has not been voluntarily reduced to save tokens or time, and reading limits are recorded truthfully |
+| Video detail and narrative emphasis | Details are selected after sufficient observation, and useful details from key scenes enter the prose; anticipated summarization does not justify missed viewing, and abundant observation does not mean every detail belongs in the novel |
+| Delivery scope | The user's stopping point, spoiler boundary, and file permissions are respected; prose contains no internal IDs or review process |
 
-做大纲时检查覆盖和依赖，写正文后检查实际发生了什么。大纲列过不代表正文已经写到；首领“被提到”不代表战斗和后果已交代。
+Check coverage and dependencies at outline stage, then check what actually happens after drafting. Listing an event in an outline does not mean the prose has reached it; mentioning a boss does not mean the battle and aftermath have been conveyed.
 
-## 扩写后的连续性检查
+## Continuity checks after expansion
 
-按改动涉及的项目检查实际正文。把上段结束状态、新增经过和下段起点接起来读，不能只审阅孤立的新句。
+Check actual prose according to the areas affected by changes. Read the preceding passage's ending state, added events, and following passage's start together rather than reviewing isolated new sentences.
 
-| 检查 | 具体核对 |
+| Check | What to verify |
 |---|---|
-| 动作进程 | 到达、开门、上船、取放物件等是否因插段发生两遍；细写是否仍落在该行动发生的位置 |
-| 空间与视线 | 人物此刻在内还是在外、上方还是下方；门、障碍和人物的相对位置是否支持视线与行动，不能为形容临时编一个相冲突的方位 |
-| 物件与能力 | 物件由谁持有、工具是否已启用、光源是否被遮住、是否已回到载具；收起、交还或关闭后的作用须符合原作规则 |
-| 知识与判断 | 先取得信息再据此辨认；已查明的事情不重写为首次发现；回顾式叙述没有提前写出人物后来才知道的名称、去向或答案；保留推测、条件、否定和确定程度，不把当前不能写成永远不能 |
-| 回忆与呼应 | 写“第一次”“曾经”或回收前文时，核对原场景的实际动作、所见与当时理解；不能把本轮想表达的意思追写成早已发生的经历。检查承诺和关系变化是否有应有的后续，不把每个闲笔都改成必须兑现的伏笔 |
-| 时间与状态 | 回忆、梦境、变身、轮回等切换后，依该作规则重新核对身体、装备、感官和环境，不能默认继承上一状态 |
-| 段落衔接 | 插段后“它、那里、刚才”仍指向正确对象；说话者、先后关系及“再次、仍然”等词与当前状态相符 |
+| Action progression | Whether inserted passages make arrival, door opening, boarding, or taking/placing objects happen twice; whether detail remains where the action occurs |
+| Space and sightlines | Whether a character is inside/outside or above/below at that moment; whether the relative positions of doors, obstacles, and characters support sightlines and action; do not invent a conflicting direction for a description |
+| Objects and abilities | Who holds an object, whether a tool is active, whether a light source is blocked, and whether someone has returned to a vehicle; effects after stowing, returning, or switching off must follow the original rules |
+| Knowledge and judgment | Information is acquired before recognition based on it; established facts are not rewritten as first discoveries; retrospective narration does not name destinations or answers learned only later; preserve guesses, conditions, negation, and certainty, and do not turn inability now into inability forever |
+| Recollections and callbacks | For “第一次”, “曾经”, or a callback, check the original scene's actual actions, observations, and understanding; do not retroactively turn this round's intended meaning into an earlier experience. Check that promises and relationship changes receive appropriate follow-through without converting every incidental detail into mandatory foreshadowing |
+| Time and state | After memories, dreams, transformations, time loops, or other shifts, recheck body, equipment, senses, and environment under this work's rules rather than assuming inheritance from the previous state |
+| Paragraph transitions | After insertion, “它、那里、刚才” still refer to the correct objects; speakers, sequence, and words such as “再次、仍然” match the current state |
 
-再检查新增段落是否增加了可感知的空间、经历或情绪层次。反复转头、确认、停留，或把已经表达的意义另讲一遍，都可能让篇幅增长而场景仍单薄。原引语全部保留、字数增加、保存结果一致，只能证明各自检查的事项，不能替代这轮叙事审阅。已有充分展开的场景和有意简短的收束可保持原样。
+Then check whether added passages provide perceptible space, experience, or emotional depth. Repeated turning, confirming, lingering, or restating an expressed meaning can increase length while leaving a scene thin. Preserving every original quote, increasing character count, and matching saved results prove only their respective checks, not this round's narrative quality. Already developed scenes and deliberately brief endings may remain unchanged.
 
-## 问题处理
+## Handle problems
 
-- **阻断忠实度**：错版本/路线、关键事件缺失、改变决定或结局、提前揭露、无证据的决定性新增。先修复或查证；无法修复时将受影响部分标待核实，交付可完成部分和具体缺口。
-- **影响连续性**：角色瞬移、物品重复、伤势消失、关系倒退、旧稿摘要错误。修正文或状态，并复核直接受影响的后续部分。
-- **表达问题**：按 [自然叙事与去模板化修订](prose-revision.md) 定位具体问题、保护有效信息、局部修订和回读。不为提升文采新增事实；原作有作用的长句、复沓、旁白和华丽修辞不能仅因形式被判错。
+- **Fidelity blockers**: wrong edition/route, missing key events, changed decisions or endings, premature revelations, or unsupported decisive additions. Repair or verify first; if that is impossible, mark affected parts as awaiting verification and deliver completable portions with the specific gap.
+- **Continuity problems**: character teleportation, duplicated items, disappearing injuries, regressed relationships, or incorrect old-draft summaries. Correct prose or state and recheck directly affected subsequent portions.
+- **Expression problems**: use [Natural narration and revision of formulaic prose](prose-revision.md) to locate specific problems, protect useful information, revise locally, and reread. Do not add facts to improve literary effect. Functional original long sentences, repetition, narration, and ornate rhetoric are not wrong merely because of their form.
 
-不要为已通过的章节无限循环审校。修复后重查改动影响的事实和连续性；需要作者决定的只问具体分歧，不重复整套开书问卷。
+Do not loop indefinitely over chapters that have passed review. After repairs, recheck affected facts and continuity. Ask only about the specific disagreement requiring an authorial decision, rather than repeating a whole book-setup questionnaire.
 
-去模板化是内部语言检查，不以命中次数、删减比例或 AI 检测分数决定完成。已自然且与原作相容的段落可以不改；删后变成梗概或动作清单时，恢复已有材料中的场景、气氛与衔接。
+Removing formulaic prose is an internal language check, not a completion decision based on hit counts, deletion ratios, or AI-detection scores. Natural passages compatible with the original may remain unchanged. If deletion reduces a passage to a synopsis or action list, restore the scene, atmosphere, and transitions from existing material.
 
-## 记录真实验证范围
+## Record the actual verification scope
 
-每章记录原作证据映射及其来源定位，并注明检查范围。可使用：
+For each chapter, record its mapping to original evidence, source locations, and review scope. Examples:
 
-- “已核对 S001 的过场第 3 段与 S004 的任务日志；本章 E005—E007 的参与者、选择和结果相符。”
-- “仅依据用户材料核对，未联网确认版本；E008 的参与者存在材料冲突，本章留为待核实。”
-- “已检查与前两章的内部连续性，原作忠实度尚未验证。”
+- “Checked cutscene segment 3 in S001 and the quest log in S004; participants, choices, and results for E005–E007 in this chapter match.”
+- “Checked only against user materials; the edition has not been confirmed online. Sources conflict on E008's participants, so this chapter remains awaiting verification.”
+- “Checked internal continuity with the preceding two chapters; fidelity to the original has not yet been verified.”
 
-不要写“完全忠于原作”“全网核实”之类超出证据的承诺。来源不完整和原作有意留白应分别说明。
+Do not promise complete fidelity to the original or verification across the entire web beyond what the evidence supports. Explain incomplete sources separately from deliberate original ambiguity.
 
-用户给出字数要求时按其口径统计；没有口径时说明“正文汉字数”或“正文字符数”，排除标题、规划和审校备注。不用英文空格词数冒充中文字数；字数满足不能替代剧情完整。
+If the user requires a length, count by their definition. If none is given, specify Chinese-character count or body-text character count, excluding headings, planning, and review notes. Do not pass off an English space-delimited word count as a Chinese character count; meeting the length cannot substitute for complete plot coverage.
 
-## 正文与附带信息
+## Prose and accompanying information
 
-小说正文保留正常章名和段落。来源、事件编号、证据卡与检查结果仅存于独立临时工作区，按项目流程在任务完成后清理；不附在作品里，也不附带交付资料文件。用户原输入保持不变。
+Keep normal chapter titles and paragraphs in the novel. Sources, event IDs, evidence cards, and check results belong only in a separate temporary workspace, cleaned up after task completion according to the project workflow. Do not attach them to the work or deliver research files alongside it. Leave the user's original inputs unchanged.
 
-对话中交付小说时直接给正文，不在前后添加介绍、来源、脚注、字数、完成声明、改编说明或审校结果；文件交付只提供实际小说文件/文档的入口。检查交付目录和导出文件，确保没有参考副本、附录、隐藏资料文件或过程报告。
+When delivering a novel in chat, provide the prose directly without introductions, sources, footnotes, character counts, completion claims, adaptation explanations, or review results before or after it. For file delivery, provide only actual novel file/document links. Check the delivery directory and exports for reference copies, appendices, hidden research files, and process reports.
 
-影响忠实度的问题在过程中解决或明确报告阻塞，不能为了最终回复干净而隐瞒缺口，更不能用正文末尾的免责声明替代核实。用户显式要求大纲、审稿或资料时，本规则不妨碍完成其当前请求。
+Resolve fidelity-affecting issues during the work or explicitly report a blocker. Do not conceal gaps to keep the final response clean, and do not replace verification with an end-of-novel disclaimer. If the user explicitly requests an outline, review, or research, this rule does not prevent completing that request.
 
-全书完成前核对所选路线从开端到结局的必经/条件主线覆盖、所有关键揭示与未决问题；只有全部所需章节真实存在、关键事件已覆盖且影响结局的疑点已解决，才报告完整改编完成。
+Before declaring the whole book complete, check mandatory/conditional main-story coverage from the opening to the selected ending, all key revelations, and unresolved issues. Report a complete adaptation only when every required chapter actually exists, key events are covered, and doubts affecting the ending are resolved.

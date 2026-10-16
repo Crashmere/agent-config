@@ -1,61 +1,61 @@
-# 媒体容量与断点恢复
+# Media capacity and checkpoint recovery
 
-读取视频截图或批量图片之前使用本流程。完整覆盖、细节可辨与如实记录的标准不变，通过更多容量受控的批次推进。
+Use this workflow before reading video screenshots or image batches. Keep the standards for full coverage, discernible detail, and truthful records unchanged, proceeding through more batches within capacity limits.
 
-## 分别检查 token 与字节
+## Check tokens and bytes separately
 
-- token 窗口与请求字节上限是两种约束。图片尺寸/精度影响视觉 token，编码后的文件大小影响请求载荷；降低 JPEG 质量不一定降低视觉 token，扩大上下文窗口也不会提高请求字节上限。
-- 图片和工具结果会随历史进入后续请求，自动压缩也可能发送整段图片历史。单批较小、token 尚有余量、以前压缩成功，都不能证明下一次请求安全。
-- 内联 Base64 的体积约为原文件的 4/3，另有文字、工具定义和封装开销。检查实际将提交的图片副本；不把文件路径、图片缓存或 URL 形式当成服务端不再处理图片的保证。
-- 曾观察到约 100 MiB 附近的请求失败，但这不是已确认的通用服务上限。以下数值是保守工作预算；有更低的平台限制时收紧，不能为让检查通过而调高。没有当前证据时不沿用旧模型的容量数字。
+- The token window and request-byte ceiling are separate constraints. Image dimensions/detail affect visual tokens, while encoded file size affects request payload. Lower JPEG quality does not necessarily reduce visual tokens, and a larger context window does not raise the request-byte ceiling.
+- Images and tool results travel into later requests as history, and automatic compaction may send the entire image history. A small batch, remaining tokens, or previous successful compaction does not prove the next request is safe.
+- Inline Base64 is approximately 4/3 of the original file size, plus text, tool definitions, and envelope overhead. Check the actual image copies to be submitted. A file path, image cache, or URL form does not guarantee the server no longer processes the image.
+- Request failures have been observed near 100 MiB, but this is not a confirmed universal service limit. The values below are conservative working budgets. Tighten them for lower platform limits; do not raise them merely to pass a check. Do not reuse an old model's capacity figures without current evidence.
 
-## 载入前的预算检查
+## Budget check before loading
 
-在本次临时工作区维护两个 UTF-8 清单，每行一个文件路径：`retained-images.txt` 记录当前上下文已载入或是否载入不明的图片；`next-images.txt` 记录下一批。相对路径以清单所在目录为基准。同一图片多次载入须重复登记，不能去重。只有已确认的新上下文才能从空的 retained 清单开始；恢复旧会话而无法重建清单时，先交接，不能假填空清单继续。
+Maintain two UTF-8 manifests in this task's temporary workspace, one file path per line: `retained-images.txt` for images loaded into the current context or of uncertain load status, and `next-images.txt` for the next batch. Resolve relative paths against the manifest directory. Register an image again every time it is loaded; do not deduplicate. Start with an empty retained manifest only in a confirmed new context. If resuming an old session whose manifest cannot be reconstructed, hand off first rather than fabricating an empty manifest to continue.
 
-已载入的图片副本在该上下文结束前保持不变；需要缩放、裁剪或重新编码时另存新文件。否则按缩小后的文件重新计数，会低估仍在历史中的旧载荷。
+Keep loaded image copies unchanged until that context ends. Save resizing, cropping, or re-encoding as new files; otherwise counting the smaller replacement would underestimate the old payload still in history.
 
-运行本技能的只读脚本，下面路径中的“技能目录”“临时工作区”替换为实际路径：
+Run this skill's read-only script, replacing `skill-directory` and `temporary-workspace` below with actual paths:
 
 ```bash
-python3 '技能目录/scripts/check-media-budget.py' \
-  --retained '临时工作区/retained-images.txt' \
-  --next '临时工作区/next-images.txt'
+python3 'skill-directory/scripts/check-media-budget.py' \
+  --retained 'temporary-workspace/retained-images.txt' \
+  --next 'temporary-workspace/next-images.txt'
 ```
 
-脚本仅使用 Python 标准库，统计文件大小，不打开图片、不调用模型、不修改清单。默认同时检查：
+The script uses only the Python standard library and counts file sizes. It does not open images, call models, or modify manifests. By default, it checks all of the following:
 
-| 检查项 | 默认工作预算 |
+| Check | Default working budget |
 |---|---:|
-| 一批图片数 | 最多 4 张，大小超限时继续拆小 |
-| 新批次编码后的媒体载荷 | 最多 8 MiB |
-| 当前保留图片 + 下一批 + 非媒体预留 | 最多 40 MiB |
-| 文字、工具定义及其他开销预留 | 8 MiB；实际更大时增加 |
+| Images per batch | At most 4; split further if the size limit is exceeded |
+| Encoded media payload of the new batch | At most 8 MiB |
+| Currently retained images + next batch + non-media reserve | At most 40 MiB |
+| Reserve for text, tool definitions, and other overhead | 8 MiB; increase when actual overhead is larger |
 
-JSON 中 `allowed: false` 或退出码 1 表示预算不允许，按 `violations` 拆小下一批或先压缩/切换；退出码 2 表示输入无效，修复清单后再判断。成功只表示静态估计通过，不代表模型已经看过图片或服务保证接收。
+JSON `allowed: false` or exit code 1 means the budget disallows loading. Use `violations` to split the next batch or compact/switch context first. Exit code 2 means invalid input; fix the manifests before deciding. Success means only that the static estimate passed, not that the model has seen the images or the service guarantees acceptance.
 
-另查宿主提供的当前 token 使用量与限制，预留下一批的视觉 token 和压缩/输出空间；无法估计时减小批次并提前交接。若请求日志的实际载荷高于脚本估计，以实际值为准，增加预留或降低工作预算。脚本不统计完整对话，也不检查音频/视频直传限制；这些工具须另查其时长、字节和上下文约束。
+Also check current token use and limits exposed by the host, reserving visual tokens for the next batch and room for compaction/output. If estimation is unavailable, reduce the batch and hand off early. If request logs show an actual payload larger than the estimate, use the actual value and increase the reserve or lower the working budget. The script neither counts the full conversation nor checks direct audio/video upload limits; separately check those tools' duration, byte, and context constraints.
 
-## 每批的执行顺序
+## Execution order for each batch
 
-1. 按连续场景选择待看画面，保留片段边界的必要重叠。导航图使用足够辨认布局的副本，原帧或局部裁剪用于核对细节；不要一次并行返回十几张大拼图。图片压缩不能损害本次要核对的文字、表情或物件。
-2. **先预算，后载入**。预先登记本批路径；返回状态不明时保守计入 retained 清单。多工具并行时，把同一轮即将返回的全部图片合并计数，不能分别检查后绕过总预算。
-3. 每批实际观察后立即把细节、来源时间戳与疑点写入证据文件，再更新覆盖表和续写状态；不要等整个十分钟片段或几十页拼图看完才保存。区分“已生成”“已返回”“已观察且已保存”，音轨与视觉覆盖分别登记。
-4. 下一批会超过任一预算，或 token 已接近压缩所需余量时，先完成下节的交接。到达预算只结束当前媒体批次；继续通过安全上下文完成尚未审阅的范围。
-5. OCR、字幕和日志全文保存在磁盘，按时间段或行段读取；对截断部分定位补读，不反复整份输出。主控上下文只保留项目约定、证据索引、当前场景和必要正文。
+1. Select pending frames by continuous scene, preserving necessary boundary overlap. Use navigation copies clear enough to identify layout and original frames or crops to verify detail; do not return a dozen or more large contact sheets in parallel at once. Compression must not impair the text, expressions, or objects being checked.
+2. **Budget before loading.** Register this batch's paths in advance; conservatively count uncertain return status in the retained manifest. With parallel tools, combine all images about to return in the same round rather than checking separately and bypassing the total budget.
+3. Immediately after observing each batch, write details, source timestamps, and doubts to evidence files, then update coverage and continuation state. Do not wait until a whole ten-minute segment or dozens of contact-sheet pages are viewed. Distinguish generated, returned, and observed-and-saved images, and record audio and visual coverage separately.
+4. If the next batch would exceed any budget, or tokens approach the space needed for compaction, complete the handoff below first. Reaching a budget ends only the current media batch; continue the unreviewed scope in a safe context.
+5. Keep complete OCR, subtitles, and logs on disk and read by time range or line range. Locate and read truncated portions rather than repeatedly outputting whole files. Retain only project agreements, evidence indexes, the current scene, and necessary prose in the main context.
 
-## 在仍有余量时交接
+## Hand off while capacity remains
 
-1. 确认逐批观察已落盘，保存最后完成范围、已返回未整理范围、下一项工作及音画盲区。保留未完成任务需要的原图、清单和索引。
-2. 仅调用当前宿主确实提供的压缩或新上下文能力。执行前确认能力与授权，不虚构 `compact` 工具；TraeX 的 `/compact` 是交互命令，不能当作 shell 命令执行。不要擅自改全局模型或容量配置。
-3. 验证交接成功：查看压缩完成事件、请求载荷/图片数下降，或确认新会话只载入了文字状态。若部分图片保留，继续计入；只有明确移除的条目才能从 retained 清单扣除。不确定时保守保留，不能只因说了“已总结”就清零。
-4. 从落盘状态读取当前片段所需证据后继续。新上下文不继承整段媒体历史；宿主若没有可用的安全交接能力，就保存准确续接点并说明所缺能力及最短恢复动作，不再追加图片等待失败。停止的是不安全载入，不把未完成任务称为完成。
+1. Confirm batch observations are saved, including the last completed range, returned but unorganized range, next task, and audiovisual blind spots. Retain original images, manifests, and indexes needed for unfinished work.
+2. Use only compaction or new-context capabilities actually provided by the current host. Confirm capability and authorization before execution; do not invent a `compact` tool. TraeX's `/compact` is an interactive command, not a shell command. Do not change global model or capacity settings on your own.
+3. Verify the handoff succeeded through a compaction-complete event, reduced request payload/image count, or a new session confirmed to have loaded only text state. Continue counting any retained images; subtract entries from the retained manifest only when explicitly confirmed removed. Keep uncertain entries conservatively rather than clearing them because a summary was written.
+4. Continue after reading the evidence needed for the current segment from saved state. A new context must not inherit the entire media history. If the host lacks a safe handoff capability, save the exact continuation point and explain the missing capability and shortest recovery action rather than adding images until failure. Stop unsafe loading without calling the unfinished task complete.
 
-本技能不要求启用子 agent。若用户或其他适用指令已允许分工，媒体任务使用不继承历史的独立上下文，只传必要项目约定、素材路径、范围和输出位置；返回文字观察与索引，不把图片串回主控。每个上下文独立遵守相同预算。
+This skill does not require subagents. If the user or other applicable instructions already permit delegation, use independent media contexts without inherited history, passing only necessary project agreements, source paths, scope, and output locations. Return text observations and indexes without feeding images back into the main context. Each context independently follows the same budgets.
 
-## 内容过大或压缩失败后的恢复
+## Recover from oversized content or failed compaction
 
-- 对 `content is too large`、请求过大或同类错误，检查失败请求的图片数、字节量、token 和是否为压缩请求。只有 `Stream disconnected` 而无大小证据时，按实际网络/服务错误诊断，不能一概归因为载荷。
-- 终止原样重试；不要对同一过大历史反复点“继续”或重复压缩。失败发生在下一次模型处理之前时，工具已返回的图片也不能自动记为已审阅。
-- 优先在新上下文读取最近落盘检查点。保留原有任务与完成记录；未整理的批次重新小批核对，已完成范围只补必要的边界与疑点，不重做全部取材。
-- 缩小批次只能减少新增载荷。若旧图片仍在历史中，必须先确认压缩/切换已减载；删除磁盘图片、写入摘要、提高上下文窗口或修改本地清单都不能消除远端历史载荷。
+- For `content is too large`, oversized requests, or similar errors, inspect the failed request's image count, bytes, tokens, and whether it was a compaction request. If there is only `Stream disconnected` without size evidence, diagnose the actual network/service error rather than attributing every failure to payload.
+- Stop identical retries. Do not repeatedly continue or compact the same oversized history. If failure occurs before the next model processing step, images already returned by tools cannot automatically count as reviewed.
+- Prefer reading the latest saved checkpoint in a new context. Preserve the original task and completion records. Recheck unorganized batches in smaller groups; for completed ranges, revisit only necessary boundaries and doubts rather than repeating all research.
+- Smaller batches reduce only new payload. If old images remain in history, first confirm compaction/context switching reduced the load. Deleting disk images, writing summaries, increasing the context window, or editing local manifests cannot remove remote historical payload.

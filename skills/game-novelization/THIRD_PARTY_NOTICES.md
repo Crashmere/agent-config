@@ -1,6 +1,6 @@
 # Third-party notices
 
-本技能重新组织了参考来源中的工作流方法，未打包上游可执行代码。来源与具体取舍见 references/sources.md。以下保留已核对的上游许可正文。
+This skill reorganizes workflow methods from the referenced sources and does not bundle upstream executable code. See references/sources.md for sources and specific adaptation decisions. The verified upstream license texts are preserved below.
 
 ## PenglongHuang/chinese-novelist-skill
 
@@ -90,7 +90,7 @@ SOFTWARE.
 
 Source: https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32
 
-media-adaptation、shared-world 与 prose-style 的 SKILL.md 元数据均声明 `license: MIT`、`author: jwynia`。本次读取未找到独立许可正文，因此不补造版权年份或许可原文；本技能只以独立表述借鉴其分析、资料组织与文风诊断方法，没有复制其完整技能正文或脚本。
+The SKILL.md metadata for media-adaptation, shared-world, and prose-style each declares `license: MIT` and `author: jwynia`. No standalone license text was found during this review, so no copyright year or license text is invented here. This skill draws on their analysis, research organization, and style-diagnosis methods in independently written language; it does not copy their complete skill texts or scripts.
 
 ## op7418/Humanizer-zh
 

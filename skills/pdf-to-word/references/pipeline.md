@@ -1,35 +1,35 @@
-# 运行与配置
+# Execution and configuration
 
-## 内容导航
+## Contents
 
-- 工作目录与依赖
-- 主流程命令
-- 文档配置
-- 第二OCR与公式工具
-- 工具维护和验证
+- Workspace and dependencies
+- Main workflow commands
+- Document configuration
+- Second OCR engine and formula tools
+- Tool maintenance and validation
 
-## 工作目录与依赖
+## Workspace and dependencies
 
-直接运行仓库中scripts的代码，把工作数据放在仓库外。PDF_WORD_WORKSPACE默认当前目录；若它落在技能仓库内，主入口会拒绝执行。不要在skill目录中创建.venv、模型、输入输出或OCR缓存。
+Run the code in the repository's scripts directory directly, keeping work data outside the repository. PDF_WORD_WORKSPACE defaults to the current directory; the main entry point refuses to run if it is inside the skill repository. Do not create .venv, models, inputs, outputs, or OCR caches inside the skill directory.
 
-| 任务目录中的路径 | 内容 |
+| Path in the task directory | Contents |
 | --- | --- |
-| input/ | 待转换PDF；每份用唯一文件名，保留来源 |
-| config/overrides.json | 可选文档配置；没有时按默认策略运行 |
-| work/batch/<文件名>/ | 哈希、布局、OCR、图片、审计和检查结果 |
-| work/batch/rendered/ | LibreOffice实际导出的预览 |
-| output/ | Word、汇总报告和可选交付压缩包 |
-| models/ | 默认本地OCR模型缓存，可配置为外部共用路径 |
+| input/ | PDFs to convert; use a unique filename for each and retain provenance |
+| config/overrides.json | Optional document configuration; use the default policy when absent |
+| `work/batch/<filename>/` | Hashes, layout, OCR, images, audits, and check results |
+| work/batch/rendered/ | Previews actually exported by LibreOffice |
+| output/ | Word files, summary reports, and an optional delivery archive |
+| models/ | Default local OCR model cache; can point to a shared external path |
 
-使用python-environment选择健康的隔离环境，确认PyMuPDF、python-docx、Pillow、OpenCV、RapidOCR、ONNX Runtime等导入正常。需要安装时使用[scripts/requirements.txt](../scripts/requirements.txt)列出的经过验证的依赖组合，并遵守该技能的安装方法。不要为了运行本技能重建已有可用环境。
+Use python-environment to select a healthy isolated environment, and confirm that PyMuPDF, python-docx, Pillow, OpenCV, RapidOCR, ONNX Runtime, and other dependencies import successfully. If installation is needed, use the verified dependency set in [scripts/requirements.txt](../scripts/requirements.txt) and follow that skill's installation method. Do not rebuild an existing usable environment just to run this skill.
 
-使用docx技能的office/validate.py进行XSD校验；默认查找用户主目录下.trae/skills/docx/scripts/office/validate.py，可以通过DOCX_VALIDATOR指定实际安装位置。缺少所需技能时按personal-skill-management检查来源，不能跳过验证并声称通过。
+Use the docx skill's office/validate.py for XSD validation. By default, it is located at .trae/skills/docx/scripts/office/validate.py under the user's home directory; set DOCX_VALIDATOR to its actual installation path if needed. If a required skill is missing, investigate its source through personal-skill-management; do not skip validation and claim it passed.
 
-用LibreOffice导出预览；不依赖Microsoft Word激活。SOFFICE可指定可执行文件路径；默认从PATH和macOS应用路径查找。当前默认中文字体为Songti SC/Heiti SC，英文字体为Times New Roman。macOS之外必须先确认字体、渲染环境；Apple Vision只在macOS可用。
+Export previews with LibreOffice; Microsoft Word activation is not required. SOFFICE can specify the executable path; otherwise, discovery uses PATH and macOS application paths. Current default Chinese fonts are Songti SC/Heiti SC, and the English font is Times New Roman. Outside macOS, first confirm fonts and the rendering environment. Apple Vision is available only on macOS.
 
-## 主流程命令
+## Main workflow commands
 
-以下示例在实际任务目录运行。把PDF_WORD_SKILL和PDF_WORD_PY设置为当前实际技能位置与隔离环境解释器，避免复制旧机器路径。
+Run these examples in the actual task directory. Set PDF_WORD_SKILL and PDF_WORD_PY to the current skill location and isolated-environment interpreter; avoid copying paths from an old machine.
 
 ~~~sh
 PDF_WORD_SKILL="$HOME/agent-config/skills/pdf-to-word"
@@ -39,46 +39,46 @@ export PYTHONDONTWRITEBYTECODE=1
 
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/convert_batch.py" --help
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/convert_batch.py" prepare
-# 查看work/batch中的layout.txt并对照原图，再决定配置或OCR路线。
+# Compare layout.txt in work/batch with the source images before choosing configuration or OCR.
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/convert_batch.py" build
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/convert_batch.py" render
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/convert_batch.py" check
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/batch_coverage.py"
 ~~~
 
-在阶段后附文件名可只处理指定文档，例如prepare example --mode ocr。mode支持auto、native、ocr；仅影响prepare或all。all串联主阶段，输出仍需视觉复核及源覆盖检查。不要未经试转就在新类型整批文档上盲目套用默认参数。
+Append a filename after a stage to process only that document, for example prepare example --mode ocr. The supported modes are auto, native, and ocr; mode affects only prepare or all. The all stage chains the main stages; its output still needs visual review and source-coverage checks. Do not blindly apply defaults to a full batch of an unfamiliar document type without trial conversion.
 
-重新build覆盖同名生成Word。用户编辑过的文件应另存，不把它作为重建目标。缓存绑定源哈希，审计绑定Word哈希，渲染记录绑定Word与预览哈希。同名源文件改变时，使用新文件名或在明确旧缓存可删除后移除该文件的work目录，再prepare。
+Running build again overwrites generated Word files with the same names. Save user-edited files separately rather than making them rebuild targets. Caches are bound to source hashes, audits to Word hashes, and rendering records to Word and preview hashes. If a source file changes under the same name, use a new filename or remove that file's work directory only after confirming that the old cache may be deleted, then run prepare again.
 
-## 文档配置
+## Document configuration
 
-参考[assets/overrides.example.json](../assets/overrides.example.json)，在任务目录创建config/overrides.json。示例只展示格式；不要未经检查照搬页数或封面策略。
+Use [assets/overrides.example.json](../assets/overrides.example.json) as a reference to create config/overrides.json in the task directory. The example illustrates the format only; do not copy its page counts or cover policy without inspection.
 
-| 字段 | 说明 |
+| Field | Meaning |
 | --- | --- |
-| source_sha256 | 原PDF哈希；非空配置必须绑定当前源文件 |
-| cover_image | 默认true：第一页当封面保留原图；无封面时显式false |
-| page_methods | 可选，按物理页列出native/ocr，长度须等于总页数 |
-| full_image_pages | 额外整页保留的页码，从1开始 |
-| regions | 页码字符串映射至矩形列表，格式[x0,y0,x1,y1] |
-| replace | 经过原图核实的文字替换；属于文档配置，不自动推广 |
+| source_sha256 | Source PDF hash; nonempty configuration must bind to the current source file |
+| cover_image | Defaults to true: preserve the first page as a cover image; explicitly set false when there is no cover |
+| page_methods | Optional native/ocr entries by physical page; length must equal the total page count |
+| full_image_pages | Additional pages to preserve as full-page images, numbered from 1 |
+| regions | Page-number strings mapped to lists of rectangles in [x0,y0,x1,y1] format |
+| replace | Text replacements verified against the source images; document-specific configuration, not automatically generalized |
 
-矩形以左上为原点，统一页面宽为595.276 pt，高度按源长宽比计算。替换为图片的文字框必须完整被裁剪覆盖，图注和边缘标记也要检查。图像保留不使其文字可编辑。
+Rectangles use the top-left corner as the origin and a normalized page width of 595.276 pt, with height calculated from the source aspect ratio. Crops must fully cover every text box replaced by an image; check captions and edge markers too. Preserving an image does not make its text editable.
 
-| 环境变量 | 用途 |
+| Environment variable | Purpose |
 | --- | --- |
-| PDF_WORD_WORKSPACE | 外部任务目录；默认当前目录 |
-| PDF_WORD_MODELS | 外部模型缓存；默认任务目录models/ |
-| SOFFICE | LibreOffice可执行文件 |
-| DOCX_VALIDATOR | 安装的docx技能验证脚本 |
+| PDF_WORD_WORKSPACE | External task directory; defaults to the current directory |
+| PDF_WORD_MODELS | External model cache; defaults to models/ in the task directory |
+| SOFFICE | LibreOffice executable |
+| DOCX_VALIDATOR | Validation script from the installed docx skill |
 
-保持源码只读运行；用PYTHONDONTWRITEBYTECODE=1避免生成源码目录缓存。模型首次运行会按RapidOCR配置下载；复用已存在的缓存时通过PDF_WORD_MODELS指定，不复制模型到仓库。
+Keep source code read-only during execution. Use PYTHONDONTWRITEBYTECODE=1 to avoid generating caches in the source directory. Models download on first use according to the RapidOCR configuration. Point PDF_WORD_MODELS to an existing cache for reuse; do not copy models into the repository.
 
-生成器会替换默认字体、限制正文和表格字号，并启发式设置表头及首列对齐。它优先保持内容和稳定分页；对设计版式有要求时，应对照源样式调整并验证，不能仅凭文件可编辑就声称格式保真。
+The generator substitutes default fonts, limits body and table font sizes, and heuristically aligns headers and first columns. It prioritizes content and stable pagination. When design fidelity matters, adjust against the source styling and validate; editability alone does not establish format fidelity.
 
-## 第二OCR与公式工具
+## Second OCR engine and formula tools
 
-在macOS上可编译Vision辅助识别器到任务目录：
+On macOS, you can compile the Vision helper into the task directory:
 
 ~~~sh
 mkdir -p work/bin
@@ -87,29 +87,29 @@ work/bin/vision_ocr work/batch/example/page-*.png
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/batch_scan_review.py" example
 ~~~
 
-扫描比较按布局选择OCR页；差异写入scan-review.json。两引擎的优劣与语言、字形相关，不能把第二引擎结果直接批量覆盖主结果。
+Scan comparison selects OCR pages from the layout and writes differences to scan-review.json. Each engine's strengths depend on language and glyphs; do not blindly overwrite the primary results with the second engine's output.
 
-word_math.py提供text、subscript、superscript、fraction、append_equation函数，供人工确认后创建OMML。它不识别PDF公式；每个XML节点只能插入一次。用新元素组装公式，再验证上下标、分数与渲染。精确行距可能裁切公式。
+word_math.py provides text, subscript, superscript, fraction, and append_equation functions for creating OMML after manual confirmation. It does not recognize PDF formulas. Each XML node can be inserted only once; assemble formulas with fresh elements, then verify subscripts, superscripts, fractions, and rendering. Exact line spacing may clip formulas.
 
-## 工具维护和验证
+## Tool maintenance and validation
 
-| 脚本 | 职责 |
+| Script | Responsibility |
 | --- | --- |
-| convert_batch.py / pipeline_config.py | 阶段编排、外部工作目录、哈希和文档设置 |
-| batch_layout.py | 文字、字体修复、物理行、表格和OCR布局 |
-| batch_convert.py | DOCX段落、表格、标题、图像和分页 |
-| ocr_batch.py / vision_ocr.swift | 本地主要OCR与可选第二OCR |
-| batch_check.py / batch_coverage.py | 渲染和结构、源字形/表格覆盖 |
-| batch_scan_review.py | 扫描文字分歧与区域覆盖线索 |
-| package_results.py | 校验当前文件哈希并汇总打包，不虚构人工复核 |
-| word_math.py | 可编辑数学结构辅助函数 |
-| smoke_pipeline.py | 临时合成输入验证，不保存真实文档 |
+| convert_batch.py / pipeline_config.py | Stage orchestration, external workspaces, hashes, and document settings |
+| batch_layout.py | Text, font repair, physical lines, tables, and OCR layout |
+| batch_convert.py | DOCX paragraphs, tables, headings, images, and pagination |
+| ocr_batch.py / vision_ocr.swift | Primary local OCR and optional second OCR engine |
+| batch_check.py / batch_coverage.py | Rendering and structure; source glyph and table coverage |
+| batch_scan_review.py | Scan-text disagreements and clues about region coverage |
+| package_results.py | Verify current file hashes and assemble the delivery archive without inventing manual review |
+| word_math.py | Helpers for editable mathematical structures |
+| smoke_pipeline.py | Validation with temporary synthetic input; no real documents retained |
 
-修改共用转换流程后，使用外部已有环境和模型运行合成验证；无需真实PDF：
+After changing the shared conversion workflow, run synthetic validation using an existing external environment and models; no real PDF is needed:
 
 ~~~sh
 "$PDF_WORD_PY" "$PDF_WORD_SKILL/scripts/smoke_pipeline.py"
-# macOS且需要验证第二OCR时增加 --with-vision
+# Add --with-vision on macOS when the second OCR engine needs validation.
 ~~~
 
-自检包含原生文字、可编辑数值表、中文扫描、空白页、渲染、XSD、覆盖、哈希保护、打包和公式。仅--with-vision时在临时目录编译并运行Apple Vision。未运行的分支应明确报告；不要扩大检查到无关技能。
+The self-check covers native text, editable numeric tables, Chinese scans, blank pages, rendering, XSD, coverage, hash protection, packaging, and formulas. Apple Vision is compiled and run in a temporary directory only with --with-vision. Explicitly report branches that were not run; do not expand checks to unrelated skills.

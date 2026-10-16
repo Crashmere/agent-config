@@ -1,52 +1,52 @@
-# 完整聊天存档
+# Full Conversation Archives
 
-## 数据与范围
+## Data and scope
 
-每个会话保存不可变快照，通过 `source + conversation_id` 与每日记录关联；新增对话内容时保存新快照，旧快照保留。同一内容重复上传去重，不能覆盖已完成快照。消息正文、代码和工具返回不做摘要替换。统一格式为 UTF-8 JSONL + gzip；长消息只分段，不截断；原始来源文件按字节保存并核验 SHA-256。服务 Schema 维护源为 AICalendar `api/archive.schema.json`，不要在技能中复制。
+Save immutable snapshots of each conversation, linked to daily records through `source + conversation_id`; save a new snapshot when conversation content grows and retain old snapshots. Deduplicate repeated uploads of the same content; never overwrite a completed snapshot. Do not replace message bodies, code, or tool results with summaries. The normalized format is UTF-8 JSONL + gzip; split long messages into segments without truncating them. Preserve original source files byte for byte and verify SHA-256. The authoritative service Schema is AICalendar's `api/archive.schema.json`; do not copy it into the skill.
 
-日历次数仍只计用户实际发送；存档消息总数包含 AI、工具及系统等内容，与使用次数含义不同。摘要的隐藏状态不删除完整存档。
+Calendar counts still include only actual user sends; total archive message counts include AI, tools, system content, and other events, so they mean something different from usage counts. Hiding a summary does not delete its full archive.
 
-保存用户指定的导出资料，包括其中附带的图片、音频、附件实体和未知字段。只有 URL、本地路径、临时资源 ID 时保留引用，报告原件未提供；不要自行读取聊天之外的本地文件或抓取外链。Trae 提取器默认保留完整 rollout 与历史投影，不自动读取日志里提及的附件路径、其他项目文件或独立子 agent 数据库。它的 coverage 为 partial，表示本机可取得资料的快照，不能证明平台历史从未丢失。
+Preserve the exports specified by the user, including supplied images, audio, attachment files, and unknown fields. When only URLs, local paths, or temporary resource IDs are present, retain the references and report that originals were not supplied; do not independently read local files outside the conversation or fetch external links. The Trae extractor preserves full rollouts and history projections by default, without automatically reading attachment paths mentioned in logs, other project files, or separate subagent databases. Its coverage is partial, indicating a snapshot of locally available materials; it cannot prove that platform history was never lost.
 
-## Trae 导入
+## Trae imports
 
-`extract_trae.py` 默认产生 archives/index.json。为其中每份 archive 执行：
+`extract_trae.py` produces archives/index.json by default. For each archive listed there, run:
 
 ```sh
 python3 scripts/archive_conversations.py prepare --archive /private/task/archives/THREAD.jsonl.gz --out /private/task/archive-plan.json
 python3 scripts/archive_conversations.py submit --plan /private/task/archive-plan.json
 ```
 
-先完成存档，再导入日历摘要；两个步骤各自可重试，不假称跨接口整批原子提交。Trae 提取可加 `--source-label "Trae · 工作电脑"`，通用 pack 可用同名参数覆盖展示来源标签；稳定 source 不随标签改名。只完成存档而摘要失败时，保留存档并继续重试原摘要计划。
+Complete archives before importing calendar summaries; each step is independently retryable, so do not claim an atomic batch commit across the two APIs. Trae extraction accepts `--source-label "Trae · 工作电脑"`; generic pack accepts the same parameter to override the displayed source label. The stable source does not change when the label is renamed. If archiving succeeds but summary import fails, retain the archive and keep retrying the original summary plan.
 
-标签保存在服务清单中；同一 gzip 内容仅更改清单的 source_label 后生成新计划、重新 prepare/submit，可更新展示标签而不产生新快照。不要编辑已有固定计划；也不要改写原始导出只为改标签。省略或空标签保留服务上的已有值。日历记录的标签另用摘要 upsert 同步，两个接口不会互相修改。网页存档列表支持标签关键词筛选。
+Labels are stored in the service manifest. With the same gzip content, changing only source_label in the manifest, generating a new plan, and running prepare/submit again updates the displayed label without creating another snapshot. Do not edit an existing fixed plan or rewrite an original export merely to change a label. An omitted or empty label preserves the service's existing value. Synchronize calendar record labels separately through summary upsert; the two APIs do not modify each other. The website archive list supports filtering by label keywords.
 
-## 其他平台
+## Other platforms
 
-外部 agent 将导出转换为本地统一 JSON：source、conversation_id、title、coverage、note、messages，以及可选 source_label（用户给出的来源标签）。messages 中每条包含稳定 id、role、at（带时区或 null）、content（原样文本或结构）、attributes（可选原模型、工具名等小型元数据）。role 使用 user、assistant、tool、system、developer、unknown。保留消息顺序、空消息与原始语言，不把多轮揉成摘要。转换无法覆盖的字段仍在原始导出中保留。
+An external agent converts the export into local normalized JSON: source, conversation_id, title, coverage, note, messages, and optional source_label (the source label supplied by the user). Each entry in messages includes a stable id, role, at (with timezone or null), content (unchanged text or structure), and attributes (optional small metadata such as the original model or tool name). Use user, assistant, tool, system, developer, or unknown for role. Preserve message order, empty messages, and original languages; do not collapse multiple turns into a summary. Fields the conversion cannot represent must remain in the original export.
 
-统一 content 的结构化值会转成 JSON 文本供展示；精确原类型及平台未知字段仍在逐字节保存的原始文件中。原始文件名单独保留，不因内部临时快照命名改变。
+Structured values in normalized content are converted to JSON text for display; exact original types and unknown platform fields remain in the source files preserved byte for byte. Preserve original filenames separately, regardless of internal temporary snapshot names.
 
 ```sh
 python3 scripts/archive_conversations.py pack --file /private/task/conversation.json --source-file /private/export.json --source-file /private/attachment.png --out /private/task/conversation.jsonl.gz
 ```
 
-统一输入文件也会作为原始资料保存。额外 --source-file 可重复；打包先复制固定快照，后续上传使用这些确定字节。每份存档最多压缩后 128 MiB / 展开后 512 MiB；超限明确失败，按连续分卷保存并在 note 标明范围，不丢弃超限内容、不声称完成。
+The normalized input file is also saved as original material. Repeat --source-file for additional files; packing first copies fixed snapshots, and later uploads use those exact bytes. Each archive is limited to 128 MiB compressed / 512 MiB expanded; fail explicitly if a limit is exceeded, save consecutive volumes, and state their ranges in note. Do not discard excess content or claim completion.
 
-## 可靠上传与取回
+## Reliable upload and retrieval
 
-`prepare` 固定目标地址、文件路径、整体 SHA-256 和分块清单；`submit` 上传缺少的 384 KiB 分块，再请求服务验证 gzip、统一消息顺序、原始资料分块及每份来源 SHA-256。仅完整验证后可浏览。最后下载实际存储字节，比较整体哈希和长度。原计划重试已完成存档返回 replay，不新增副本。
+`prepare` fixes the destination address, file path, overall SHA-256, and chunk list; `submit` uploads missing 384 KiB chunks, then asks the service to verify gzip, normalized message order, original-material chunks, and each source's SHA-256. Browsing is available only after complete verification. Finally, download the actual stored bytes and compare the overall hash and length. Retrying the original plan for a completed archive returns replay without adding a copy.
 
-网络失败保留文件和计划，重新执行同一个 submit。收到 400/409 时检查明确错误；不能通过改哈希、丢分块或减少计数骗过校验。503 表示服务未启用存档扩展，应完成维护后重试。
+Preserve files and plans on network failure, then execute the same submit again. For 400/409 responses, inspect the specific error; do not alter hashes, drop chunks, or reduce counts to bypass validation. A 503 means the service has not enabled the archive extension; complete maintenance before retrying.
 
-批量回读清单使用 `GET /ingest/v1/archives?source=...&offset=0&limit=100`，每页最多 100 条。当前接口始终返回 `next_offset=offset+本页条数`，末页不以 null 标记结束；本页为空或少于指定 limit 时停止，否则使用返回的 next_offset。核对所有快照 ID、已提交状态、清单哈希及会话关联，修订快照不重复计作新会话。
+Read back manifests in batches with `GET /ingest/v1/archives?source=...&offset=0&limit=100`, with at most 100 entries per page. The current API always returns next_offset equal to offset plus the number of entries on the current page; it does not use null to mark the last page. Stop when the current page is empty or shorter than the requested limit; otherwise, use the returned next_offset. Check all snapshot IDs, committed states, manifest hashes, and conversation associations; do not count revised snapshots as new conversations.
 
-网页「聊天存档」可按快照查看消息并下载 `.jsonl.gz`。完整还原：
+The website's “聊天存档” view lets users browse messages by snapshot and download `.jsonl.gz`. To restore everything:
 
 ```sh
 python3 scripts/archive_conversations.py unpack --archive /private/download.jsonl.gz --out /private/new-directory
 ```
 
-输出合并长消息后的 messages.jsonl、逐份原始文件 original-NNN.bin 和文件名/类型/哈希映射 sources.json；原始文件逐份核验。输出目录必须不存在，不跟随来源文件名写任意路径。服务没有自动清理完整存档或删除原文的接口。
+Output includes messages.jsonl with long messages reassembled, individual original-NNN.bin source files, and sources.json mapping filenames/types/hashes; each original file is verified. The output directory must not already exist. Do not write arbitrary paths based on source filenames. The service has no interface for automatically cleaning up full archives or deleting original text.
 
-上传保存不等于已做备份。备份范围以服务 [运维文档](https://github.com/Crashmere/AICalendar/blob/main/docs/OPERATIONS.md) 为准：当前每日 SQLite 备份只包含活动与导入审计数据，不包含完整聊天、原始资料及其上传分块和索引。需要长期保留的原始资料应由用户另行保存，不因上传成功就自行删除本地原件。
+Saving an upload does not mean it has been backed up. Follow the service's [operations documentation](https://github.com/Crashmere/AICalendar/blob/main/docs/OPERATIONS.md) for backup scope: current daily SQLite backups contain only activity and import audit data, excluding full conversations, original materials, and their upload chunks and indexes. The user should separately retain original materials needed long term; do not delete local originals merely because uploading succeeded.

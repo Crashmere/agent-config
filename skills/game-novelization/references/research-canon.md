@@ -1,59 +1,59 @@
-# 资料与原作证据
+# Research and canon evidence
 
-## 确认具体作品
+## Identify the specific work
 
-查明游戏原名、简体中文名、发行版本/重制版本、平台差异、补丁、DLC、路线与语言。原作与重制版、单机故事与联动活动、不同周目不能默认互通。未提供版本时先查是否存在剧情差异：没有实质差异可注明采用范围；存在差异才就相关选项询问。
+Establish the game's original title, Simplified Chinese title, release/remake edition, platform differences, patches, DLC, route, and language. Do not assume interchangeability between an original and remake, a standalone story and crossover event, or different playthroughs. If no edition is specified, first check for plot differences: state the adopted scope if there are no material differences; ask about the relevant options only when differences exist.
 
-用户提供的流程、截图、游戏文本和存档路线优先用于确定“改编的是哪次经历”。其内容仍需区分原作事实、MOD 内容和用户设定；用户授权的改变记录为改编选择，不标成官方设定。
+Prioritize user-provided walkthroughs, screenshots, game text, and save-file routes when determining which experience is being adapted. Still distinguish original facts, MOD content, and user-created settings within them. Record user-authorized changes as adaptation choices, not official canon.
 
-## 选择和读取来源
+## Select and read sources
 
-按具体事实选择最直接的证据，而非只按站点名排序：
+Choose the most direct evidence for each fact rather than ranking sources solely by site name:
 
-1. 目标版本的游戏对话、过场、任务日志、图鉴、可核实的实际游玩记录。
-2. 官方剧情材料、设定集和版本说明；标明它们是否属于本作、是否包含剧透，以及在游戏正文之外增加了什么。
-3. 有原文引证的 Wiki、剧情整理和完整流程；关键死亡、背叛、路线锁定、结局或版本争议尽量回到直接证据，或用独立来源交叉核对。
-4. 社区讨论用于发现线索和解释争议；二创、剪辑推测、MOD、玩家脑补不能成为已证实主线。
+1. Dialogue, cutscenes, quest logs, encyclopedias, and verifiable actual playthrough records from the target edition.
+2. Official story material, setting books, and release notes; identify whether they belong to this work, contain spoilers, and add anything beyond the game itself.
+3. Wikis with original-text citations, plot summaries, and full walkthroughs. For key deaths, betrayals, route locks, endings, or edition disputes, return to direct evidence where possible or cross-check independent sources.
+4. Use community discussions to discover leads and understand disputes. Fan works, edited speculation, MODs, and player headcanon cannot become verified main-story facts.
 
-使用游戏中英文及原文名称检索，围绕缺口搜人物、任务、过场、路线和结局。需要中文术语时核对官方本地化，不只把繁体字转成简体字。无可靠官译则一致使用常见译名或暂译，首次记下原文。
+Search using the Chinese, English, and original-language game titles, focusing on characters, quests, cutscenes, routes, and endings relevant to the gap. For Chinese terminology, check the official localization rather than merely converting Traditional Chinese characters to Simplified Chinese. Without a reliable official translation, consistently use a common or provisional translation and record the original at first mention.
 
-实际读取相关内容。视频记标题、URL、时间点与看过的片段；只有转录时说明证据仅来自转录，不能声称核实了动作或画面。文件记路径和页码/行号/段落。页面无法打开就标记未读，换可用来源；没有检索能力时依据用户材料工作并说明未外部核实。
+Actually read the relevant content. For videos, record the title, URL, timestamps, and segments watched. If only a transcript is available, state that the evidence comes solely from the transcript; do not claim to have verified actions or visuals. For files, record paths and pages/lines/paragraphs. Mark inaccessible pages as unread and use an available source instead. Without search capability, work from user materials and disclose the lack of external verification.
 
-同一转载链不是多源证据。不要给每个普通描写设置来源配额，也不要因缺少第二份证据否定清楚的原始过场。围绕高影响疑点投入核对工作。
+A single chain of reposts is not multiple-source evidence. Do not impose a source quota for every ordinary description, or reject a clear original cutscene because a second source is unavailable. Focus verification effort on doubts with substantial consequences.
 
-## 记录事实与权威范围
+## Record facts and their authority
 
-为实际使用的来源分配 `S001` 等编号，记录标题、链接/路径、版本/路线、定位和读取日期；为可复用的重要事实分配 `F001` 等编号。
+Assign IDs such as `S001` to sources actually used, recording title, link/path, edition/route, location, and access date. Assign IDs such as `F001` to important reusable facts.
 
-| 类别 | 用法 |
+| Category | Use |
 |---|---|
-| 原作事实 | 有证据且适用于当前版本/路线；可以约束正文 |
-| 原作中的说法/传闻 | 只确认“某角色/文献如此说”，不确认说法为真 |
-| 合理推断 | 从证据推导而非直接陈述；不能单独决定主线结果 |
-| 小说化补充 | 为表达添加的非决定性细节；只在本书内保持一致 |
-| 用户改编选择 | 用户明确选定的路线、自建角色设定或原作偏离；保留范围和依据 |
-| 待核实 | 不作为确定事实写入受影响的正文 |
+| Original fact | Supported by evidence and applicable to the current edition/route; may constrain the prose |
+| Claim/rumor within the original | Confirms only that a character/document makes the claim, not that it is true |
+| Reasonable inference | Derived from evidence rather than directly stated; cannot independently determine a main-story outcome |
+| Novelization addition | A non-decisive detail added for expression; maintain consistency only within this book |
+| User-selected adaptation | A route, custom-character setting, or deviation from the original explicitly chosen by the user; retain its scope and basis |
+| Awaiting verification | Do not write it as an established fact in the affected prose |
 
-事实还可标记“适用、冲突、被新版取代”；取代时保留旧条目适用的版本，不能让新版追溯覆盖旧版改编。来源权威与作品内叙述可靠性分开判断：游戏中的不可靠叙述者仍可能在撒谎。
+Facts may also be marked applicable, conflicting, or superseded by a newer edition. When superseding a fact, retain the edition to which the old entry applies; a newer edition must not retroactively overwrite an adaptation of an older one. Judge source authority separately from in-world narrative reliability: an unreliable narrator in the game may still be lying.
 
-最小事实条目包含：内容、类别、来源与定位、适用范围、谁在何时知道它、原作何时让读者/玩家知道它。不要用一个全知设定条目同时替代角色知识和读者揭示时间。
+A minimal fact entry includes its content, category, source and location, scope of applicability, who knows it when, and when the original reveals it to the reader/player. Do not use one omniscient setting entry as a substitute for both character knowledge and reader revelation timing.
 
-## 解决冲突与资料缺口
+## Resolve conflicts and research gaps
 
-先比较作品/版本、路线、时间段、翻译、转录缺句、说话者和是否 MOD；能从证据解决就直接修正。两份材料冲突时保留各自来源及受影响事件，不按支持人数或叙事便利“投票”。
+First compare work/edition, route, period, translation, missing transcript lines, speaker, and MOD status. Correct directly when the evidence resolves the issue. When two sources conflict, retain both sources and affected events; do not vote by popularity or narrative convenience.
 
-仍不能判定时区分：
+If the issue remains unresolved, distinguish:
 
-- **关键事实缺口**：生死、决定动机、入队时间、关键物品、能力获得、路线条件、结局。暂停依赖它的章节或片段，给出具体缺口；可以继续共同前段和不依赖它的研究/规划。
-- **非关键表达缺口**：无剧情作用的普通声响、动作衔接或感官描写。在不造成新规则、伤势、天气机关或未来义务时可少量补写；无需逐句询问。
-- **原作有意留白**：标为留白，不把它当成必须查出并补完的资料缺口。
+- **Critical factual gap**: life or death, decision motive, time of joining the party, key item, ability acquisition, route condition, or ending. Pause dependent chapters or passages and state the specific gap. Continue the shared opening and independent research/planning where possible.
+- **Noncritical expression gap**: an ordinary sound, action transition, or sensory description without plot significance. Add a small amount when it creates no new rule, injury, weather-dependent mechanism, or future obligation; do not ask about every sentence.
+- **Deliberate ambiguity in the original**: mark it as intentional, rather than treating it as missing information that must be uncovered and filled in.
 
-若用户在信息不足时要求试稿，交付明确的试稿与受限范围，不称为核实通过，不推进正式主线状态。把模糊猜测写得肯定不会提高可信度。
+If the user requests a trial draft despite insufficient information, clearly identify it as a trial and state its limited scope. Do not claim it passed verification or advance the official main-story state. Turning vague guesses into definite prose does not improve credibility.
 
-## 控制研究范围
+## Control research scope
 
-完整改编先建立从开端到所选结局的主线骨架；逐章补角色声音、现场动作和任务连接。大纲未定前无需抓取全部收集品、对话分支或支线百科。
+For a complete adaptation, first establish the main-story skeleton from the opening to the selected ending; add character voices, on-scene actions, and quest connections chapter by chapter. Before the outline is settled, there is no need to collect every collectible, dialogue branch, or side-story encyclopedia entry.
 
-已有 `game-guide` 或用户知识库资料可作为线索，重新判断它是否足以支持当前剧情事实；不要照搬攻略的全部操作细节，也不要为写小说自动触发攻略收集和入库流程。
+Existing `game-guide` material or the user's knowledge base may provide leads. Reassess whether it supports the current plot facts. Do not copy every operational detail from a walkthrough, or automatically trigger walkthrough collection and knowledge-base ingestion to write a novel.
 
-用户限制剧透时遵守其边界，不擅自为了“确保全书”阅读后续；记录资料覆盖终点，先完成这一范围。没有剧透限制的全主线项目可研究终局，但小说仍按原作逐步揭示。
+Respect user-imposed spoiler boundaries; do not read ahead on your own to ensure whole-book coverage. Record where research coverage ends and complete that scope first. A full-main-story project without spoiler restrictions may research the finale, but the novel must still reveal information gradually as the original does.

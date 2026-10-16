@@ -1,78 +1,78 @@
-# API 与知识库操作
+# API and knowledge base operations
 
-`api --path` 使用相对 `/api/` 的路径。默认 GET；JSON body 从 `--input file.json` 读取，支持 `-` stdin。脚本自动为 JSON body 设置 `Content-Type: application/json`；服务端对缺少它的 JSON 写入返回 400，对浏览器跨站写入返回 403 `cross_origin`，自行发请求时同样遵守。命令只允许下表已知接口；创建和修改正文必须走 create/edit，不用泛用 API 绕过格式与冲突检查。查询值按 URL 编码，不把凭据写进 URL。
+`api --path` uses paths relative to `/api/`. The default method is GET. Read the JSON body from `--input file.json`; `-` supports stdin. The script automatically sets `Content-Type: application/json` for JSON bodies. The server returns 400 for JSON writes without it and 403 `cross_origin` for browser cross-site writes; follow the same requirements when making requests yourself. The command allows only the known endpoints below. Create and modify document bodies through create/edit; do not use the generic API to bypass format and conflict checks. URL-encode query values and never put credentials in URLs.
 
-## 查找与关系
+## Search and relationships
 
-| GET path | 用途 |
+| GET path | Purpose |
 |---|---|
-| books / books/ID | 知识库列表 / 详情 |
-| books/ID/tree | 有序文档树，节点有 id、kind、title、children；kind 区分 doc/group，网页编辑较慢的文档带 `heavy: true`（见下） |
-| book-groups | 首页知识库分组及 revision |
-| recent / titles | 最近文档 / 文档标题索引 |
-| stats | 全站及各知识库正文总字数，返回 `{chars: number, bookChars: {[bookId: string]: number}}`，与首页及各卡片右下角一致 |
-| search?q=关键词 | 服务端全文匹配，空格分开的多个词须都出现在标题或正文中（最多取前 10 个不同的词），标题含词多的在前；最多 50 项，并非无限分页搜索 |
-| link-targets | 存活文档与 H1–H6 章节，含实际 slug；不包含回收站 |
-| docs/ID/preview?heading=slug | 文档/章节摘要 |
-| docs/ID/backlinks | 反向链接及来源上下文 |
-| docs/ID/view | 阅读 HTML、目录、邻接文档和图片尺寸；`images` 按素材 ID 给出原图 `[宽, 高]`，有显示版本时为 `[宽, 高, 文件列表]`，2 倍及以上屏幕另有一套时再加第四项 `高密度屏列表`（此时第三项可为空） |
-| docs/ID/recent-changes?revision=N | 最近修改的历史基线与摘要；revision 可选，详见历史说明 |
-| templates / templates/ID | 模板/片段列表 / 完整内容与预览 |
-| docs/ID/versions / versions/ID | 历史列表 / 某个历史的原生内容 |
-| versions/ID/view | 历史阅读 HTML 与元信息 |
-| drawings/CONTENT_ID | 受支持的不可变画板包、场景、预览与派生文字 |
-| trash | 回收站 |
-| attachments/CONTENT_ID/preview?name=文件名 | 素材预览类型、有限文本或压缩包目录 |
+| books / books/ID | Knowledge base list / details |
+| books/ID/tree | Ordered document tree; nodes have id, kind, title, and children. kind distinguishes doc/group. Documents that are slow to edit in the web UI have `heavy: true` (see below) |
+| book-groups | Home page knowledge base groups and revision |
+| recent / titles | Recent documents / document title index |
+| stats | Total body character counts site-wide and per knowledge base; returns `{chars: number, bookChars: {[bookId: string]: number}}`, matching the home page and the bottom-right corner of each card |
+| search?q=关键词 | Server-side full-text matching. All space-separated terms must appear in the title or body (up to the first 10 distinct terms); titles containing more terms rank first. Up to 50 results, not unlimited paginated search |
+| link-targets | Live documents and H1–H6 sections, including actual slugs; excludes trash |
+| docs/ID/preview?heading=slug | Document/section summary |
+| docs/ID/backlinks | Backlinks and source context |
+| docs/ID/view | Reading HTML, outline, adjacent documents, and image dimensions. `images` maps media IDs to original `[width, height]`; with display variants, it is `[width, height, file list]`. A separate set for screens at 2x density or higher adds a fourth item, `high-density screen list` (the third item may then be empty) |
+| docs/ID/recent-changes?revision=N | Historical baseline and summary of recent changes; revision is optional, as described under history |
+| templates / templates/ID | Template/snippet list / full content and preview |
+| docs/ID/versions / versions/ID | History list / native content of a history entry |
+| versions/ID/view | Reading HTML and metadata for a history entry |
+| drawings/CONTENT_ID | Supported immutable drawing package, scene, preview, and derived text |
+| trash | Trash |
+| attachments/CONTENT_ID/preview?name=文件名 | Media preview type, limited text, or archive directory listing |
 
-渲染 HTML 超过 256 KiB 的文档在阅读页分段载入：网页另用 `docs/ID/view?segments=1`、`docs/ID/segments` 和 `docs/ID/segments/matches` 按版本标记取段，文档修改或服务重启后旧标记返回 409。脚本读取 HTML 一律用不带参数的 `docs/ID/view`，结果始终是整篇。分段文档在阅读页标记最近修改、打印或页内查找前会先载入全文。
+Documents whose rendered HTML exceeds 256 KiB load in segments on the reading page. The web UI also uses `docs/ID/view?segments=1`, `docs/ID/segments`, and `docs/ID/segments/matches` to fetch segments by version token; old tokens return 409 after document changes or a service restart. Scripts always read HTML through `docs/ID/view` without parameters, which always returns the full document. Segmented documents load their full body before the reading page marks recent changes, prints, or searches within the page.
 
-编辑负载（正文节点数，含文字节点，加字数 ÷ 100）达到 40,000 的文档在目录树中带 `heavy: true`：网页进入编辑前提示打开较慢并建议拆分，直接打开 `/docs/ID/edit` 会先转到阅读页确认。这只影响网页编辑器，脚本的 read/create/edit 不受限制；规划超长文档时可据此向用户说明网页编辑的代价。
+Documents whose editing load (body node count, including text nodes, plus character count ÷ 100) reaches 40,000 have `heavy: true` in the tree. Before opening the editor, the web UI warns that opening may be slow and suggests splitting the document; directly opening `/docs/ID/edit` first redirects to the reading page for confirmation. This affects only the web editor; script read/create/edit commands are unrestricted. Use this threshold to explain the web editing cost when planning very long documents.
 
-标题拼音从服务端返回，可用于筛选结果；不要引入另一份拼音词典。查找同名文档时同时查看知识库和父目录，选择后返回真实链接。
+Title pinyin is returned by the server and can filter results; do not introduce another pinyin dictionary. When finding documents with duplicate names, inspect both the knowledge base and parent, then return the real link for the selected document.
 
-查询全站及各知识库的字数用 `node "$YUYAN_DOC" api --path stats`：`chars` 为全站总数，`bookChars` 按知识库 ID 的字符串索引，每个存活知识库都有一项，空知识库为 0；例如 ID 为 12 的知识库读取 `bookChars["12"]`。统计与阅读页及目录一致：非空白 Unicode 字符逐个计数，只统计当前存活正文，不含文档标题、目录分组、回收站文档/知识库、历史或模板；无知识库时返回 `{chars: 0, bookChars: {}}`。
+Use `node "$YUYAN_DOC" api --path stats` for site-wide and per-knowledge-base character counts. `chars` is the site-wide total; `bookChars` is indexed by knowledge base ID strings, with an entry for every live knowledge base and 0 for empty ones. For example, read `bookChars["12"]` for knowledge base ID 12. Counts match the reading page and tree: each non-whitespace Unicode character counts once, and only current live bodies are counted. Document titles, tree groups, trashed documents/knowledge bases, history, and templates are excluded. With no knowledge bases, the response is `{chars: 0, bookChars: {}}`.
 
-## 目录与知识库
+## Document tree and knowledge bases
 
-| 方法与 path | body |
+| Method and path | body |
 |---|---|
-| POST books | name、description，可选 groupId；创建与归入指定分组在一个事务保存 |
-| POST books/ID/to-group | 来源知识库当前 name、另一个存活知识库 targetBookId、存活根项的完整有序 rootIds（空库为 []）；使用 --confirm |
-| PATCH books/ID | 仅发送需要修改的 name / description 字段 |
-| PUT books/order | ids，完整知识库顺序 |
-| PUT book-groups | baseRevision、groups: [{id,name,bookIds}]，可选 bookOrder（全部存活知识库 ID 的顺序）；分组与顺序在一个事务保存 |
-| POST docs/ID/move | bookId、parentId（根用 null）、index（目标位置） |
-| POST docs/ID/dissolve | 目录分组当前的 bookId、parentId（根用 null）、childIds（当前存活直接子项的完整有序 ID 列表，空分组为 []）；使用 --confirm |
-| POST docs/ID/extract | 目录分组当前的 bookId、显式 parentId（根用 null）、title、childIds（存活直接子项的完整有序 ID 列表，空分组为 []）；使用 --confirm |
-| POST docs/batch | bookId、ids、action: copy / move / trash；copy/move 另带 targetBookId、parentId |
+| POST books | name, description, optional groupId; creation and placement in the specified group are saved in one transaction |
+| POST books/ID/to-group | Source knowledge base's current name, targetBookId of another live knowledge base, and the complete ordered rootIds of live root entries ([] for an empty base); use --confirm |
+| PATCH books/ID | Send only the name / description fields that need changing |
+| PUT books/order | ids, the complete knowledge base order |
+| PUT book-groups | baseRevision, groups: [{id,name,bookIds}], optional bookOrder (ordered IDs of all live knowledge bases); groups and order are saved in one transaction |
+| POST docs/ID/move | bookId, parentId (null for the root), index (target position) |
+| POST docs/ID/dissolve | Tree group's current bookId, parentId (null for the root), childIds (complete ordered IDs of current live direct children; [] for an empty group); use --confirm |
+| POST docs/ID/extract | Tree group's current bookId, explicit parentId (null for the root), title, childIds (complete ordered IDs of live direct children; [] for an empty group); use --confirm |
+| POST docs/batch | bookId, ids, action: copy / move / trash; copy/move also require targetBookId and parentId |
 
-batch 一次最多 5000 项，选父项时必须包含其全部存活后代；先读树展开选择。服务端校验并在一个事务内完成，目录变化时 409 后重新读取。copy 会复制所选结构、重写复制范围内文档链接并共享原素材。移动禁止放进自己的子树。成功后读取目标树确认位置及数量。
+batch accepts at most 5000 entries at a time. Selecting a parent requires including all its live descendants; read the tree and expand the selection first. The server validates and completes the operation in one transaction. Reread after a 409 caused by tree changes. copy duplicates the selected structure, rewrites document links within the copied scope, and shares original media. Moving an entry into its own subtree is forbidden. After success, read the target tree to confirm positions and counts.
 
-在指定分组新建知识库时，先读 `book-groups` 取得目标 ID，再 POST `books`，例如 body 为 `{"name":"新知识库","description":"","groupId":"目标分组ID"}`。创建与追加归属在同一事务完成，新知识库位于该组末尾；无需再发一次移组请求。省略 `groupId` 或传空字符串时创建到“未分组”。非空目标不存在返回 404 且不创建记录，先刷新分组再根据用户意图处理，不静默改到未分组。该接口只向最新配置追加新 ID，保留既有归属与顺序，不需要 baseRevision；归组成功递增 revision，旧 revision 的完整分组写入仍会冲突。成功后合并读取一次 `books` 与 `book-groups` 核对新 ID、归属和末尾位置；失败时先确认是否已创建，不自动重试非幂等请求。网页分组菜单的“新建知识库”使用同一操作；在首页创建后停留原处，保留滚动与分组折叠状态。
+To create a knowledge base in a specified group, read `book-groups` to obtain the target ID, then POST `books`, for example with `{"name":"新知识库","description":"","groupId":"目标分组ID"}`. Creation and appending membership happen in the same transaction; the new knowledge base appears at the end of the group, so no separate move request is needed. Omitting `groupId` or passing an empty string creates it under “未分组”. A nonexistent nonempty target returns 404 without creating a record. Refresh groups first and proceed according to the user's intent; do not silently fall back to ungrouped. This endpoint only appends the new ID to the latest configuration, preserving existing memberships and order; it does not require baseRevision. Successful group assignment increments revision, and full group writes with an old revision still conflict. After success, batch one read each of `books` and `book-groups` to check the new ID, membership, and final position. On failure, check whether creation occurred before proceeding; do not automatically retry non-idempotent requests. The web group menu's “新建知识库” uses the same operation. Creation on the home page keeps the user there, preserving scroll position and group collapse state.
 
-移动知识库并指定组内位置时，先读取 `books` 和 `book-groups`。保留其他分组及回收站知识库的既有归属，只将目标 ID 从原组的 `bookIds` 移到新组；移至“未分组”则从各组移除。`bookIds` 只决定归属，实际显示顺序由 `books` 返回的全局顺序决定，不能只调整 `bookIds` 数组。
+To move a knowledge base and specify its position within a group, first read `books` and `book-groups`. Preserve the existing memberships of other groups and trashed knowledge bases; move only the target ID from the old group's `bookIds` to the new group. Moving to “未分组” removes it from all groups. `bookIds` determines membership only; the global order returned by `books` determines display order. Adjusting only the `bookIds` array is insufficient.
 
-从全部存活知识库的有序 ID 列表中取出待移动 ID，插到目标卡片之前或之后（放到组末尾时插在该组最后一个存活 ID 之后），将完整列表作为 `bookOrder` 与更新后的 `groups`、原 `baseRevision` 一起 PUT。例如全局顺序为 `[1,2,3,4]`，将知识库 1 移入包含 2、3 的组并放在两者之间，发送 `bookOrder: [2,1,3,4]`，同时保留知识库 4 的归属。空目标组只有新移入的一项，无须改变它在全局列表的位置。
+Remove the moving ID from the ordered list of all live knowledge base IDs, then insert it before or after the target card (after the group's last live ID when placing it at the end). PUT the full list as `bookOrder` together with the updated `groups` and original `baseRevision`. For example, with global order `[1,2,3,4]`, moving knowledge base 1 into the group containing 2 and 3, between those two, sends `bookOrder: [2,1,3,4]` while preserving knowledge base 4's membership. An empty target group contains only the newly moved entry; its position in the global list need not change.
 
-`bookOrder` 必须恰好包含所有存活知识库，包括其他组和未分组，不含回收站；遗漏、重复、未知或已删除 ID 返回 400，旧 revision 返回 409，归属和顺序均不部分保存。省略 `bookOrder` 保持既有顺序，旧调用仍兼容。失败后重新读取并根据用户意图重建请求，不换新 revision 强行提交旧快照；成功后读取一次 `books` 与 `book-groups` 核对归属、组内顺序及其他组保持情况。网页拖放会立即预览落点，失败时恢复已确认状态。
+`bookOrder` must contain exactly all live knowledge bases, including other groups and ungrouped entries, and exclude trash. Missing, duplicate, unknown, or deleted IDs return 400; an old revision returns 409. Neither membership nor order is partially saved. Omitting `bookOrder` preserves the existing order, maintaining compatibility with older calls. After failure, reread and rebuild the request according to the user's intent; do not substitute a new revision to force an old snapshot through. After success, read `books` and `book-groups` once each to check membership, order within groups, and preservation of other groups. Web drag-and-drop immediately previews the drop position and restores the confirmed state on failure.
 
-解散目录分组时，先从 `books/ID/tree` 定位 `kind=group` 的节点，将其 `parentId` 与 `children` 的直接子项 ID 顺序原样发送到 `docs/分组ID/dissolve`。这会在一个事务内用子项替换分组原来的位置，子分组及文档的内部层级、正文、ID、revision 和历史保留；仅空分组进入回收站。已在回收站的直接子项也上移父级但保持删除状态，恢复或彻底删除空分组不会带走已移出的内容。该操作不写正文，不需要正文 baseRevision；目标不是分组或缺少 childIds 返回 400，所在知识库、父级、子项及其顺序不符返回 409，分组或知识库已删除返回 404。失败后重新读取目录并重选，不拆成多次移动再删除。用户明确要求解散后带 `--confirm` 执行，也可先 `--dry-run` 预览；成功后读取一次相关知识库树核对替换位置和所有子项。
+To dissolve a tree group, locate its `kind=group` node in `books/ID/tree`, then send its `parentId` and the exact ordered IDs of direct `children` to `docs/GROUP_ID/dissolve`. In one transaction, this replaces the group at its original position with its children, preserving the internal hierarchy, bodies, IDs, revisions, and history of subgroups and documents; only the emptied group goes to trash. Direct children already in trash also move up to the parent while remaining deleted. Restoring or permanently deleting the empty group does not affect content already moved out. This operation does not write bodies and needs no body baseRevision. A nongroup target or missing childIds returns 400; mismatches in knowledge base, parent, children, or their order return 409; a deleted group or knowledge base returns 404. After failure, reread the tree and reselect; do not split this into multiple moves followed by deletion. Execute with `--confirm` after the user explicitly requests dissolution; optionally preview with `--dry-run` first. After success, read the relevant knowledge base tree once to check the replacement position and all children.
 
-提取目录分组为知识库时，先读 `books/ID/tree` 定位 `kind=group`，将其当前 `title`、`parentId`、直接子项 ID 顺序与来源 `bookId` 发送到 `docs/分组ID/extract`。接口在同一事务中新建与分组同名的知识库、将所有后代改归新库、将直接子项提升到新库根层，并仅将原空分组移入回收站；子项顺序及内部层级、正文、ID、revision、时间和历史保留。已删除后代也改归新库并保持删除状态，日后恢复不依赖原分组；恢复原空分组不会撤销提取。空分组可提取为空知识库，同名知识库不自动合并或覆盖。
+To extract a tree group into a knowledge base, locate `kind=group` in `books/ID/tree`, then send its current `title`, `parentId`, ordered direct child IDs, and source `bookId` to `docs/GROUP_ID/extract`. In the same transaction, the endpoint creates a knowledge base with the group's name, assigns all descendants to it, promotes direct children to its root, and moves only the original emptied group to trash. Child order, internal hierarchy, bodies, IDs, revisions, timestamps, and history are preserved. Deleted descendants are also assigned to the new base and remain deleted; later restoration does not depend on the original group. Restoring the original empty group does not undo extraction. An empty group can become an empty knowledge base; same-name knowledge bases are not automatically merged or overwritten.
 
-新库自动追加到来源知识库当前所属的首页分组末尾，来源未分组则新库也未分组；调用方不传目标 groupId。成功 201 返回 `{book, bookGroups}`，前者是已创建知识库及文档数，后者是提交后的首页分组配置；有首页归属时 revision 递增。参数无效或目标不是目录分组返回 400，名称、来源知识库、父目录或存活直接子项顺序变化返回 409，分组或来源知识库已删除返回 404。全部步骤失败回滚，不拆成“建库、逐项移动、删除”多次调用。
+The new base is automatically appended to the source knowledge base's current home page group. If the source is ungrouped, the new base is also ungrouped; callers do not pass a target groupId. Success returns 201 with `{book, bookGroups}`: the created knowledge base and document count, and the committed home page group configuration. Revision increments when there is a home page group assignment. Invalid parameters or a target that is not a tree group return 400; changed name, source knowledge base, parent, or live direct child order return 409; a deleted group or source base returns 404. Any failure rolls back all steps. Do not split the operation into separate create-base, move-entry, and delete calls.
 
-用户明确要求提取后带 `--confirm` 执行，可先 `--dry-run`；成功后合并读取来源与新库树、`books` 和 `book-groups` 各一次核对名称、归属、根层位置与子树。409 后重新读取再按用户意图制定请求，网络失败先核对原分组与新库是否已变化，不盲目重试非幂等提取。网页侧栏与目录分组菜单共用“提取为知识库”，确认后先保存并结束当前编辑，再提取并打开新库；刷新失败仍提示已成功提取，避免重复创建。
+Execute with `--confirm` after the user explicitly requests extraction; `--dry-run` is available first. After success, batch one read each of the source and new base trees, `books`, and `book-groups` to check names, memberships, root positions, and subtrees. After 409, reread and prepare the request according to the user's intent. After a network failure, first check whether the original group and new base have changed; do not blindly retry non-idempotent extraction. The web sidebar and tree group menus share “提取为知识库”. After confirmation, the UI saves and ends any current editing session before extracting and opening the new base. A refresh failure still reports successful extraction to avoid duplicate creation.
 
-将知识库转为分组时，先读取来源 `books/ID` 与 `books/ID/tree`，并确认目标为另一个存活知识库；将来源当前 `name`、有序根项 ID `rootIds` 和 `targetBookId` 提交到 `books/来源ID/to-group`。同一事务在目标根目录末尾新建与来源同名的分组，将来源所有文档与分组移入；原根项成为新分组的直接子项，内部层级和顺序不变。原知识库作为空库移入回收站，名称、简介与首页分组归属仍保留，恢复空库不会撤销转换。已删除文档/分组也改归目标并保持删除状态，后续可在目标恢复。正文、文档 ID、revision、时间、历史、素材及链接不变，只有新分组新增创建快照；空库可转为空分组，目标已有同名分组也不会合并或覆盖。
+To convert a knowledge base into a group, read the source `books/ID` and `books/ID/tree`, and confirm the target is another live knowledge base. Submit the source's current `name`, ordered root entry IDs `rootIds`, and `targetBookId` to `books/SOURCE_ID/to-group`. In one transaction, a group with the source's name is created at the end of the target root, and all source documents and groups move into it. Original root entries become direct children of the new group, preserving internal hierarchy and order. The original knowledge base moves to trash as an empty base, retaining its name, description, and home page group membership. Restoring the empty base does not undo the conversion. Deleted documents/groups are also assigned to the target and remain deleted, available for later restoration there. Bodies, document IDs, revisions, timestamps, history, media, and links remain unchanged; only the new group receives a new creation snapshot. An empty base can become an empty group, and an existing same-name group in the target is not merged or overwritten.
 
-转换成功 201 返回 `{group: DocMeta, book: 目标Book}`；缺少/非法 name、rootIds、目标或目标为来源自身返回 400，来源名称或存活根项顺序过期返回 409，来源或目标不存在/已删除返回 404。失败全部回滚，不拆为新建分组、多次移动和删除知识库。用户明确要求转换后使用 `--confirm`，可先 `--dry-run`；成功后读取目标树与 `books`/`trash` 核对新分组位置、完整子树和原空库状态。网络失败先检查是否已经转换，不能盲目重试。网页“转为分组…”按首页分组、知识库选择目标，确认后先保存并结束当前编辑；成功打开新分组，刷新失败仍报告已转换，用户切换页面后不强行跳转。
+Successful conversion returns 201 with `{group: DocMeta, book: targetBook}`. Missing/invalid name, rootIds, or target, or a target identical to the source, return 400; stale source name or live root order returns 409; missing/deleted source or target returns 404. Failure rolls back everything; do not split the operation into group creation, multiple moves, and knowledge base deletion. Use `--confirm` after the user explicitly requests conversion, optionally preceded by `--dry-run`. After success, read the target tree and `books`/`trash` to check the new group's position, complete subtree, and original empty base state. After a network failure, check whether conversion already occurred before retrying. The web “转为分组…” action selects the target by home page group and knowledge base. After confirmation, it saves and ends current editing, then opens the new group on success. Refresh failures still report successful conversion; do not force navigation if the user has switched pages.
 
-首页知识库更多菜单只提供知识库操作，不提供“新建文档”“从模板新建”“新建目录分组”；知识库内部菜单保留这些入口。知识库菜单的“移动到”选择首页知识库分组，与“转为分组…”是两个操作。
+The home page knowledge base overflow menu offers only knowledge base operations, not “新建文档”, “从模板新建”, or “新建目录分组”; menus inside a knowledge base retain these entries. “移动到” in the knowledge base menu chooses a home page knowledge base group and is a separate operation from “转为分组…”.
 
-从其他知识库移入文档时，目标是指定知识库的根目录，沿用 `POST docs/batch`，body 为 `bookId: 来源知识库ID`、`ids: 所选节点及全部存活后代ID`、`action: "move"`、`targetBookId: 目标知识库ID`、`parentId: null`。每次选择一个来源知识库，允许选择其不同目录中的文档；根项按来源目录顺序追加到目标末尾，文档 ID、正文、历史、内部链接和子树保留。网页首页知识库卡片的“从其他知识库移入”提供分栏选择器，支持勾选、Command/Ctrl 多选和 Shift 连选；API 不需要经过网页选择器。成功后读取来源与目标树各一次核对，409 后重新选择，非幂等移动失败先核对结果再处理。
+To move documents in from other knowledge bases, target the specified knowledge base's root and reuse `POST docs/batch` with `bookId: source knowledge base ID`, `ids: selected nodes and all live descendant IDs`, `action: "move"`, `targetBookId: target knowledge base ID`, and `parentId: null`. Select one source knowledge base at a time; documents from different directories within it may be selected. Root entries are appended to the target in source tree order, preserving document IDs, bodies, history, internal links, and subtrees. “从其他知识库移入” on the web home page knowledge base card opens a column selector supporting checkboxes, Command/Ctrl multi-select, and Shift range selection; the API does not require using this UI. After success, read the source and target trees once each. Reselect after 409; after a failed non-idempotent move, check the result before proceeding.
 
-## 模板与片段
+## Templates and snippets
 
 ```sh
 node "$YUYAN_DOC" api --path templates
@@ -80,32 +80,32 @@ node "$YUYAN_DOC" api --method POST --path templates --input "$work_dir/template
 node "$YUYAN_DOC" create --book 1 --title '新笔记' --template TEMPLATE_ID
 ```
 
-创建 body：`{"name":"模板名","kind":"document","content":{"type":"doc","content":[...]}}`。kind 为 document 或 snippet；名称最多 100 个字符。从现有文档/选区保存时保留完整 JSON 和真实素材引用，片段也要形成合法 doc 根（补齐表格、分栏、Callout 等必要外层），不能截取无法闭合的节点序列。
+Creation body: `{"name":"模板名","kind":"document","content":{"type":"doc","content":[...]}}`. kind is document or snippet; names are at most 100 characters. When saving from an existing document/selection, preserve complete JSON and real media references. Snippets also require a valid doc root, including necessary outer table, column, or Callout containers; do not extract a sequence of nodes that cannot form a complete structure.
 
-模板插入已有文档：GET templates/ID 后，将其 content.content 通过 edit 的 splice 插到合适容器。模板是独立快照，删除或修改来源不影响它。
+To insert a template into an existing document, GET templates/ID, then splice its content.content into the appropriate container with edit. A template is an independent snapshot; deleting or changing its source does not affect it.
 
-PATCH templates/ID 只支持重命名：name、baseRevision。DELETE 同样要求 baseRevision 和 --confirm。服务尚无原地修改模板正文接口；用户要求变更模板内容时可新建修订模板，确认替代范围后再删除旧模板，不伪造 PATCH 正文功能。
+PATCH templates/ID supports renaming only: name and baseRevision. DELETE also requires baseRevision and --confirm. The service has no endpoint for editing a template body in place. If the user requests template content changes, create a revised template and delete the old one after confirming the replacement scope; do not invent a PATCH body capability.
 
-## 历史与删除
+## History and deletion
 
-- 阅读页顶部栏的“最近修改”开关用浅紫底色加虚线针脚的“补丁”显示最新编辑会话的变化，相邻修改合并为一块，补丁内改动的字加深底色，浏览器记住开关；这是独立显示层，不是正文 highlight mark，不会写入、复制或导出为文档格式。删除的内容由浏览器把基线渲染的副本临时放回原处，套玫红虚线框：整块删除标“已删除”，部分删除在新版前显示标“修改前”的旧版并划去删掉的字，代码只列失去的行。副本不可选中，不出现在 `docs/ID/view` 的 HTML、正文 JSON、复制或导出中，也不能当作正文写回。底部悬浮栏的“修改”“删除”可单独或同时显示，可上一处/下一处定位并展开隐藏内容；精确改动仍以“完整差异”为准。
-- `GET docs/ID/recent-changes?revision=N` 只读返回 `{revision, baseline, summary?}`；baseline 为 `{id, revision, title, html}` 或 null。优先使用本次“编辑前”/“恢复前”快照；本次沿用上一条“编辑结束”“恢复”或“新建”快照作基线时使用该快照；跨过同次编辑的自动快照；无会话边界的旧客户端回退到最近不同快照。无保留基线时返回 null，不能把整篇当作新增。可选 revision 与当前不符返回 409，应重新读取当前文档。基线原生 JSON 仍通过 `versions/基线ID` 读取；HTML 仅用于阅读比较，不作为正文写回。示例：`node "$YUYAN_DOC" api --path 'docs/123/recent-changes?revision=7'`。
+- The reading page's top-bar “最近修改” toggle displays changes from the latest editing session as patches with a light purple background and dashed stitching. Adjacent changes merge into one patch, changed characters within a patch receive a darker background, and the browser remembers the toggle. This is a separate display layer, not a body highlight mark; it is not saved, copied, or exported as document formatting. For deletions, the browser temporarily places a rendered copy of the baseline at the original location with a magenta dashed border. Whole-block deletions are labeled “已删除”; partial deletions show the old version labeled “修改前” before the new version, striking out deleted text; code shows only removed lines. These copies cannot be selected, are absent from `docs/ID/view` HTML, body JSON, copying, and export, and must not be written back as body content. The bottom floating bar's “修改” and “删除” can be displayed separately or together, with previous/next navigation that expands hidden content. Use “完整差异” for precise changes.
+- `GET docs/ID/recent-changes?revision=N` is read-only and returns `{revision, baseline, summary?}`; baseline is `{id, revision, title, html}` or null. Prefer the current session's “编辑前”/“恢复前” snapshot. When the session reuses the preceding “编辑结束”, “恢复”, or “新建” snapshot as its baseline, use that snapshot. Skip automatic snapshots from the same editing session. Older clients without session boundaries fall back to the nearest differing snapshot. If no baseline remains, return null; do not treat the entire document as new. An optional revision that differs from the current revision returns 409; reread the current document. Read native baseline JSON through `versions/BASELINE_ID`; HTML is only for reading comparisons and must not be written back as body content. Example: `node "$YUYAN_DOC" api --path 'docs/123/recent-changes?revision=7'`.
 
-- 改正文使用 edit，它会同事务把编辑前内容留在历史中（最新快照已是相同 revision、标题和正文的会话边界且距过期超过一周时直接沿用，不再重复记录），并在完成后补记结果快照；历史保留 30 天，不保底保留一条。GET versions 返回的历史 ID 不等同于文档 revision。
-- POST versions/VERSION_ID/restore，body 为当前文档的 baseRevision；使用 --confirm。先查看该历史正文和当前版本，明确恢复目标。服务同事务保留恢复前快照。恢复后重新读取文档和历史确认。
-- POST docs/ID/snapshot 手动补记当前正文，用于完成阶段失败后的修复；不能把它当作数据库备份。
-- DELETE docs/ID、DELETE books/ID 是移入回收站；POST 相应的 /restore 恢复。知识库/目录操作会影响其内容，先核对树。
-- DELETE trash/docs/ID、DELETE trash/books/ID 是彻底删除；DELETE trash 清空回收站。此类动作没有历史撤销保障，必须有明确用户授权，工具要求 --confirm。
-- 回收站恢复与历史恢复都要求 --confirm；用户已明确请求具体操作时无需重复询问。模糊的“清理一下”不等于同意清空全部数据。
+- Use edit for body changes. In the same transaction, it retains the pre-edit body in history. If the latest snapshot is already a session boundary with the same revision, title, and body and more than one week until expiry, it is reused without duplication. A result snapshot is added after completion. History is retained for 30 days, with no guarantee that even one entry remains. History IDs returned by GET versions are not document revisions.
+- POST versions/VERSION_ID/restore with the current document's baseRevision as the body; use --confirm. Inspect that history entry's body and the current version first, and establish the intended restore target. The service retains a pre-restore snapshot in the same transaction. Reread the document and history after restoration to confirm.
+- POST docs/ID/snapshot manually records the current body to repair failures in the completion stage; it is not a database backup.
+- DELETE docs/ID and DELETE books/ID move entries to trash; POST the corresponding /restore restores them. Knowledge base/tree operations affect their contents; inspect the tree first.
+- DELETE trash/docs/ID and DELETE trash/books/ID permanently delete entries; DELETE trash empties the trash. These actions have no history-based undo guarantee, require explicit user authorization, and require --confirm in the tool.
+- Both trash restoration and history restoration require --confirm. When the user has already explicitly requested the specific operation, do not ask again. A vague request to clean up does not authorize emptying all data.
 
-泛用 API 写入返回服务响应，随后按任务读取一次必要的树、列表、文档或历史核验，确认受影响对象后结束；批量操作合并核对，不逐篇重复获取全文和历史。create/edit 已在脚本中回读比对，不因使用了 API 参考就再检查一遍。`--dry-run` 返回请求计划且不写入。网络失败不可自动重试 copy/create 等非幂等操作，先核对是否已成功。
+Generic API writes return the service response. Then read the necessary tree, list, document, or history once according to the task, and stop after confirming affected objects. Combine checks for batch operations rather than repeatedly fetching each full body and history. create/edit already read back and compare within the script; using this API reference does not require checking them again. `--dry-run` returns the request plan without writing. Do not automatically retry non-idempotent operations such as copy/create after network failures; check whether they succeeded first.
 
-## 画板与客户端兼容
+## Drawings and client compatibility
 
-`api/meta` 的 features 包含 drawing-v1 表示支持画板。新 CLI 自动携带 `X-Yuyan-Features: drawing-v1`；含画板的当前文档保存和取消编辑拒绝旧客户端，revision 检查仍适用。
+drawing-v1 in `api/meta` features indicates drawing support. The new CLI automatically sends `X-Yuyan-Features: drawing-v1`. Saving or canceling editing of a current document containing drawings rejects older clients; revision checks still apply.
 
-包发布走 `upload --kind drawing`，不通过泛用 API 写入。它调用 POST /api/drawings，返回完整 drawing 节点；包限 12 MiB，依赖图片必须已存在且类型匹配。GET drawings/ID 读取包；媒体下载路径不含 /api，使用 download 的 `/drawings/ID/file` 或 `/drawings/ID/preview`。未知版本不能编辑，允许保留原文件和服务端校验通过的静态预览。详见 [可编辑画板](drawing.md)。
+Publish packages with `upload --kind drawing`, not generic API writes. It calls POST /api/drawings and returns a complete drawing node. Packages are limited to 12 MiB; dependent images must already exist with matching types. GET drawings/ID reads the package. Media download paths omit /api; use download with `/drawings/ID/file` or `/drawings/ID/preview`. Unknown versions cannot be edited; retaining the original file and a server-validated static preview is allowed. See [Editable drawings](drawing.md).
 
-## 运行与维护边界
+## Operations and maintenance boundaries
 
-本技能不提供数据库迁移、直接 SQL、生产 GC、部署、修改门户鉴权或备份恢复接口。相关任务交给 server-operations 和项目文档。新增 API 时先核对实际路由及契约，再更新本参考和脚本允许列表；不要从网页按钮名称猜接口。
+This skill provides no database migration, direct SQL, production GC, deployment, portal authentication changes, or backup/recovery endpoints. Delegate these tasks to server-operations and project documentation. Before adding API support, check actual routes and contracts, then update this reference and the script allowlist; do not guess endpoints from web button labels.

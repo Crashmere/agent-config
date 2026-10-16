@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 只读主机检查；不会读取业务数据、env、SSH keys 或触发发布/备份。
+# Read-only host inspection; does not read business data, environment files, or SSH keys, or trigger releases or backups.
 set -uo pipefail
 if [[ $(uname -s) != Linux ]]; then
   printf 'Run on the Linux server, not on the local workstation.\n' >&2

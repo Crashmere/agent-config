@@ -1,15 +1,16 @@
-# 服务器维护入口
+<a id="服务器维护入口"></a>
+# Server Maintenance Entry Point
 
-操作这台服务器或部署新应用前，先读取 `/opt/server-context/SKILL.md`，然后按其导航读取共享约定、当前应用清单及目标项目文档。
+Before operating this server or deploying a new application, read `/opt/server-context/SKILL.md`, then follow its navigation to the shared conventions, current application inventory, and target project documentation.
 
-- 共享文档来源：`https://github.com/Crashmere/agent-config` 的 `skills/server-operations/`；服务器 `/opt/server-context/` 是同步副本，来源见其中 `SOURCE`。
-- 项目细节来源：各项目自己的仓库。当前有 Ledger、FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal 与 AICalendar；按共享应用清单定位 `/opt/<app>/AGENTS.md`、`/opt/<app>/docs/README.md`，来源见对应 `docs/SOURCE`。
-- 先读当前状态再只读核实，不因文档记载某服务就假定现场未变化。不要读取或打印无关凭据/业务数据。
-- 哪些事直接做完再告知、哪些先确认，只看 `/opt/server-context/SKILL.md` 的授权表。文档维护、清理已知垃圾、按已有方案处理问题都属于直接做。
-- 修改共享入口、端口、运行时、权限、备份或发布方案前，评估清单中的全部应用，不只修新项目。
-- 网页默认拦截 Tab / Shift+Tab 控件切换并取消焦点高亮；用户明确要求的例外和验证范围见 `/opt/server-context/references/conventions.md` 的“网页键盘与焦点”，不要自行恢复浏览器默认行为。
-- 发布失败或排障先查 `/opt/server-context/references/common-issues.md`。可能影响多个应用的问题，解决方案统一写在那里，项目文档只留参数和链接。
-- 每次变更都更新所属源码配置和当前文档，提交推送后在本地运行 agent-config 的 `skills/server-operations/scripts/sync-docs.sh` 同步服务器副本。只改服务器不回写仓库不能算完成。
-- 项目数据库、备份、私钥、Token 不入 Git。业务仓库与共享上下文公开、ServerPortal 仓库私有；所有源码仍不保存公网地址、真实数据或秘密。
+- Shared documentation source: `skills/server-operations/` in `https://github.com/Crashmere/agent-config`. The server's `/opt/server-context/` is a synchronized copy; see its `SOURCE` for provenance.
+- Project details come from each project's own repository. The current projects are Ledger, FeeTable, FabricWorld, RecipeBox, Yuyan, ServerPortal, and AICalendar. Use the shared application inventory to locate `/opt/<app>/AGENTS.md` and `/opt/<app>/docs/README.md`; provenance is in the corresponding `docs/SOURCE`.
+- Read the current state, then verify it with read-only checks. Do not assume the live system is unchanged just because a service is documented. Do not read or print unrelated credentials/business data.
+- Use only the authorization table in `/opt/server-context/SKILL.md` to decide what to complete and report versus what needs confirmation first. Documentation maintenance, known-junk cleanup, and applying existing solutions all belong in the proceed category.
+- Before changing shared entry points, ports, runtimes, permissions, backup plans, or release plans, assess every application in the inventory rather than fixing only the new project.
+- By default, block Tab / Shift+Tab from moving focus between web controls and remove focus highlights. See "Web keyboard and focus" in `/opt/server-context/references/conventions.md` for user-requested exceptions and validation scope; do not restore browser defaults on your own.
+- For release failures or troubleshooting, first consult `/opt/server-context/references/common-issues.md`. Document solutions to issues that may affect multiple applications there; retain only project-specific parameters and links in project documentation.
+- For every change, update the owning source configuration and current documentation. After committing and pushing, run agent-config's `skills/server-operations/scripts/sync-docs.sh` locally to synchronize server copies. A server-only change without updating the repository is incomplete.
+- Keep project databases, backups, private keys, and tokens out of Git. Business repositories and shared context are public; the ServerPortal repository is private. All source repositories must still exclude public addresses, real data, and secrets.
 
-注意：非交互 SSH 不会自动加载本文件。远程操作 agent 应显式执行 `cat /opt/AGENTS.md`；交互登录提示只是辅助发现。
+Note: noninteractive SSH does not automatically load this file. Agents performing remote operations must explicitly run `cat /opt/AGENTS.md`; the interactive login notice only aids discovery.

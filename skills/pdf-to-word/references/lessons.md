@@ -1,40 +1,40 @@
-# 已知问题与方法
+# Known issues and methods
 
-把这些经验作为有适用范围的线索，不作为所有PDF的规则。新增经验记录可观察现象、原因证据、已验证修正和限制；需要确定性操作时补充脚本，避免仅增加说明而让工具继续出错。
+Treat these lessons as clues with defined applicability, not rules for every PDF. Record observable symptoms, evidence for the cause, verified corrections, and limits for new findings. Add scripts when deterministic operations are needed rather than adding explanations while leaving tools broken.
 
-| 现象 | 原因或检查线索 | 已验证方法与边界 |
+| Symptom | Cause or diagnostic clue | Verified method and limits |
 | --- | --- | --- |
-| 一次性直接转换封面分裂、英文粘连、公式丢分母 | 页面定位信息不能可靠变成段落/公式结构 | 用直接转换作试转基线，必要时原生提取并重建。简单文件仍可用通用转换器，始终检查结果。 |
-| 存在文字层但内容不全 | 部分扫描PDF的文字层不完整 | 对照可见原图，按页改走OCR；不要只用字符数量判断。 |
-| 方正E-*字体英文变成生僻汉字 | 观察到的ToUnicode将CID 0x42–0x7B错误映射到U+7280–U+72FF | 按该条件恢复CID−1的ASCII。汇总所有页面，并处理字体名Identity-H别名。该规律不能推广到其他字体或任意汉字。 |
-| 报告字号约为可见字号两倍，页数膨胀 | 字体元数据异常 | 用连续汉字跨度/字符数/字号估计缩放，仅在明显异常时应用；回到原图和实际渲染验证。 |
-| 同一行的英文、中文、上下标被拆成多个块 | PDF按字体或基线切分 | 综合垂直重叠和基线重组物理行；保持横向顺序。多栏页面需另做列分区，不能直接套单栏规则。 |
-| μ、γ、氮/氨、钴/钻、c/C混淆 | OCR对形近字与专业符号不可靠 | 主引擎结合第二引擎与源图核对，尤其数值单位、化学符号和变量大小写。不确定时保留原图。 |
-| 两套OCR都识别人名错误 | 模糊或罕见字形 | 使用完整原图区域，不能依据姓名常识猜测。通用字体映射修复也不能写死某个人名。 |
-| 页底网站、来源或标记消失 | 内容位于正文裁剪边界之外 | 对照页边，必要时添加页面锚定图片，避免插入正文后挤出新页。 |
-| 页面尺寸巨大或裁剪错位 | 扫描PDF的MediaBox与普通页面不同 | 统一宽度为595.276 pt并保持比例；所有OCR/图像/裁剪用同一坐标系。 |
-| 封面或插图变成细线 | Word精确行距小于图片高度 | 普通插图使用自动行距；整页图以页面锚点定位。检查横纵偏移，不只检查图片尺寸。 |
-| 删除了整段文字但原图切掉尾字 | 用文字框中心决定排除，而裁剪区域小于完整文字框 | 扩展裁剪到所有被替换文字框的完整边界，合并重叠区域，再检查原图。 |
-| OCR正文额外换行和多页 | 右缩进按短源行设置、字号不稳定 | 使用稳定基准字号和可用页面宽度，有限缩放；大幅缩小时重新考虑布局。 |
-| 上下标过小 | 原PDF小字号再应用Word上下标会二次缩小 | 应用Word上下标时恢复基准字号，核对正文和表格中的效果。 |
-| 图例编号被误作标题加粗 | 只判断数字开头 | 区分“章节号+标题”与“编号—说明”；标题识别仍为启发式，新格式需复核。 |
-| 中文在无界面LibreOffice中消失 | 当前macOS的Fontconfig环境未正确加载 | 检查中文字体，必要时显式设置Homebrew字体配置。不要当作跨平台固定路径。 |
-| Word打开正常但XSD失败 | 表格缩进、边框、边距等XML子元素顺序不合规范 | 按schema顺序插入，而不是任意追加；实际渲染与结构校验都需通过。 |
-| 增大单元格左边距后，表格在LibreOffice预览中向左移动 | 渲染器的表格定位与单元格边距、表格缩进共同作用 | 调整边距时一起检查外框位置，必要时用相应表格缩进补偿，再核对单元格内容。该现象在简单原生表格试用中验证，不作为所有渲染器的固定补偿值。 |
-| 新建python-docx默认文档的zoom校验失败 | w:zoom缺少w:percent | 显式补充percent，例如100；公式辅助测试也需合规文档设置。 |
-| LibreOffice返回成功但预览仍是旧文件 | 转换未产出新文件、旧预览残留 | 转换前清除明确的派生目标，确认新预览存在，绑定源Word/预览哈希。保留输入。 |
-| 同名输入改变后复用旧OCR | 只按文件名缓存 | OCR开始前写源指纹；源改变时拒绝复用。新增引擎或参数策略也应考虑缓存失效规则。 |
+| Direct conversion in one pass splits the cover, joins English words, or loses formula denominators | Page-position data does not reliably become paragraph or formula structure | Use direct conversion as a trial baseline; use native extraction and reconstruction when needed. General converters still work for simple files; always inspect the result. |
+| A text layer exists but is incomplete | Some scanned PDFs have incomplete text layers | Compare against the visible source images and switch pages to OCR as needed; do not judge by character count alone. |
+| English in Founder (方正) E-* fonts becomes rare Chinese characters | Observed ToUnicode mappings incorrectly map CID 0x42–0x7B to U+7280–U+72FF | Under this condition, recover ASCII as CID−1. Aggregate across all pages and handle Identity-H aliases in font names. Do not generalize this pattern to other fonts or arbitrary Chinese characters. |
+| Reported font size is roughly twice the visible size, inflating page count | Anomalous font metadata | Estimate a scale from consecutive Chinese-character spans, character count, and font size; apply it only to clear anomalies. Verify against source images and actual rendering. |
+| English, Chinese, and subscripts or superscripts on one line are split into multiple blocks | The PDF splits content by font or baseline | Reconstruct physical lines from vertical overlap and baselines while preserving horizontal order. Multicolumn pages need separate column segmentation; do not apply single-column rules directly. |
+| Confusion between μ, γ, 氮/氨, 钴/钻, or c/C | OCR is unreliable for similar glyphs and specialized symbols | Compare the primary engine with a second engine and source images, especially for numeric units, chemical symbols, and variable case. Retain source images when uncertain. |
+| Both OCR engines misread a person's name | Blurred or rare glyphs | Use the complete source-image region; do not guess based on familiar names. General font-mapping repairs must not hard-code a particular person's name either. |
+| Websites, source credits, or markers at the bottom of a page disappear | Content lies outside the body crop boundary | Compare page edges; add page-anchored images when needed to avoid creating extra pages by inserting them into the body. |
+| Page dimensions are huge or crops are displaced | The scanned PDF's MediaBox differs from ordinary pages | Normalize width to 595.276 pt while preserving aspect ratio; use one coordinate system for all OCR, images, and crops. |
+| Covers or illustrations become thin lines | Word's exact line spacing is smaller than the image height | Use automatic line spacing for ordinary illustrations and page anchoring for full-page images. Check horizontal and vertical offsets as well as image dimensions. |
+| An entire text passage is removed, but its image crop cuts off the final characters | Exclusion is based on the text-box center while the crop is smaller than the full text box | Expand crops to include the full boundaries of all replaced text boxes, merge overlapping regions, and inspect the source image again. |
+| OCR body text gains extra line breaks and pages | Right indents follow short source lines and font size is unstable | Use a stable baseline font size and the available page width with limited scaling; reconsider the layout when substantial shrinking is needed. |
+| Subscripts or superscripts are too small | Applying Word subscript or superscript shrinks an already small source-PDF font again | Restore the baseline font size when applying Word subscript or superscript; verify the result in body text and tables. |
+| Legend numbers are mistaken for bold headings | Detection checks only for a leading number | Distinguish a section number plus title from a number followed by an explanation. Heading detection remains heuristic; review new formats. |
+| Chinese text disappears in headless LibreOffice | Fontconfig is not loaded correctly in the current macOS environment | Check Chinese fonts and explicitly set the Homebrew font configuration if needed. Do not treat its path as fixed across platforms. |
+| Word opens normally, but XSD validation fails | XML children such as table indentation, borders, or margins are out of specification order | Insert in schema order instead of appending arbitrarily; both actual rendering and structural validation must pass. |
+| Increasing left cell margins shifts the table left in the LibreOffice preview | Renderer table positioning interacts with cell margins and table indentation | Check the outer table position whenever margins change. Compensate with corresponding table indentation if needed, then check cell content. This was verified in a trial with a simple native table; it is not a fixed compensation value for every renderer. |
+| Zoom validation fails for a new default python-docx document | w:zoom lacks w:percent | Set percent explicitly, for example to 100; formula-helper tests also require compliant document settings. |
+| LibreOffice reports success, but the preview is still the old file | Conversion produced no new file and an old preview remains | Remove the identified derived target before conversion, confirm a new preview exists, and bind source-Word and preview hashes. Preserve inputs. |
+| Old OCR is reused after an input changes under the same name | Caching uses only the filename | Write a source fingerprint before OCR starts and reject reuse when the source changes. Consider cache-invalidation rules when adding engines or parameter policies too. |
 
-## 当前能力边界
+## Current capability limits
 
-- 默认生成器使用统一字体、正文/表格字号上限，并启发式设置表头和首列对齐；可以提高技术文档分页稳定性，但不保证保留源设计样式。需要更高版式保真时提取源样式或增加经验证的配置，不对所有新文档无条件套用一次性的修正。
-- 主要验证范围为中文单栏、物理页序稳定的技术文档；多栏、竖排、手写、复杂跨页表格和嵌套结构仍需要新增规则。
-- 启发式扫描表格检测可能漏检；无文字层的独立矢量图不一定出现在图片列表。必须视觉确认后保留或重建。
-- 字符覆盖按计数比较，无法证明顺序与语义；数值序列化核对也不能证明OCR数字正确。
-- 物理行到段落的策略利于保留分页，但不适合大量文字重排。需要语义段落合并时应另建步骤并复核整份渲染。
-- 批量工具不自动把公式变为OMML；可编辑公式由人工确认结构后使用word_math.py构建。
-- 当前文字与Word字体配置偏向macOS。迁移系统时先适配字体和工具路径，记录新验证结果。
+- The default generator uses uniform fonts, body and table font-size caps, and heuristic header and first-column alignment. This can improve pagination stability for technical documents but does not guarantee preservation of the source design. For higher layout fidelity, extract source styles or add verified configuration; do not unconditionally apply a one-off fix to all new documents.
+- Validation has mainly covered Chinese single-column technical documents with stable physical page order. Multicolumn, vertical, handwritten, complex cross-page tables, and nested structures still require additional rules.
+- Heuristic scanned-table detection may miss tables. Standalone vector figures without a text layer may not appear in the image list. Visually confirm them before preserving or rebuilding them.
+- Character coverage compares counts and cannot establish order or meaning; numeric serialization checks cannot establish that OCR numbers are correct either.
+- Mapping physical lines to paragraphs helps preserve pagination but is unsuitable for extensive text reflow. Merge semantic paragraphs in a separate step when needed and review the entire rendered document.
+- The batch tools do not automatically convert formulas to OMML. Confirm formula structure manually before building editable formulas with word_math.py.
+- Current text and Word font settings favor macOS. Adapt fonts and tool paths before moving to another system, and record the new validation results.
 
-## 维护这些经验
+## Maintaining these lessons
 
-遇到未覆盖问题时先验证修正，再判断属于通用机制还是任务特例。修改受影响旧条目，并更新对应脚本、最小合成验证及运行说明。删除矛盾或失效规则，不保留真实文档内容作为例子。按personal-skill-management完成仓库同步；无需等用户再次要求积累经验。
+When an uncovered problem appears, first verify the correction, then decide whether it reflects a general mechanism or a task-specific case. Revise affected existing entries and update the corresponding scripts, minimal synthetic validation, and execution instructions. Remove contradictory or obsolete rules, and do not retain real document content as examples. Complete repository synchronization through personal-skill-management; do not wait for another request to record lessons.

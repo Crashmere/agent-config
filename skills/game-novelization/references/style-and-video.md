@@ -1,83 +1,83 @@
-# 原作风格与视频细节
+# Original style and video details
 
-## 从原作建立风格档案
+## Build a style profile from the original
 
-以原作实际呈现为依据，概括它试图带给玩家的感受。作者访谈或官方说明可作辅助，不能把自己的推测宣称为制作方意图。不要只填“奇幻”“恐怖”“科幻”等类型标签，也不从攻略作者或主播的口吻推导游戏文风。
+Summarize the experience the original seeks to give players from its actual presentation. Creator interviews and official statements may support this, but do not present personal guesses as production intent. Do not stop at genre labels such as fantasy, horror, or science fiction, or infer the game's literary style from a walkthrough writer's or streamer's tone.
 
-在 `项目.md` 的风格档案中记录少量可执行结论，并链接支持它们的场景：
+Record a few actionable conclusions in the style profile in `project.md`, linking the scenes that support them:
 
-| 观察维度 | 转成小说时决定什么 |
+| Observation dimension | What it determines in the novel |
 |---|---|
-| 叙述与情绪 | 冷峻/温暖、讽刺/诚恳、绝望/希望的实际组合；允许原作内的变化 |
-| 叙述声音 | 当前视角与叙述距离、用词的正式程度、句子节奏、修辞与停顿；以同一游戏和本书已认可段落校准 |
-| 人物对白 | 正式程度、简繁、幽默、潜台词、称谓及角色间差异 |
-| 节奏与留白 | 哪些地方急促、迟缓或沉默；何时解释，何时让读者自行理解 |
-| 画面与空间 | 反复出现的光线、材质、尺度、构图关系；选择对感受或行动有用的特征 |
-| 声音与音乐 | 环境声、静默、声音距离与原作配乐营造的情绪；区分可被角色听到的声音 |
-| 主题与价值冲突 | 原作通过什么选择、代价、反差表达主题；避免用新旁白替它下结论 |
+| Narration and emotion | The actual blend of austerity/warmth, irony/sincerity, despair/hope; allow changes present in the original |
+| Narrative voice | Current viewpoint and narrative distance, diction formality, sentence rhythm, rhetoric, and pauses; calibrate using the same game and approved passages in this book |
+| Character dialogue | Formality, brevity/complexity, humor, subtext, forms of address, and differences between characters |
+| Pacing and ambiguity | Where the original is urgent, slow, or silent; when to explain and when to let readers understand on their own |
+| Visuals and space | Recurring light, materials, scale, and compositional relationships; choose features useful to experience or action |
+| Sound and music | Environmental sound, silence, sound distance, and emotions created by the original score; distinguish sounds characters can hear |
+| Themes and value conflicts | Choices, costs, and contrasts through which the original expresses themes; avoid concluding for it through new narration |
 
-为当前剧情段写 3—6 条具体文风规则即可，例如“保留角色说话时的克制，用停顿和已发生的后果承接悲伤，不替角色作激昂宣言”。给结论标原作证据，资料不足时注明暂定；不要为凑条数扩大设定。
+For the current plot segment, 3–6 concrete style rules suffice, for example: retain the character's restraint in speech, carry grief through pauses and consequences that have already occurred, and do not make impassioned declarations on the character's behalf. Tag conclusions with original evidence and mark them provisional when material is insufficient; do not expand the setting to fill a quota.
 
-不同章节可以有不同情绪。轻松日常不能因为全书分类为恐怖就处处阴森，原作突然的幽默也不因“风格统一”删去。续写检查既遵守全书特点，也保留当前场景原有的变化。
+Different chapters may carry different emotions. Light everyday scenes need not be ominous merely because the book is classified as horror, and sudden original humor should not disappear for stylistic uniformity. Continuation checks should respect both whole-book traits and variations native to the current scene.
 
-把当前场景需要保留的声音和功能性写法记在同一档案中，例如庄严的称谓、犹疑的省略号、仪式中的复沓或有依据的叙述者评论；不另建禁词白名单。写作、润色和审校复用同一约定，冲突按自然叙事参考逐维度处理。文风一致不等于每章相同，去 AI 味也不能覆盖原作的有意表达。
+Record the current scene's voice and functional choices in the same profile, such as solemn forms of address, hesitant ellipses, ritual repetition, or supported narrator commentary; do not create a separate whitelist of banned words. Writing, polishing, and review reuse the same agreements, resolving conflicts dimension by dimension through the natural-narration reference. Style consistency does not mean identical chapters, and reducing AI-like prose must not override deliberate original expression.
 
-## 使用用户下载的流程攻略
+## Use user-downloaded walkthroughs
 
-先盘点用户给出的文件名、格式和覆盖范围，识别原版/重制版、DLC、路线和更新日期。读取实际内容，优先复用它解决事件顺序、触发条件、地点、关键物品和结局前置；缺口再补网络检索，不把已有材料当不存在重新全网搜一遍。
+First inventory the provided filenames, formats, and coverage, identifying original/remake editions, DLC, routes, and update dates. Read the actual contents and prioritize reusing them for event order, triggers, locations, key items, and ending prerequisites. Search online to fill gaps rather than ignoring existing materials and searching the entire web again.
 
-按格式使用可用工具：纯文本/Markdown/HTML 直接读；PDF、Word 等使用对应文件技能。压缩包先列目录，再只处理需要的文件；不执行来源不明的附带程序。记录源文件路径与页码/段落，保留作者与原链接（若提供）。
+Use available tools suited to the format: read plain text/Markdown/HTML directly; use the corresponding file skills for PDF, Word, and similar formats. List archive contents before processing only needed files; do not execute bundled programs of unknown origin. Record source paths and pages/paragraphs, retaining authors and original links when provided.
 
-攻略的建议顺序、最优打法、跳过路线或作者解释不一定是唯一剧情。将“为了拿成就建议这么做”与“主线必须这么做”分开；不能因为攻略省略了对话，就认定原作没有对话或过场。
+A guide's recommended order, optimal tactics, skipped route, or author interpretation may not be the only story. Distinguish achievement recommendations from main-story requirements. A guide omitting dialogue does not prove the original lacks dialogue or cutscenes.
 
-## 使用攻略视频或游戏录像文件
+## Use walkthrough videos or game recording files
 
-提供视频时，以尽量完整、准确地获取视听细节为首要目标。用户已明确允许为此投入 token 和时间，不以节省消耗、加快交付或减少工具调用为由降低查看覆盖、密度与核对深度，也不反复询问是否值得继续细看。除用户明确限定时间段或剧透范围，默认完整查看所有提供的视频。
+When videos are provided, prioritize obtaining audiovisual details as completely and accurately as possible. The user has explicitly allowed token and time expenditure for this. Do not reduce viewing coverage, density, or verification depth to save resources, accelerate delivery, or reduce tool calls, and do not repeatedly ask whether further detailed viewing is worthwhile. Unless the user explicitly limits the time range or spoiler scope, review every provided video in full by default.
 
-先充分取材，再决定小说详略。攻略、自动字幕、低密度缩略图和关键过场合集只辅助定位，不能替代完整细看；不能因为某段可能在小说中略写，就在审阅时跳过其中的环境、人物反应或对话。
+Gather sufficient material before deciding narrative emphasis. Walkthroughs, automatic subtitles, sparse thumbnails, and key-cutscene compilations help navigation but cannot replace full detailed viewing. Do not skip environment, character responses, or dialogue during review because a segment may later be summarized in the novel.
 
-1. **盘点**：读取时长、轨道、分辨率和分段信息；核对游戏版本、路线、是否剪辑、是否 MOD、有无解说/加速/跳过过场。多文件分别编号，时间戳始终带文件编号，避免把各集的 `00:10:00` 混为一处。
-2. **建时间线与覆盖表**：利用章节标记、攻略、字幕和导航预览给全部视频划分连续片段。逐段记下待看、已细看、需回看及音画/字幕读取情况；片段边界留适当重叠，避免遗漏跨段台词、动作或镜头转换。导航预览不记为已细看。
-3. **完整细看**：顺序查看各片段的画面、可听声音和字幕，捕捉人物动作、朝向、视线、表情、停顿、空间关系、场景陈设、文字、物件、声音和环境变化。对跑图、等待、非核心 NPC 对话与失败尝试也先检查有无独特内容，再判断其是否属于主线或值得入文。
-4. **反复核对细节**：任务转折、关键对话、细微表情、短暂文字、快速动作、环境线索与含混处反复查看前后文。必要时减速、提高抽帧密度、按原帧率逐帧看、放大局部、分离可用音轨和回听；不能从一张图推断连续动作，不能用自动字幕替代关键台词核听。
-5. **形成场景证据卡**：尽量记录可辨认的起止时间、人物、空间、动作顺序、表情/停顿、物件、光线/环境变化、游戏内声音、对话、结果和原作氛围。细节暂不用于小说也可留在本次临时卡片，方便后续选择；观察、推断与外部评论分开。
-6. **回填主线与章卡**：关联事件、场景证据和章节，在充分观察后决定采用哪些细节、详写哪些场景、压缩哪些重复过程。获取细节充分，不等于把每个观察都写进正文。
-7. **复查覆盖与盲区**：逐段检查漏看、跳跃、遮挡、短暂内容与音轨缺失，对能够补看的盲区继续补看，直到全部范围完成相应审阅且可解决的疑点已核对。确因工具或素材无法读取的部分保留真实限制，不能标记完整看过，更不能靠编造填满记录。
+1. **Inventory**: inspect duration, tracks, resolution, and segmentation. Verify edition, route, editing, MOD use, commentary, speed changes, and skipped cutscenes. Number multiple files separately and always pair timestamps with file IDs to avoid confusing each episode's `00:10:00`.
+2. **Build a timeline and coverage table**: use chapter markers, guides, subtitles, and navigation previews to divide every video into continuous segments. Record pending viewing, viewed in detail, or requiring another look, plus audio/visual/subtitle access for each. Leave suitable overlap at boundaries to avoid missing dialogue, actions, or shot changes spanning segments. Navigation previews do not count as detailed viewing.
+3. **Review completely and in detail**: inspect each segment's visuals, available sound, and subtitles in order, capturing character actions, orientation, gaze, expressions, pauses, spatial relationships, furnishings, text, objects, sounds, and environmental changes. Check travel, waiting, minor NPC dialogue, and failed attempts for unique content before deciding whether they belong to the main story or deserve inclusion.
+4. **Recheck details repeatedly**: revisit context around quest turns, key dialogue, subtle expressions, brief text, fast actions, environmental clues, and ambiguities. Where needed, slow playback, increase frame-extraction density, examine frame by frame at the original frame rate, enlarge regions, separate available audio tracks, and listen again. Do not infer continuous action from one image or replace listening to key dialogue with automatic subtitles.
+5. **Create scene evidence cards**: record identifiable start/end times, characters, space, action sequence, expressions/pauses, objects, light/environmental changes, in-game sounds, dialogue, outcomes, and original atmosphere as fully as possible. Details not yet selected for the novel may remain in this task's temporary cards for later choice. Keep observation, inference, and external commentary separate.
+6. **Update main-story and chapter cards**: link events, scene evidence, and chapters. After sufficient observation, decide which details to use, scenes to expand, and repetitive processes to compress. Thorough detail collection does not mean every observation belongs in the prose.
+7. **Recheck coverage and blind spots**: inspect each segment for missed viewing, jumps, obstructions, brief content, and absent audio tracks. Continue filling accessible blind spots until the full scope has undergone the corresponding review and resolvable doubts have been checked. Preserve genuine limitations where tools or source material prevent access; do not mark those portions fully watched or invent content to complete records.
 
-优先使用当前环境可用的视频理解、图像查看、音频转录与媒体工具。需要本地抽帧时先检查 `ffprobe`/`ffmpeg` 是否存在；安装或依赖配置分别遵循 `software-installation`、`python-environment`，不擅自全局安装包，也不上传原视频到外部转录服务。
+Prefer video-understanding, image-viewing, audio-transcription, and media tools available in the current environment. Before local frame extraction, check for `ffprobe`/`ffmpeg`. Follow `software-installation` for installation and `python-environment` for dependency setup. Do not install packages globally without authorization or upload original videos to external transcription services on your own.
 
-基础命令只作按需示例，实际路径使用安全引用，输出放本次临时目录并避免覆盖；`HH:MM:SS` 必须换成已定位的时间：
+These basic commands are examples for use as needed. Quote actual paths safely, place outputs in this task's temporary directory, and avoid overwrites. Replace `HH:MM:SS` with an identified timestamp:
 
 ```bash
 ffprobe -v error -show_format -show_streams -of json 'input.mp4'
 ffmpeg -n -ss HH:MM:SS -i 'input.mp4' -frames:v 1 'scene-frame.png'
 ```
 
-按细节需要决定抽帧、分段、转码和音频处理方式，不为省 token 或耗时限制整个任务的审阅总量、总时长或回看次数；每次请求与当前上下文仍须遵守[媒体容量与断点恢复](media-context.md)的预算。无法直接连续查看时，使用分段高密度抽帧及音频/字幕对齐重建过程；短暂表情、文字与快速动作继续提高密度，必要时保留并查看相关片段的全部源帧。不要把稀疏抽样覆盖到首尾称为连续看完。
+Choose frame extraction, segmentation, transcoding, and audio processing according to detail needs. Do not cap total review volume, duration, or revisit count to save tokens or time; each request and current context must still follow the budgets in [Media capacity and checkpoint recovery](media-context.md). If continuous viewing is unavailable, reconstruct the sequence using dense frame extraction by segment and aligned audio/subtitles. Increase density further for brief expressions, text, and rapid action, retaining and viewing every source frame in relevant segments when needed. Sparse sampling from start to finish is not continuous full viewing.
 
-批量处理和临时媒体管理只用于保证可执行性，不用于减少必要审阅。保留足以辨认文字、表情与物件的分辨率；联系表只作导航，小图看不清时打开相关原帧或局部裁剪，不对所有拼图默认使用 `detail: original`。在独立临时工作区逐批保存覆盖和细节索引，并在载荷仍小时完成上下文交接；分批调用、写入笔记或删除本地图片都不会自动移除已进入对话的图片。分批继续直到完成，不因长度自行降级成摘要；确实缺少安全续接能力时按恢复流程保存准确停点并报告具体限制。
+Batch processing and temporary media management support execution, not reductions in necessary review. Retain enough resolution to identify text, expressions, and objects. Contact sheets serve navigation; open relevant original frames or crops when thumbnails are unclear, and do not default every contact sheet to `detail: original`. Save coverage and detail indexes batch by batch in a separate temporary workspace, and hand off context while payloads are still small. Separate calls, saved notes, or deletion of local images do not automatically remove images already in the conversation. Continue in batches to completion without downgrading the task to a summary because of length. If safe continuation is genuinely unavailable, follow recovery procedures to save the exact stopping point and report the specific limitation.
 
-完成取材的判断依据是实际覆盖、细节可辨程度与疑点核对情况；已清楚可辨、没有未决问题的内容无需机械无休止重复。没有能力读取视频时明确说明并利用可读资料推进，不能声称已细看视频。
+Judge research completion by actual coverage, discernible detail, and resolved doubts. Clear material without unresolved issues does not need mechanical endless repetition. If video access is unavailable, say so and proceed with readable material without claiming detailed video review.
 
-## 区分视频里的四层内容
+## Distinguish four layers in videos
 
-- **游戏内事件与声音**：可作为人物动作、环境、台词和空间证据。
-- **非角色可感知的配乐/镜头演出**：用来决定小说节奏、叙述重点和氛围，不写成角色听到背景音乐或看见镜头切换。
-- **玩家操作、UI、暂停、读档与失败尝试**：用于识别过程，是否成为故事事件按原作机制判断。
-- **解说、弹幕、剪辑字幕与主播反应**：只当外部评论或定位线索。未经核实不能写成原作对白、角色动机、事实或本书叙述声音。
+- **In-game events and sounds**: evidence for character actions, environment, dialogue, and space.
+- **Score and camera presentation characters cannot perceive**: inform novel rhythm, narrative emphasis, and atmosphere; do not write characters hearing background music or seeing camera cuts.
+- **Player operations, UI, pauses, reloads, and failed attempts**: identify the process; whether they become story events depends on the original mechanisms.
+- **Commentary, scrolling viewer comments, editor-added subtitles, and streamer reactions**: external commentary or navigation clues only. Without verification, do not turn them into original dialogue, character motives, facts, or this book's narrative voice.
 
-自动字幕和 OCR 可能错人名、漏否定或串说话者。关键命令、承诺、身份与真相必须回听/回看或找可靠文本核对；听不清就保留缺口，不能顺着自动转录编下去。
+Automatic subtitles and OCR may misspell names, omit negation, or mix speakers. Rehear/review key commands, promises, identities, and truths, or check reliable text. If audio is unclear, retain the gap rather than inventing a continuation from automatic transcription.
 
-## 按剧情作用安排详略
+## Allocate detail by narrative role
 
-| 场景作用 | 推荐写法 |
+| Scene role | Recommended treatment |
 |---|---|
-| 改变主线、关系或认知的关键决定；核心演出与终局 | 细写完整动作、对话、停顿、空间和后果，落实视频证据中的有效细节 |
-| 对原作风格重要的安静段、探索、环境叙事 | 保留足以建立气氛、线索或情绪过渡的篇幅，不因没有战斗就全部略掉 |
-| 首次展示的重要规则、能力、地点与敌人 | 写出其可感知特征及对行动的影响，后续重复不重新介绍 |
-| 重复跑图、刷怪、同质收集、无新信息的操作 | 简短概述或省略，保留必要耗时、消耗、到达与结果 |
-| 暂停、菜单、解说闲聊、现实打断、非剧情读档 | 从小说排除，原作明确具有叙事意义的机制例外 |
+| Key decisions changing the main story, relationships, or understanding; central dramatic sequences and finale | Fully develop action, dialogue, pauses, space, and consequences, incorporating useful video evidence |
+| Quiet passages, exploration, and environmental storytelling important to the original style | Keep enough space to establish atmosphere, clues, or emotional transitions; do not omit everything without combat |
+| First presentation of important rules, abilities, places, and enemies | Show perceptible features and their effect on action; do not reintroduce them in later repetition |
+| Repeated travel, grinding, similar collecting, and operations without new information | Briefly summarize or omit while retaining necessary time, resource use, arrival, and outcomes |
+| Pauses, menus, commentary chatter, real-world interruptions, and non-story reloads | Exclude from the novel except for mechanisms with explicit narrative significance in the original |
 
-篇幅依据**因果重要性、人物变化、情绪作用、原作演出重点和首次信息量**分配。十秒的关键抉择可能需要比十分钟赶路更多文字；一段漫长静默也可能承担主题，不能单凭“没有操作”压掉。
+Allocate length by **causal importance, character change, emotional function, original dramatic emphasis, and the amount of first-time information**. A ten-second key choice may need more prose than ten minutes of travel. A long silence may carry a theme and must not be compressed solely because there is no gameplay operation.
 
-细写不是堆形容词、镜头口令或身体部位。选择能解释空间、改变行动、传递情绪、体现关系或保留原作辨识度的细节；删去同一信息的重复注解。视频中的细节用于加深已知场景，不用于自行增加因果。
+Detailed writing is not a pile of adjectives, camera directions, or body parts. Select details that explain space, change action, convey emotion, reveal relationships, or preserve the original's identity, and remove repeated annotations of the same information. Video detail deepens established scenes rather than authorizing new causality.

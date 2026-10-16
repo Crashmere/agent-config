@@ -1,102 +1,102 @@
-# 忠实改编与叙事
+# Faithful adaptation and narrative craft
 
-## 保留什么，允许改变什么
+## What to preserve and what may change
 
-| 层面 | 处理规则 |
+| Layer | Handling rule |
 |---|---|
-| 世界与人物 | 保留身份、价值取向、已有关系、能力边界及原作规定的变化 |
-| 主线因果 | 保留触发条件、关键决定、行动者、对象、结果、付出的代价和后续影响 |
-| 信息结构 | 保留误解、隐瞒、发现与揭露的时机；不以全知旁白提前解释谜底 |
-| 媒介表达 | 将操作与画面转为场景、叙述、对话和必要心理反应；措辞可重写 |
-| 重复游玩 | 可概述或省略不改变事实的刷怪、往返和收集；交代必要时间、道具、资源与路程 |
-| 决定性改写 | 新关系、动机、能力、重大人物生死、真相或结局仅在用户明确要求时改变，并记录偏离 |
+| World and characters | Preserve identities, values, existing relationships, ability limits, and changes established by the original |
+| Main-story causality | Preserve triggers, key decisions, actors, targets, outcomes, costs, and subsequent effects |
+| Information structure | Preserve the timing of misunderstandings, concealment, discoveries, and revelations; do not explain the mystery early through omniscient narration |
+| Medium-specific expression | Turn gameplay operations and visuals into scenes, narration, dialogue, and necessary psychological responses; wording may be rewritten |
+| Repetitive gameplay | Summarize or omit grinding, backtracking, and collecting that do not change facts; account for necessary time, items, resources, and travel |
+| Decisive rewrites | Change relationships, motives, abilities, major characters' life or death, truths, or endings only at the user's explicit request, and record the deviation |
 
-优先再现原作的情绪体验和人物处境，但在忠实模式下，情绪效果不能成为改变事实的理由。不要为塑造“更深的反派”追加悲惨身世，不为主角成长强造缺陷，不因配角不服务主角就删去其主线作用。
+Prioritize recreating the original emotional experience and character circumstances, but in faithful mode, emotional effect cannot justify changing facts. Do not add a tragic backstory to deepen a villain, manufacture a flaw for protagonist growth, or remove a supporting character's main-story role because it does not serve the protagonist.
 
-## 分支、结局与不同周目
+## Branches, endings, and different playthroughs
 
-先明确属于哪一类：
+First determine which category applies:
 
-- **有可核实的单一主线**：直接沿主线组织，不要求用户重新选择。
-- **有官方确认的承接路线**：说明证据与适用作品；“续作承接某结局”不等于其他作品只有该结局。用户已选路线优先。
-- **互斥且没有权威默认路线**：列出会影响本书的差异，询问需要采用哪条；不要把好结局、最受欢迎结局或攻略推荐叫作正史。可以先做共同前段。
-- **用户要求全部路线**：分别成卷/分支版本或用用户明确认可的框架，不能直接接成一次旅程；框架会改变阅读方式时先把选择说清楚。
-- **多周目或元叙事**：只有游戏内证据说明周目、记忆或重置属于故事，才作为连续时间线写入。普通读档失败不能写成主角真实死亡。
+- **One verifiable main story**: organize directly along that story without asking the user to choose again.
+- **An officially confirmed continuation route**: state the evidence and applicable work. A sequel continuing from one ending does not mean other works have only that ending. Prioritize the route the user has already chosen.
+- **Mutually exclusive routes with no authoritative default**: list the differences that affect this book and ask which route to use. Do not call the good ending, most popular ending, or guide recommendation canon. Work on the shared opening may begin first.
+- **The user requests every route**: use separate volumes/branch versions or a framework explicitly accepted by the user; do not simply join them into one journey. Explain the choice first when the framework changes how the work is read.
+- **Multiple playthroughs or metanarrative**: write playthroughs, memories, or resets into a continuous timeline only when in-game evidence establishes them as part of the story. Ordinary failed attempts followed by loading a save must not become the protagonist's actual deaths.
 
-主角可自定义时，保留原作给定部分。用不会改变事件的中性称呼、行为和限知描写处理未定细节；姓名、性别、职业、阵营或恋爱路线若会改变对话和事件，再询问。沉默主角不意味着可以自由添加强烈价值宣言、前世经历或整段原创演讲。
+When the protagonist is customizable, preserve the parts established by the original. Handle undecided details through neutral names, behavior, and limited narration that do not change events. Ask about name, gender, class, faction, or romance route only when they change dialogue or events. A silent protagonist does not grant freedom to add forceful value statements, past-life experiences, or entire original speeches.
 
-## 从事件到章节
+## From events to chapters
 
-为主线事件建立稳定编号 `E001` 等，并标记“必经主线 / 条件主线 / 必要支线 / 可省略循环”。每项至少保存：前置、发生内容、行动者、结果、状态改变、信息揭示、来源与路线条件。
+Give main-story events stable IDs such as `E001`, and classify them as mandatory main story / conditional main story / necessary side story / omissible loop. For each, retain at least prerequisites, what happens, actors, outcomes, state changes, information revealed, sources, and route conditions.
 
-在章节规划中将事件归为“完整场景、概述压缩、留待其原作揭示时机、因路线不适用而排除”。排除注明条件；不以“节奏需要”删除必经事件。两件事合并成一章不代表可以换掉谁做了什么。
+In chapter planning, classify events as full scenes, compressed summaries, deferred until their original revelation time, or excluded because the route does not apply. State the condition for exclusions; do not remove mandatory events for pacing. Combining two events into one chapter does not permit changing who did what.
 
-拆章依据冲突阶段、地点转换、重大决定或情绪落点，不按一个任务一章，也不凭目标字数拆掉完整因果链。允许跨章展开一个大事件；分别写明已完成的阶段和剩余内容，全部完成前不标记整项已覆盖。
+Split chapters by conflict phase, location change, major decision, or emotional resting point, rather than one quest per chapter or breaking a complete causal chain to meet a target length. A large event may span chapters; separately record completed stages and remaining content, and do not mark the entire event covered before completion.
 
-在章卡中记下：覆盖事件、视角、场景起点、当下目标、现有阻力、原作选择与后果、角色已知/未知、揭露上限、结束状态及停笔点。保留顺序只要求维护因果和揭露，不把无关探索顺序当作必需的游玩录像。
+Record in each chapter card: covered events, viewpoint, scene start, current goal, existing resistance, original choices and consequences, character knowledge and unknowns, revelation ceiling, ending state, and stopping point. Preserving order requires maintaining causality and revelation, not reproducing unrelated exploration order as if it were a mandatory playthrough recording.
 
-## 场景展开与地点转移
+## Scene development and location transitions
 
-场景单薄时，先判断缺少的是空间、经过、情绪承接，还是已有内容的表达层次，再选择补写位置。以下是判断维度，按场景选用，不按固定顺序逐项填段：
+When a scene feels thin, first determine whether it lacks spatial grounding, the course of events, emotional continuity, or expressive depth in existing material; then choose where to expand. Use these dimensions according to the scene rather than filling paragraphs in a fixed sequence:
 
-- **让空间可以被想象。** 选人物位置、可辨认的参照物、远近或尺度关系，随接近、遮挡、明暗变化逐渐展开。物件清单不能代替它们与人物的关系；门、障碍和出路的相对位置要能支持接下来的行动。
-- **让环境参与经历。** 从原作细节中选择影响注意力、行动或感受的部分，例如光线使人暂时看不清、狭窄处改变通过方式、熟悉的声音帮助辨认来路。感官描写须在当前身体、装备和位置的感知范围内，不强凑五感，也不为增加细节另造危险或失败。
-- **交代必要的转移。** 让读者知道人物为何离开、怎样到达，以及到达时处于什么状态。前文已经明确的动机可省，普通往返可概述；进出载具、跨过障碍和时间或状态切换不能靠漏写步骤造成瞬移。有意的跳切可以保留，只要时空关系清楚。
-- **给重要发现留下反应的时间。** 到达、发现、失去或决定之后，可用停留、直接心理、对话或已有行动承接。需要承接时，不要用下一项任务直接盖过反应；紧迫场景可让反应与后续行动同时发生。同一情绪不必分别用动作、标签和主题总结解释三遍。安静观察本身可以承担场景，不必额外制造冲突。
-- **区分初见与重访。** 初见建立地点的辨识度；重访写已知路线、环境变化或人物认识的变化，不重新完整介绍。可让前文已有的物件、景色或声音在后文获得新的意义，但不能为了回收伏笔，倒填人物当时尚未获得的知识。
+- **Make the space imaginable.** Choose character positions, recognizable landmarks, and distance or scale relationships, revealing them gradually through approach, obstruction, and changes in light. An inventory of objects cannot replace their relationship to the characters; the relative positions of doors, obstacles, and exits must support the ensuing action.
+- **Let the environment participate in the experience.** Select original details that affect attention, action, or feeling: light that briefly obscures vision, a narrow passage that changes how someone moves, or a familiar sound that helps identify the way back. Keep sensory description within what the current body, equipment, and position can perceive. Do not force all five senses or invent danger or failure to add detail.
+- **Explain necessary transitions.** Let readers know why characters leave, how they arrive, and their state on arrival. Omit motives already clear from earlier text and summarize ordinary backtracking, but do not create teleportation by skipping entry into or exit from vehicles, crossing obstacles, or changes in time or state. Deliberate jump cuts may remain if the spatial and temporal relationships are clear.
+- **Leave time to respond to important discoveries.** After arrival, discovery, loss, or a decision, use a pause, direct thought, dialogue, or existing action to carry the response. When a response is needed, do not bury it under the next quest; in urgent scenes, it may accompany subsequent action. The same emotion need not be explained three times through action, a label, and a thematic summary. Quiet observation can sustain a scene without added conflict.
+- **Distinguish first visits from returns.** Establish a place's identity on first arrival; on return, show the known route, environmental changes, or changes in character understanding instead of reintroducing everything. An existing object, view, or sound may gain new meaning later, but do not retroactively give a character knowledge they had not acquired merely to pay off foreshadowing.
 
-## 让没玩过游戏的读者跟得上
+## Help readers who have never played the game follow the story
 
-作者读过攻略、看过视频，容易把玩家知识当成读者常识。通读时换成只读过前文的人，留意哪里会问“这是什么”“他为什么去那里”“这和刚才那件事有什么关系”。常见断点：
+After reading walkthroughs and watching videos, writers can mistake player knowledge for reader knowledge. Reread as someone who knows only the preceding prose, noticing where they would ask what something is, why a character goes somewhere, or how this relates to the previous event. Common gaps include:
 
-- **名称晚于事物。** 地点、物件、族群第一次出场时就让读者知道它叫什么、大致是什么；不要先用几页“那个东西”，再在后文突然直呼专名，也不要首次出现就扔出一串没有解释的专名。
-- **动机藏在玩家脑子里。** 玩家去某处常因为任务列表或攻略顺序；小说要给出人物自己的理由：一条线索、一段未完的记录、一个还没验证的猜想或单纯的好奇。理由前文已清楚时不必重复。
-- **呼应缺少铺垫。** 后文回想“那封没寄出的信”“上次听见的钟声”时，核对前文是否真的写过它，而且写到足以被记住。缺了就在原发生处补上必要的一笔，不在回想处临时解释成新信息。
-- **回顾叙述泄露后来的知识。** 过去时、尤其第一人称回顾，容易把人物后来才得知的名称、去向、用途或答案写进当时的叙述。按人物当时所知写所见；推断写成推断，并交代根据。
-- **跨章称呼漂移。** 同一物件、装备或地点在不同章换了叫法，读者会以为是两样东西；有意区分的相似物件也要始终分得开。改动称呼后在全书检索并统一，同时核对量词与指代。
-- **游戏外语汇进入叙述。** 作品标题、成就名、物品栏用语、攻略章节名、UI 提示不应成为人物口中的世界内名称，除非原作确实如此称呼。
-- **非常规交流的说话者不清。** 靠书写、手势、符号、翻译设备或幻象交流时，每轮都让读者知道是谁表达了什么，以及主角是怎样理解的。
+- **Names arrive after the things they name.** On a place's, object's, or people's first appearance, tell readers its name and roughly what it is. Do not spend pages referring to an unnamed thing and suddenly use its proper name later, or introduce a string of unexplained proper names at once.
+- **Motivation exists only in the player's mind.** Players often go somewhere because of a quest list or walkthrough order. The novel needs a character's own reason: a clue, an unfinished record, an untested hypothesis, or simple curiosity. Do not repeat a reason already clear from the preceding text.
+- **Callbacks lack setup.** When later prose recalls “那封没寄出的信” or “上次听见的钟声”, check that the earlier text actually included it and made it memorable enough. If not, add the necessary touch at the original point of occurrence rather than explaining it as new information during the recollection.
+- **Retrospective narration leaks later knowledge.** Past-tense narration, especially first-person retrospection, can introduce names, destinations, uses, or answers the character learned only later. Describe what was seen using what the character knew then; present inferences as inferences and explain their basis.
+- **Names drift across chapters.** Renaming the same object, equipment, or place between chapters can make readers think there are two. Similar objects intentionally distinguished must remain distinguishable. After changing a name, search the whole book and make usage consistent, also checking classifiers and references.
+- **Vocabulary from outside the game world enters narration.** Work titles, achievement names, inventory terminology, walkthrough chapter titles, and UI prompts must not become in-world names used by characters unless the original actually uses them that way.
+- **Speakers are unclear in unconventional communication.** With writing, gestures, symbols, translation devices, or visions, make clear each turn who expressed what and how the protagonist understood it.
 
-修补以最小必要信息为准：交代类别、当前可见用途和人物此刻的判断即可，不提前解释原作尚未揭示的真相，也不为照顾读者把留白说尽。
+Repair with the minimum necessary information: category, currently visible use, and the character's current assessment. Do not explain truths the original has not yet revealed or eliminate all ambiguity for the reader's convenience.
 
-## 攻略感从哪里来
+## Why narration feels like a walkthrough
 
-“像攻略”很少只因一个词，多半是几种写法叠加：
+A walkthrough-like effect rarely comes from a single word; it usually emerges from several habits together:
 
-- 场景只剩“目标—操作—结果—下一目标”的循环，人物到达后没有观察、反应或理解的变化，发现之后立刻转向下一处。
-- 机关、密码、路线写到可以照着复现的精度，而读者真正需要的是人物怎样想到、试错和意识到。
-- 动作衔接成串地使用“先……再……”“等……才……”“直到……才……”，把每个动作都拆成步骤与等待。单句无错，全书累积后就像操作说明。
-- 首次和重访写得一样细，学会的操作每次重新演示；或反过来，首次遇到的关键规则被一句带过。
-- 每章收在“接下来该去某处”，而不是人物的处境、情绪或尚未解开的疑问。
+- Scenes become a loop of goal → operation → result → next goal. Arrival brings no observation, response, or change in understanding, and discovery immediately leads to the next location.
+- Mechanisms, passwords, and routes are described precisely enough to reproduce, when readers need to understand how the character thought, experimented, and realized something.
+- Chains of “先……再……”, “等……才……”, and “直到……才……” break every action into steps and waits. Each sentence may be valid, but their accumulation across a book reads like operating instructions.
+- First visits and returns receive equal detail, and learned actions are demonstrated again every time; or, conversely, a key rule encountered for the first time receives only a passing sentence.
+- Every chapter ends with the next destination instead of the character's circumstances, emotion, or an unresolved question.
 
-处理时保留真正的试探、等待和紧张；只合并没有改变注意力、判断或情绪的步骤。原作中解谜本身就是叙事核心时，写清推理与验证的关键环节，压缩的是照着做的部分，而不是思考。
+Preserve real experimentation, waiting, and tension. Merge only steps that do not change attention, judgment, or emotion. When puzzle solving itself is central to the original narrative, retain the key reasoning and verification stages; compress the executable instructions rather than the thinking.
 
-## 游戏机制的文学转换
+## Turn game mechanics into literary expression
 
-| 原有内容 | 转换方式 | 不能越过的边界 |
+| Original content | Adaptation approach | Boundary to preserve |
 |---|---|---|
-| 菜单、任务标记 | 通过已有委托、观察、地图、线索表达当下目标 | 不凭空添加给主角发任务的神秘声音 |
-| 重复赶路、同质小战斗 | 用简短叙述保留路程、疲劳、资源消耗和必要遭遇；首次抵达或改变处境的路程按场景作用展开 | 不顺手引入永续伤势、关键战利品或新仇敌 |
-| 首领战 | 写清目标、空间、威胁、应对、转折、决定性行动和战后后果 | 保留参战者、胜负、救援与过场结果；不能把必败剧情写赢 |
-| 数值、冷却、血条 | 表达身体状态、战术窗口和游戏已确立的限制 | 原作真实存在的等级/系统可保留；不要把 UI 数值当世界物理定律 |
-| 技能/装备获得 | 通过原作训练、授予、发现或剧情觉醒体现 | 不提前使用尚未获得的能力、武器或知识 |
-| 解谜、调查 | 写观察、已有线索、试探、推理与验证 | 不让角色直接背出攻略答案，不虚构关键线索补漏洞 |
-| 道具说明、图鉴 | 在接触或识别发生时择要融入 | 不假定主角看过玩家菜单中所有说明 |
-| 环境叙事 | 写可观察痕迹，让角色在证据范围内推测 | 不把物件位置直接解释成无争议的历史真相 |
-| 联机/队伍 | 依据剧情身份与本次选定编队安排场面 | 操控人数、可用角色与过场在场人物不总相同 |
+| Menus and quest markers | Express the current goal through existing requests, observations, maps, and clues | Do not invent a mysterious voice assigning quests to the protagonist |
+| Repetitive travel and similar minor battles | Briefly retain distance, fatigue, resource use, and necessary encounters; develop first arrivals or journeys that change circumstances according to their scene role | Do not casually introduce lasting injuries, key loot, or new enemies |
+| Boss battles | Make goals, space, threats, responses, turns, decisive actions, and aftermath clear | Preserve participants, victory/defeat, rescues, and cutscene outcomes; do not turn a scripted defeat into a win |
+| Stats, cooldowns, and health bars | Express bodily state, tactical windows, and limits established by the game | Retain levels/systems that genuinely exist in the original; do not treat UI values as physical laws of the world |
+| Skill/equipment acquisition | Show the original training, granting, discovery, or story awakening | Do not use abilities, weapons, or knowledge before acquisition |
+| Puzzles and investigations | Show observation, existing clues, experimentation, reasoning, and verification | Do not have characters recite walkthrough answers or invent key clues to plug gaps |
+| Item descriptions and encyclopedias | Integrate selected information when contact or recognition occurs | Do not assume the protagonist has read every description in player menus |
+| Environmental storytelling | Describe observable traces and let characters infer within the evidence | Do not turn object placement directly into undisputed historical truth |
+| Multiplayer/party | Stage scenes according to story identities and the selected party | The number of controlled characters, available characters, and people present in cutscenes are not always the same |
 
-原作只确定胜负而没有唯一战术时，可以写符合已有能力和环境的局部招式组合；保留为小说化编排，不声称它是唯一原作流程。会改变伤势、关键物品、他人功劳或下一章能力的战术属于需额外核对的事实。
+If the original fixes only victory or defeat without one canonical tactic, local combinations of moves may fit existing abilities and the environment. Treat them as novelization choreography rather than the only original sequence. Tactics affecting injuries, key items, another character's credit, or next-chapter abilities are facts requiring additional verification.
 
-## 人物、对话与文风
+## Characters, dialogue, and style
 
-用原作的称呼、句式、语气、回避方式和压力下的决定区分角色。重写对话可以去除游戏式反复提示，必须保留语义、承诺、态度、信息量和关系变化；只保留确有必要的短原句，不把大段过场转录当小说成稿，也不把自拟台词标为原话。
+Differentiate characters through the original forms of address, syntax, tone, evasions, and decisions under pressure. Rewritten dialogue may remove repetitive game prompts but must preserve meaning, commitments, attitude, information, and relationship changes. Keep only genuinely necessary short original lines; a long cutscene transcript is not a finished novel, and invented dialogue must not be labeled verbatim.
 
-以文献、遗迹或解谜推进的故事，还要留意信息背后的生活。选择原作记录中能体现写作者当时目的与关系的细节，例如争论、打趣、顾虑和惦念，让读者逐渐认识留下线索的人。保留他们自己的处境，不把所有人的话都压成给主角的提示；也不为营造人情凭空补出往事或回应。
+For stories advanced through documents, ruins, or puzzles, attend to the lives behind the information. Choose details from original records that show the writer's purposes and relationships at the time, such as disputes, teasing, concerns, and thoughts of others, so readers gradually come to know the people who left clues. Preserve their own circumstances rather than reducing everyone's words to hints for the protagonist. Do not invent past experiences or responses to create human warmth.
 
-重要发现改变人物对世界或他人的认识时，让这种变化在后续的注意力、选择、交谈或行动中得到承接。可以借已有物件、记录和重访场景建立联系，不必另加一段主题解释。不是每条线索都需要情感转折，也不能为回收意象强造决定性动机或原作不支持的领悟。
+When an important discovery changes a character's understanding of the world or others, carry that change into later attention, choices, conversation, or action. Existing objects, records, and revisited scenes can connect these moments without another paragraph explaining the theme. Not every clue requires an emotional turn, and paying off imagery does not justify a decisive motive or realization unsupported by the original.
 
-心理描写从角色当时可知的信息与已有性格出发。可以表达当下迟疑、疼痛或注意力，不能捏造童年回忆、秘密计划、预知结局或本来未确定的恋爱意图。对原作暧昧之处保持可兼容多种解释的写法。
+Base interior narration on what the character could know then and their established personality. Express current hesitation, pain, or attention without inventing childhood memories, secret plans, foreknowledge of the ending, or previously unresolved romantic intentions. Where the original is ambiguous, write compatibly with multiple interpretations.
 
-环境描写交代读者理解现场所需的空间、感官和气氛，也保留原作有作用的静默与环境意象。不凭“更具体”编造日期、金额、距离或世界规则。解释陌生术语的类别和当前可见用途即可，保留原作尚未揭示的真相。
+Environmental description should provide the space, sensations, and atmosphere needed to understand the scene while preserving meaningful silence and environmental imagery. Do not invent dates, amounts, distances, or world rules merely to be more specific. Explain unfamiliar terminology's category and currently visible use while withholding truths the original has not yet revealed.
 
-新写、扩写与表达修订使用 [自然叙事与去模板化修订](prose-revision.md)：新写或明确要求的扩写在既定事实内完成小说表达，单纯表达修订不默认授权新增动作或事件。人物情绪、对白、修辞和节奏按本书声音处理；章尾可以落在原作已有疑问、行动后果或安静的情绪余波，不添加假危机吸引续读。
+For new writing, expansion, and expression revision, use [Natural narration and revision of formulaic prose](prose-revision.md). New writing or explicitly requested expansion completes the novel's expression within established facts; expression-only revision does not automatically authorize new actions or events. Handle emotion, dialogue, rhetoric, and rhythm in this book's voice. Chapter endings may rest on an existing original question, the consequences of action, or quiet emotional aftermath; do not add a false crisis to attract continued reading.

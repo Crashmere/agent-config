@@ -1,43 +1,48 @@
-# 本机发布与按需验证
+<a id="本机发布与按需验证"></a>
+# Local Releases and On-Demand Validation
 
-适用当前个人服务 Ledger、FeeTable、FabricWorld、RecipeBox、Yuyan、ServerPortal、AICalendar。2026-09-28 用户决定：GitHub 仅备份源码与配置；构建和发布由维护电脑完成；本地验证本次功能后即可上线，不以全量历史回归为发布门槛，不默认积累永久测试代码。临时检查脚本用完即可移除。普通功能故障接受修复或程序回退；数据库迁移、批量写入/删除、导入覆盖和备份恢复先在隔离副本针对性验证。
+Applies to the current personal services Ledger, FeeTable, FabricWorld, RecipeBox, Yuyan, ServerPortal, and AICalendar. On 2026-09-28, the user decided: GitHub only backs up source code and configuration; the maintenance computer handles builds and releases; deployment may proceed after local validation of the current feature, without requiring the full historical regression suite or accumulating permanent test code by default. Temporary check scripts may be removed after use. Ordinary feature failures can be handled by fixes or program rollback; database migrations, bulk writes/deletions, import overwrites, and backup restoration require focused validation on an isolated copy first.
 
-## 维护电脑
+<a id="维护电脑"></a>
+## Maintenance computer
 
-取得 agent-config 与各项目仓库。使用 go.mod 指定的 Go 工具链、Node/npm、Git、OpenSSH、make、Python 3 标准库；无需 Python 第三方包。当前实测 Mac 为 Go 1.26.8、Node 26.10.0、npm 12.1.0；发布清单记录实际版本，不依赖云端 runner。前端依赖按 package-lock.json 安装。FabricWorld、RecipeBox 本地验证图片功能还需 libvips；Yuyan 导入/导出/roundtrip 等维护工具继续保留。
+Obtain agent-config and each project repository. Use the Go toolchain specified by go.mod, Node/npm, Git, OpenSSH, make, and the Python 3 standard library; no third-party Python packages are needed. The currently verified Mac has Go 1.26.8, Node 26.10.0, and npm 12.1.0. Release manifests record the actual versions, without relying on a cloud runner. Install frontend dependencies according to package-lock.json. Local image-feature validation for FabricWorld and RecipeBox also requires libvips; retain Yuyan's import/export/roundtrip and other maintenance tools.
 
-新电脑安装工具按 software-installation，不为保留已退役的 Linux 回归套件安装虚拟机。Go 默认 PATH 由 goenv 延迟加载时，发布入口自动补充 ~/.goenv/shims。
+Follow software-installation to install tools on a new computer; do not install a VM to preserve the retired Linux regression suite. When goenv lazily loads Go's default PATH, the release entry point automatically adds ~/.goenv/shims.
 
-共享实现是 scripts/release.py。每个项目 deploy/release.sh 调用它，deploy/release.json 维护应用名、构建命令、产物位置和传输模式。默认共享源码位于 ~/agent-config/skills/server-operations，可用 SERVER_OPERATIONS_HOME 指定。不要在业务仓库复制整套发布实现。
+The shared implementation is scripts/release.py. Each project's deploy/release.sh calls it, while deploy/release.json maintains the application name, build commands, artifact location, and transfer mode. Shared source defaults to ~/agent-config/skills/server-operations and can be specified with SERVER_OPERATIONS_HOME. Do not copy the entire release implementation into business repositories.
 
-## 验证、构建和部署
+<a id="验证构建和部署"></a>
+## Validation, build, and deployment
 
-1. 本地验证本次修改。界面检查实际使用的桌面/手机场景；计算或导入逻辑用代表性样例。构建保留必要的类型检查。开发时已经验证的内容无需发布时重复完整测试。
-2. 提交明确的源码快照并 git push origin main。推送只备份，不触发任何生产操作。
-3. 在项目执行 make release：只导出 Git 已提交文件，在隔离构建目录安装锁定依赖并 make linux；生成静态 Linux amd64 程序。业务应用同时校验和保存同提交 deploy/portal.json。
-4. make deploy 复用同提交构建产物；没有产物才构建。拒绝未提交的受跟踪修改、未备份到 origin/main 的提交及哈希不符的产物。未跟踪文件不进入快照。
-5. 本机通过 SSH 上传，服务器固定脚本完成备份、候选校验、原子替换和启动健康检查；随后同步声明并核对门户回执，验证公网未授权接口返回 401。
-6. 文档变更推送后运行 scripts/sync-docs.sh；只改文档无需部署程序。
+1. Validate the current changes locally. For UI, check actual desktop/mobile use cases; for calculation or import logic, use representative examples. Retain necessary type checks in the build. Work already validated during development does not require repeating full tests at release time.
+2. Commit a clear source snapshot and run git push origin main. Pushing only backs up the source and triggers no production operation.
+3. Run make release in the project: export only Git-committed files, install locked dependencies in an isolated build directory, and run make linux to produce a static Linux amd64 program. Business applications also validate and save deploy/portal.json from the same commit.
+4. make deploy reuses build artifacts from the same commit and builds only if none exist. It rejects uncommitted tracked changes, commits not backed up to origin/main, and artifacts with mismatched hashes. Untracked files are excluded from the snapshot.
+5. Upload from the local machine over SSH. The fixed server script handles backup, candidate validation, atomic replacement, and startup health checks; then synchronize the declaration, verify the portal receipt, and check that unauthorized public endpoints return 401.
+6. Run scripts/sync-docs.sh after pushing documentation changes; documentation-only changes do not require program deployment.
 
-本地 `.local/releases/<完整提交>/` 保存 program、manifest.json、业务应用的 portal.json 和 last-deployment.json；manifest 记录源码提交、SHA-256、工具版本及构建命令。它明确只证明构建/声明检查，不能冒充功能验证记录。材料不提交 Git，也不自动清理。可用 make releases 查看。
+The local `.local/releases/<full-commit>/` directory stores program, manifest.json, business applications' portal.json, and last-deployment.json. The manifest records the source commit, SHA-256, tool versions, and build commands. It proves only build/declaration checks and must not be presented as a functional validation record. These materials are neither committed to Git nor automatically cleaned up. Use make releases to inspect them.
 
-脚本中途失败会返回非零。程序成功而门户声明或公网检查失败时，运行程序可能已经更新，应按输出和 last-deployment.json 确认，不能盲目重复发布。只修声明执行 make portal，不构建或重启服务。源码、构建参数或工具链需要重新生成产物时，保留原材料，把对应版本目录移动到明确的新位置后重新 make release。
+The script returns nonzero if it fails partway through. If program deployment succeeds but the portal declaration or public checks fail, the running program may already be updated; confirm from the output and last-deployment.json rather than blindly repeating deployment. To fix only a declaration, run make portal without building or restarting the service. When source, build arguments, or toolchain changes require regenerating artifacts, preserve the existing materials by moving that version directory to a clearly identified new location, then rerun make release.
 
-## 身份与传输
+<a id="身份与传输"></a>
+## Identities and transfer
 
-- RELEASE_HOST 默认 ali，使用本地已信任的 SSH 主机配置和严格指纹校验。
-- 业务应用使用各自 <app>-deploy 受限身份，共用维护电脑的 ~/.ssh/ali_deploy_ed25519 发布密钥（可用 RELEASE_KEY 指定），私钥只留本机并独立保管。该密钥拥有业务应用的发布/数据权限，不拥有整机管理员权限；不复用到其他机器。
-- 服务器 authorized_keys 设置 restrict 与固定 deploy-ssh.sh；只接受 deploy、portal-check、portal，sudo 仅允许本应用 root 管理的 deploy-release.sh。新服务器/新应用用各项目 setup-deploy.sh 建立身份；已有账号显式轮换公钥，不重复初始化。
-- ServerPortal 使用现有管理员 SSH；它的采集器运行于 root，因此门户发布仍是管理员操作。其固定脚本由 ServerPortal/deploy 维护，不创建一个伪装成低权限的门户发布账号。
-- GitHub Actions 在各应用仓库均关闭，workflow 和原有 production Secrets 已移除，旧 CI 公钥已撤销。不要向 GitHub 上传生产发布私钥。GitHub 推送认证独立保留。
-- SSH 启用压缩；Yuyan 继续传 gzip 流并校验未压缩哈希，其他应用沿用原始程序流。服务器不安装构建工具。
+- RELEASE_HOST defaults to ali, using locally trusted SSH host configuration and strict fingerprint verification.
+- Business applications use their own restricted <app>-deploy identities and share the maintenance computer's ~/.ssh/ali_deploy_ed25519 release key (overridable with RELEASE_KEY). Keep the private key only on the local machine and safeguard it independently. This key has business-application deployment/data permissions, not whole-server administrator permissions; do not reuse it on other machines.
+- Server authorized_keys sets restrict and the fixed deploy-ssh.sh; only deploy, portal-check, and portal are accepted, and sudo permits only this application's root-managed deploy-release.sh. Use each project's setup-deploy.sh to create identities for new servers/applications; explicitly rotate public keys for existing accounts rather than reinitializing them.
+- ServerPortal uses the existing administrator SSH access. Its collector runs as root, so portal deployment remains an administrator operation. Its fixed scripts are maintained under ServerPortal/deploy; do not create a portal deployment account that pretends to have low privileges.
+- GitHub Actions is disabled in every application repository; workflows and the former production Secrets have been removed, and old CI public keys revoked. Do not upload production deployment private keys to GitHub. GitHub push authentication remains separate.
+- SSH compression is enabled. Yuyan continues to transfer a gzip stream and verify the uncompressed hash; other applications retain raw program streams. Do not install build tools on the server.
 
-## 回退和数据保护
+<a id="回退和数据保护"></a>
+## Rollback and data protection
 
-`make rollback COMMIT=<完整旧提交>` 使用本地保留的已校验版本，经同一个服务器脚本发布，仍执行升级前备份与健康检查。迁移时保存了各服务原有生产程序及哈希，便于首次本机发布回退；以后每次构建自然积累本地可选版本。
+`make rollback COMMIT=<full-old-commit>` uses a locally retained, verified version and deploys it through the same server script, still performing a pre-upgrade backup and health checks. Each service's original production program and hash were saved during migration to support rollback of the first local release; subsequent builds naturally accumulate locally available versions.
 
-先确认目标旧程序兼容当前 schema/设备状态。程序回退不等于数据库恢复，不会自动恢复照片、数据库或门户凭据；真实恢复按项目文档选择时点并另行确认。服务器 releases 保存 previous/result/metadata/recovery，程序、数据与文档的来源版本分别记录。服务器发布材料由 [共享保留任务](retention.md) 每日清理；本地 .local/releases 不属于该范围。失败终态写入明确的回退结果，供 7 天后清理判断。
+First confirm the target older program is compatible with the current schema/device state. Program rollback is not database restoration and does not automatically restore photos, databases, or portal credentials. For actual restoration, select a recovery point according to project docs and obtain separate confirmation. Server releases stores previous/result/metadata/recovery; source versions for program, data, and documentation are recorded separately. The [shared retention task](retention.md) cleans server release materials daily; local .local/releases is outside its scope. Failed terminal states record an explicit rollback result for cleanup decisions after 7 days.
 
-门户更新短暂停止 Web 和采集器，data/config 在停写后复制到 root 私有 backups/before-deploy-*。正在运行的归档任务会使更新拒绝；发布期间不要新开备份或清理。公网设备认证会短暂不可用，业务应用进程不重启。门户历史备份和发布目录已列入其私有配置模板的 shared 资源，不对网页开放浏览和清理。
+Portal updates briefly stop the Web process and collector, then copy data/config into root-private backups/before-deploy-* after writes stop. An active archive task causes the update to be rejected; do not start new backups or cleanup during deployment. Public device authentication is briefly unavailable; business application processes are not restarted. Portal historical backups and release directories are registered as shared resources in its private configuration template and are not exposed for web browsing or cleanup.
 
-发布机制、鉴权、备份格式发生变化时，针对改动验证正常路径与关键失败分支；检查脚本可以临时编写，不要求恢复永久全量测试。公共诊断工具与运行时保护按实际价值保留。
+When release mechanisms, authentication, or backup formats change, validate the normal path and key failure branches relevant to the change. Check scripts may be temporary; there is no requirement to restore a permanent full test suite. Retain shared diagnostic tools and runtime safeguards according to their actual value.

@@ -1,52 +1,52 @@
 ---
 name: pdf-to-word
 description: >-
-  Convert PDFs into usable Word DOCX documents with content accuracy first, editable text and tables where reliable, and verified rendering. Use for PDF转Word, PDF转换为可编辑文档, batch PDF-to-DOCX conversion, scanned or broken-text PDFs, and diagnosing or improving conversion quality. Apply local OCR, font recovery, layout reconstruction, source-image fallbacks, and continuous improvement of the conversion workflow and tools after real use.
+  Convert PDFs into usable Word DOCX documents with content accuracy first, editable text and tables where reliable, and verified rendering. Use for PDF-to-Word conversion, converting PDFs into editable documents, batch PDF-to-DOCX conversion, scanned or broken-text PDFs, and diagnosing or improving conversion quality. Apply local OCR, font recovery, layout reconstruction, source-image fallbacks, and continuous improvement of the conversion workflow and tools after real use.
 ---
 
-# PDF 转 Word
+# PDF to Word
 
-以内容准确、完整和可编辑性为优先，按文档实际情况选择方法，再优化排版。把这套工具视为经过实践的起点，不把已知经验当成完整规则，也不承诺任意PDF一键无损转换。
+Prioritize accurate, complete, editable content. Choose methods for the actual document before refining the layout. Treat these tools as a starting point validated through use, not a complete set of rules or a promise of lossless one-click conversion for every PDF.
 
-## 职责与依赖
+## Responsibilities and dependencies
 
-- 用本技能编排PDF到Word的转换和质量检查。复用已安装的官方pdf、docx技能处理通用文件操作及OOXML验证，不复制其安装目录或第三方脚本进本仓库。
-- 涉及第三方Python依赖和环境选择时使用python-environment；安装或排查LibreOffice等软件时使用software-installation。
-- 需要翻译时使用translate-pdf负责语义、术语和翻译审校；格式转换不擅自改写、翻译或纠正原文事实。
-- 改进本技能及脚本时使用personal-skill-management，沿其仓库流程完成验证、接入同步、提交和推送。
+- Use this skill to orchestrate PDF-to-Word conversion and quality checks. Reuse the installed official pdf and docx skills for general file operations and OOXML validation; do not copy their installation directories or third-party scripts into this repository.
+- Use python-environment for third-party Python dependencies and environment selection; use software-installation to install or troubleshoot software such as LibreOffice.
+- Use translate-pdf for meaning, terminology, and translation review when translation is needed. Format conversion must not independently rewrite, translate, or correct facts in the source.
+- Use personal-skill-management when improving this skill or its scripts, following its repository workflow for validation, discovery-link synchronization, commits, and pushes.
 
-## 核心工作流程
+## Core workflow
 
-1. **确认目标并检查输入。** 从请求判断范围、编辑需求和版式取舍。盘点文件、哈希、页数、尺寸、重复文件、文字层与图片。对照原图查看正文、表格、公式、页边和空白页，不因存在文字层就认定它可靠。
-2. **按页选择路线。** 可靠文字层优先原生提取；扫描或损坏文字层使用OCR。正文与能够可靠还原的表格重建为Word对象；复杂公式、图谱、化学结构及不确定字形保留原图。只有用户明确接受时才用整份逐页图片作为最终Word。
-3. **先试转代表页面。** 在新类型或异常文档上，先覆盖密集表格、公式、低清晰度、跨页及边缘内容。检查读取顺序、漏字、字号、裁剪和分页，再扩展到整批。发现现有路线不适用时调整或扩展工具，不把新输入强行套进旧规则。
-4. **生成并保留可核对证据。** 分离任务配置与通用代码；文档专用替换、裁剪坐标和OCR缓存绑定源哈希。源图替代文字时确保裁剪含完整文字框和图注，不猜测难辨字符。保持真实空白页和内容顺序。
-5. **完成验证闭环。** 结构验证、实际Word渲染、逐页文字传递、源内容覆盖、逐单元格核对与视觉检查分别完成。扫描件重点检查数字、单位、符号、人名；可用第二OCR发现分歧后对照原图裁定。修复后只重跑受影响检查，共用排版逻辑变化再扩大范围。
-6. **交付并说明限制。** 提供Word及从最终Word实际导出的PDF预览；按文档说明可编辑/保留图片范围、已做检查和剩余问题。不要把字符计数、页数一致或OCR一致称为全文准确。Word未激活不妨碍Python生成与LibreOffice验证。
-7. **完成经验回写。** 按下节检查新增发现，交付后完成相关技能维护；不要只把可复用解决方法留在任务目录或本次对话中。
+1. **Confirm the goal and inspect the input.** Infer the scope, editing needs, and layout tradeoffs from the request. Inventory files, hashes, page counts, dimensions, duplicates, text layers, and images. Compare body text, tables, formulas, page edges, and blank pages with the source images; a text layer is not necessarily reliable merely because it exists.
+2. **Choose a method for each page.** Prefer native extraction for reliable text layers and OCR for scans or damaged text layers. Rebuild body text and reliably recoverable tables as Word objects; preserve source images for complex formulas, diagrams, chemical structures, and uncertain glyphs. Use an entire document of page images as the final Word file only when the user explicitly accepts that result.
+3. **Trial-convert representative pages first.** For unfamiliar or anomalous documents, include dense tables, formulas, low-resolution areas, cross-page content, and page edges. Check reading order, missing characters, font sizes, crops, and pagination before expanding to the full batch. Adjust or extend the tools when the existing method does not fit; do not force new input into old rules.
+4. **Generate output and retain evidence for comparison.** Separate task configuration from general code; bind document-specific replacements, crop coordinates, and OCR caches to the source hash. When replacing text with source images, include complete text boxes and captions in the crop; do not guess unclear characters. Preserve genuine blank pages and content order.
+5. **Complete the verification cycle.** Perform structural validation, actual Word rendering, per-page text transfer checks, source-content coverage checks, cell-by-cell comparisons, and visual inspection separately. For scans, focus on numbers, units, symbols, and names; a second OCR engine can expose disagreements for resolution against the source image. After fixes, rerun only affected checks; expand the scope when shared layout logic changes.
+6. **Deliver and explain limitations.** Provide the Word file and a PDF preview actually exported from the final Word file. For each document, state which content is editable or retained as images, the checks performed, and remaining issues. Matching character counts, page counts, or OCR results do not establish complete textual accuracy. An unactivated Word installation does not prevent Python generation or LibreOffice verification.
+7. **Record reusable findings.** Review new findings as described below and complete relevant skill maintenance after delivery. Do not leave reusable solutions only in the task directory or this conversation.
 
-## 必须随使用持续完善
+## Continuous improvement during use is required
 
-用户要求本技能随转换实践不断完善。后续输入必然会遇到当前经验、版式规则或脚本尚未覆盖的情况；主动识别这些缺口，不因已有技能而降低检查标准。
+The user requires this skill to improve through conversion practice. Future inputs will encounter cases not covered by current experience, layout rules, or scripts. Identify these gaps proactively; having an existing skill must not lower the inspection standard.
 
-- 每次转换结束前回顾：是否出现新的PDF类型、编码/字体异常、OCR混淆、表格/公式结构、平台差异、验证盲点，或值得复用的新操作。
-- 出现可复用的新发现、工具缺陷或新解决方法时，**先完成并验证当前任务的修复，再在同一轮工作中使用personal-skill-management更新本技能；无需等用户再次提出“更新skill”。** 如果当前任务仍在进行，可先记录待沉淀要点，交付后完成回写。
-- 把可泛化的判断和边界放入SKILL.md；把具体故障的“现象—原因—验证过的修正—适用范围”补入references；把重复、确定性的操作补充或修正到scripts。需要新工具时可以新增脚本，更新入口、参数说明和依赖记录。
-- 为会改变内容、分流或验证结论的修改添加最小可复现的脱敏/合成用例，运行受影响检查。发现旧规则过度概括或验证不足时修正旧描述，合并重复经验，不机械追加案例堆积。
-- 将仅对单份文档有效的坐标、专名修正和版式配置留在任务工作目录；通用化时保留机制与合成例子，不保存原文、真实截图、OCR结果或文档哈希。模型、环境、编译产物和缓存也不进入skill仓库。
-- 如没有新发现，不为“持续完善”制造改动；只说明已有规则适用。如改进仍未验证，明确记录边界，不声称已支持。
-- 维护完成后按personal-skill-management的仓库流程验证并同步，向用户简述新增能力或经验、验证与同步结果。该要求适用于本技能，不能据此修改无关技能或扩大任务权限。
+- Before finishing each conversion, review whether it revealed a new PDF type, encoding or font anomaly, OCR confusion, table or formula structure, platform difference, verification blind spot, or reusable operation.
+- When a reusable finding, tool defect, or new solution emerges, **first finish and verify the fix for the current task, then use personal-skill-management to update this skill in the same turn; do not wait for another request to update the skill.** If the task is still underway, record points to retain and complete the write-back after delivery.
+- Put generalizable decisions and boundaries in SKILL.md; add the specific symptom, cause, verified correction, and applicability to references; add or correct repeated deterministic operations in scripts. Add scripts when new tools are needed, and update entry points, parameter documentation, and dependency records.
+- For changes that affect content, routing, or verification conclusions, add a minimal reproducible sanitized or synthetic case and run the affected checks. Correct old descriptions when rules are overgeneralized or insufficiently validated, and merge duplicate lessons instead of mechanically accumulating cases.
+- Keep coordinates, proper-name corrections, and layout settings that apply to one document in the task workspace. When generalizing, retain the mechanism and synthetic examples, not source text, real screenshots, OCR output, or document hashes. Keep models, environments, compiled artifacts, and caches out of the skill repository as well.
+- When there are no new findings, do not manufacture changes for continuous improvement; state that the existing rules applied. If an improvement is not yet verified, record its limits explicitly and do not claim support.
+- After maintenance, validate and synchronize through the personal-skill-management repository workflow. Briefly report the new capability or lesson, validation, and synchronization results. This requirement applies to this skill; it does not authorize changes to unrelated skills or expand task permissions.
 
-## 读取与执行入口
+## Reading and execution entry points
 
-- **首次运行工具或切换工作目录时**读[运行与配置](references/pipeline.md)：外部工作目录、依赖、阶段命令、裁剪设置、可编辑公式与脚本清单。
-- **决定检查范围、记录人工复核或交付时**读[质量检查](references/quality.md)：覆盖检查的能力边界、视觉检查及交付记录。
-- **遇到异常或准备沉淀新经验时**读[已知问题与方法](references/lessons.md)：字体映射、OCR、图片裁剪、字号、上下标和渲染问题。
-- 使用[scripts/convert_batch.py](scripts/convert_batch.py)运行主流程；脚本参数和辅助工具的用途见运行参考。修改共用流程后可运行[scripts/smoke_pipeline.py](scripts/smoke_pipeline.py)的合成自检。
+- **Before running the tools for the first time or changing workspaces**, read [Execution and configuration](references/pipeline.md) for external workspaces, dependencies, stage commands, crop settings, editable formulas, and the script inventory.
+- **When deciding check scope, recording manual review, or delivering results**, read [Quality checks](references/quality.md) for the limits of coverage checks, visual inspection, and delivery records.
+- **When investigating anomalies or preparing to record new lessons**, read [Known issues and methods](references/lessons.md) for font mapping, OCR, image crops, font sizes, subscript and superscript, and rendering problems.
+- Run the main workflow with [scripts/convert_batch.py](scripts/convert_batch.py); see the execution reference for parameters and helper tools. After changing the shared workflow, you can run [scripts/smoke_pipeline.py](scripts/smoke_pipeline.py) for synthetic validation.
 
-## 操作边界
+## Operational boundaries
 
-- 在任务目录中保留源PDF和输出，默认不修改源文件。仅在用户授权清理时删除具体文档产物；不能把其他任务的清理授权推广到当前任务。
-- 优先本地提取、OCR和渲染；下载模型不等于上传文档。外部转换服务涉及上传时先确认任务已有授权。
-- 将运行数据置于技能仓库之外；使用仓库脚本作为唯一维护源，不在多个目录各自修正后放任分叉。
-- 说明正文按物理行组织带来的编辑限制；需要大段重排时另做语义段落合并并验证。默认封面图片策略、单栏假设、字体和平台限制必须按新文档检查。
+- Keep source PDFs and output in the task directory; leave source files unchanged by default. Delete specific document artifacts only when the user authorizes cleanup; do not apply cleanup permission from another task to the current one.
+- Prefer local extraction, OCR, and rendering. Downloading models does not upload documents. Before using an external conversion service that uploads documents, confirm that the task already authorizes the upload.
+- Keep runtime data outside the skill repository. Maintain the repository scripts as the single source of truth instead of independently fixing copies in multiple directories and letting them diverge.
+- Explain the editing limits of organizing body text by physical lines. If extensive reflow is needed, merge semantic paragraphs in a separate step and validate the result. Check the default cover-image policy, single-column assumptions, fonts, and platform limits against each new document.

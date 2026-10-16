@@ -1,35 +1,35 @@
-# ChatGPT 网页版导出
+# ChatGPT Web Exports
 
-用户指定 ChatGPT 导出 ZIP、JSON 或 HTML 时读取本参考。导出格式会变化，先检查实际结构；不要把缺少某个旧文件名解释成没有对话。本文补充来源识别和转换规则，打包、上传、重试及回读仍按主技能与 `archives.md` 执行。
+Read this reference when the user specifies a ChatGPT export ZIP, JSON, or HTML file. Export formats change, so inspect the actual structure first; do not interpret the absence of an old filename as the absence of conversations. This document supplements source identification and conversion rules; follow the main skill and `archives.md` for packing, uploading, retrying, and reading back.
 
-## 确认导出范围
+## Confirm export scope
 
-1. 记录原始 ZIP 的 SHA-256，创建固定的私有来源副本，检查压缩包完整性和文件清单。优先按成员读取，避免不经检查地解压不可信路径。
-2. 同时检查单文件 `conversations.json` 和分片 `conversations-*.json`。存在导出清单时，以其中列出的文件核对名称、大小和分片范围；不能只读取第一个分片。没有清单时记录实际发现的文件，不推定全量覆盖。
-3. 逐份解析相关 JSON，核对会话 ID、消息 ID、父子关系和空会话。若 `chat.html` 含嵌入的会话数据，可用解析后的内容比对作为交叉检查；不要仅从页面可见文本提取聊天。
-4. 会话创建或更新时间不能代表所有用户发送的日期。按每条用户消息的实际时间和选定时区分日，独立报告消息日期范围及导出时间；时间缺失时保留未知，不用零值生成 1970 年日期。
+1. Record the original ZIP's SHA-256, create a fixed private source copy, and check archive integrity and the file inventory. Prefer reading individual members instead of extracting untrusted paths without inspection.
+2. Check for both a single `conversations.json` and sharded `conversations-*.json`. If an export manifest exists, use its file list to verify names, sizes, and shard coverage; do not read only the first shard. Without a manifest, record the files actually found and do not assume full coverage.
+3. Parse each relevant JSON file and check conversation IDs, message IDs, parent/child relationships, and empty conversations. If `chat.html` contains embedded conversation data, compare its parsed content as a cross-check; do not extract conversations solely from visible page text.
+4. Conversation creation or update times do not represent every user's send date. Group each user message by its actual timestamp and the selected timezone, and report the message date range and export time separately. Keep missing timestamps unknown instead of turning zero values into dates in 1970.
 
-## 消息树与发送次数
+## Message trees and send counts
 
-- `mapping` 通常是消息树，可能包含编辑、重试和重新生成形成的分支。遍历全部节点，不只沿 `current_node` 的父链取当前分支；保留父子关系、原始位置和稳定 ID。
-- 使用尊重父子关系的稳定顺序生成完整存档，不能仅按时间排序而使回复排在父消息前。空根节点与 `message=null` 不计发送，真实空消息仍在原始存档中保留。
-- 以独立的用户消息 ID 识别可恢复的发送，区分用户、模型、工具和系统节点。不要按文本去重：相同文本的两次发送、编辑分支中不同 ID 的发送可能都是真实记录。遇到重复 ID 或异常角色时先核查，不直接累加。
-- 正文为空不一定没有发送：附件上传、语音内容或 `targeted_reply_label` 等引用追问信息可能承载用户输入。结合节点结构核实，保存具体计数依据；不能使用 `if text.strip()` 一刀切过滤。
-- 每条日历记录是一个会话在一天的快照。用会话 ID 与日期构成稳定 `external_id`，跨日拆统计但不截断完整聊天。零用户发送的空会话只归档，不凭空生成日历活动。
+- `mapping` is usually a message tree that may contain branches created by edits, retries, and regenerations. Traverse all nodes instead of following only the parent chain from `current_node` for the current branch; preserve parent/child relationships, original positions, and stable IDs.
+- Generate the full archive in a stable order that respects parent/child relationships; sorting only by time must not put replies before parent messages. Empty root nodes and `message=null` do not count as sends, while real empty messages remain in the original archive.
+- Identify recoverable sends by distinct user message IDs, distinguishing user, model, tool, and system nodes. Do not deduplicate by text: two sends with identical text, or sends with different IDs on edited branches, may both be real records. Investigate duplicate IDs or anomalous roles before counting them.
+- An empty body does not necessarily mean no send: attachment uploads, audio content, or quoted follow-up information such as `targeted_reply_label` may carry user input. Verify against node structure and preserve the specific counting basis; do not apply a blanket `if text.strip()` filter.
+- Each calendar record is a daily snapshot of one conversation. Construct a stable `external_id` from the conversation ID and date, split statistics across days, and preserve the full conversation without truncation. Archive empty conversations with zero user sends without inventing calendar activity.
 
-## 语音、图片和附件
+## Audio, images, and attachments
 
-- 递归检查结构化 `content`，不要只收集 `parts` 中的字符串。`audio_transcription` 等结构可以保存文字转写，审阅主题时也要提取这些文字；归档仍保留原始结构及未知字段。
-- `asset_pointer` 是通用资源引用，不能据此直接标成图片。结合所在内容类型、资源路径或扩展名、文件元数据及实际字节判断；例如 WAV 引用属于语音资源。无法确定类型时称“多模态资源”，明确保留不确定性。
-- 导出的附件可能使用 `.dat` 等通用后缀。按导出元数据和文件特征识别图片、PDF 或其他格式，不仅依赖后缀；保留原始文件名和原始字节。
-- 分别统计对话引用但缺实体的资源，以及文件库中有元数据但缺实体的条目。按资源 ID 去重，并列出受影响会话；不能把元数据条目数当作已取得文件数。
-- 缺失语音文件时，如果文字转写存在，应说明“语音实体缺失，转写保留”。不得声称音频本身已归档，也不要把语音缺失误报为图片丢失。仅保存导出提供的附件，不自动访问资源外链补齐。
+- Inspect structured `content` recursively instead of collecting only strings in `parts`. Structures such as `audio_transcription` may contain text transcriptions; extract that text when reviewing topics, while preserving original structures and unknown fields in the archive.
+- `asset_pointer` is a generic resource reference and does not by itself identify an image. Determine the type using its containing content type, resource path or extension, file metadata, and actual bytes; for example, a WAV reference is an audio resource. When the type cannot be determined, call it a “multimodal resource” and explicitly retain uncertainty.
+- Exported attachments may use generic suffixes such as `.dat`. Identify images, PDFs, or other formats from export metadata and file signatures instead of extensions alone; preserve original filenames and bytes.
+- Count resources referenced by conversations but missing their files separately from entries with file-library metadata but no files. Deduplicate by resource ID and list affected conversations; do not treat the number of metadata entries as the number of files obtained.
+- When an audio file is missing but a transcription exists, state “语音实体缺失，转写保留” (audio file missing; transcription retained). Do not claim the audio itself has been archived or misreport missing audio as missing images. Save only attachments supplied by the export; do not automatically follow resource links to fill gaps.
 
-## 原文保存与验证
+## Original preservation and verification
 
-1. 保存统一消息、全部分支和完整原始数据。需要逐会话来源文件时，可从原 JSON 分片精确切取原始对象；解析后重新序列化的 JSON 只能称为派生文件，不能声称逐字节原文。
-2. 大包可单独建立以导出哈希为稳定标识的来源存档，保存原始 ZIP 及说明；各会话存档保留自己的原始对象和已有附件，并记录整包关联。这样既保留全包，又避免将同一 ZIP 重复打进每个会话。
-3. 本地核对压缩文件与解压内容哈希、分段消息重组结果和每份嵌入来源的字节哈希。核对全部用户节点计数与每日记录总数，不只看上传是否返回成功。
-4. 上传固定计划后核对回执和实际下载字节的哈希。来源包中的 ZIP 哈希与用户原文件一致，才能报告原始导出已完整保存。
-5. 已提交存档不可变。发现资源类型等说明错误时，保留旧快照并创建修订快照，明确修订范围；报告时区分会话数量和物理快照数量，不能把修订重复算成新会话。
-6. 已审阅完现有资料的记录设为 `record_state=final`。缺失附件或无法确认平台全部历史时，在来源 `coverage` 和存档说明中保留局限。最终报告记录数量、用户发送数、日期范围、空会话、原始文件哈希、附件缺失及回读结果。
+1. Preserve normalized messages, all branches, and complete raw data. When per-conversation source files are needed, extract the exact raw objects from the original JSON shards; JSON parsed and then serialized again is a derived file and must not be described as a byte-for-byte original.
+2. For large bundles, create a separate source archive using the export hash as a stable identifier, preserving the original ZIP and notes. Each conversation archive retains its own raw object and available attachments and records its association with the full bundle. This preserves the entire bundle without packing the same ZIP into every conversation.
+3. Locally compare hashes of compressed files and expanded content, the results of reassembling segmented messages, and byte hashes of every embedded source. Check all user-node counts against total daily records instead of checking only whether uploads succeeded.
+4. After uploading the fixed plan, verify receipts and hashes of the actual downloaded bytes. Report the original export as fully preserved only when the ZIP hash in the source bundle matches the user's original file.
+5. Committed archives are immutable. If descriptions such as resource types are incorrect, preserve old snapshots, create revised snapshots, and state the scope of revision. Distinguish conversation counts from physical snapshot counts in reports; do not count revisions as new conversations.
+6. Set records whose available materials have all been reviewed to `record_state=final`. If attachments are missing or complete platform history cannot be confirmed, preserve those limitations in source `coverage` and archive notes. Finally, report record counts, user send counts, date ranges, empty conversations, original file hashes, missing attachments, and read-back results.

@@ -1,111 +1,113 @@
-# 项目与续写
+# Projects and continuation
 
-## 作品目录与临时工作区
+## Work directory and temporary workspace
 
-用户指定的作品目录优先；没有指定时放在当前写作工作区的 `game-novels/` 下。当前目录是技能仓库、软件源码库或系统目录时，改用 `~/Documents/game-novels/`，在开始保存时说明位置，不能把小说、来源全文和运行状态提交到技能仓库。
+Prioritize the user's designated work directory. If none is specified, use `game-novels/` under the current writing workspace. If the current directory is a skill repository, software source repository, or system directory, use `~/Documents/game-novels/` instead and state the location when saving begins. Do not commit novels, full source texts, or runtime state to the skill repository.
 
-每部作品用游戏名、版本和路线区分，例如 `game-novels/游戏名/原版-路线A/`。先检查已有作品，续写时复用，不按每次会话新建副本。不同版本或互斥路线独立，不能共用章节进度。
+Distinguish each work by game title, edition, and route, for example `game-novels/game-title/original-routeA/`. Check existing works first and reuse them when continuing, rather than making a new copy for each session. Keep different editions or mutually exclusive routes independent; they must not share chapter progress.
 
-最终作品目录只保存小说正文与正常章节文件，不保存资料、大纲、状态表或审校附件。不要用隐藏目录、附录或侧车文件绕过“只交付小说”。用户显式要求大纲、审稿或资料时，按该次请求交付。
+The final work directory contains only the novel text and normal chapter files, not research, outlines, state tables, or review attachments. Do not evade the novel-only delivery rule through hidden directories, appendices, or sidecar files. If the user explicitly requests an outline, review, or research, deliver according to that request.
 
-需要落盘内部资料时，为本次任务创建独立临时工作区，记录真实路径，必须位于作品目录之外。按需从 `assets/project-template/` 复制模板，不覆盖已有文件，不预建空的人物和势力百科：
+When internal material must be saved, create a separate temporary workspace for this task, record its actual path, and keep it outside the work directory. Copy templates from `assets/project-template/` as needed, without overwriting existing files or prebuilding empty character and faction encyclopedias:
 
 ```text
-本次临时工作区/
-├── 项目.md                 # 作品、版本、路线、风格与用户约定
-├── 原作资料.md             # 已读来源、关键事实、视频证据和资料缺口
-├── 主线与章节.md           # 主线事件、依赖、条件、详略与章节映射
-├── 续写状态.md             # 当前任务有效状态和下一步
-└── 章节记录/
-    └── 第001章.md           # 来源映射、检查范围和状态变化
+task-temporary-workspace/
+├── project.md              # Work, edition, route, style, and user agreements
+├── source-notes.md         # Read sources, key facts, video evidence, and gaps
+├── plot-and-chapters.md    # Main-story events, dependencies, conditions, detail levels, and chapter mapping
+├── continuation-state.md   # Valid state and next steps for the current task
+└── chapter-log/
+    └── chapter-001.md       # Source mapping, review scope, and state changes
 ```
 
-正文另存到作品目录，内部文件只引用其实际位置。`章节记录.md` 模板按章复制到临时记录目录，不放入正文。聊天中短篇试写直接给正文，不附依据、不强制建项目；用户禁止创建文件时遵守。
+Save the prose separately in the work directory; internal files only reference its actual location. Copy the `chapter-log.md` template per chapter into the temporary log directory, not into the prose. For a short trial passage in chat, provide the prose directly without supporting records or a mandatory project setup. Respect any user prohibition on file creation.
 
-## 语燕中的作品定位
+Compatibility with existing workspaces: `项目.md` → `project.md`, `原作资料.md` → `source-notes.md`, `主线与章节.md` → `plot-and-chapters.md`, `章节记录.md` → `chapter-log.md`, and `续写状态.md` → `continuation-state.md`. These are equivalent old and new template/workspace filenames; read and reuse existing files under their old names without requiring renaming. The new per-chapter log directory is `chapter-log/`; existing `章节记录/` directories and Chinese chapter filenames remain valid and must not be renamed merely for migration.
 
-仅在用户要求保存到语燕或继续其中的作品时使用；本地交付约定不因此改变。先读 [yuyan-doc](../../yuyan-doc/SKILL.md) 及其指定的读写参考，连接、API、正文格式、revision 和保存核验复用该技能。
+## Locating works in Yuyan
 
-当前归档层级为：首页“游戏小说”分组 → 每款游戏的独立小说知识库 → 章节文档。已有小说知识库使用《游戏名》形式，章节直接位于库内根层；首页分组与知识库内部的文档目录是不同层级。
+Use this only when the user requests saving to Yuyan or continuing a work there; local delivery conventions remain in effect. First read [yuyan-doc](../../yuyan-doc/SKILL.md) and its designated read/write references. Reuse that skill for connectivity, APIs, body format, revisions, and save verification.
 
-1. **每次重新定位。** 用户明确指定的文档或位置优先。默认读取 `book-groups` 与 `books`，按名称找到首页“游戏小说”分组，再用 `bookIds` 关联存活知识库。结合游戏名、别名、版本和实际章节内容确认作品；书名号只作名称匹配线索，不能代替分组归属判断，同一游戏的攻略知识库可能位于“游戏攻略”分组。
-2. **接上实际章节。** 读取目标 `books/ID/tree`，核对章节顺序、文档 ID 与当前父目录，再读取本次要处理的现稿。知识库或目录调整后，旧文档 ID 可能仍有效，旧知识库 ID 和父目录映射却已过时；旧交接只作查找线索，按当前响应更新本次临时状态，不恢复旧“游戏小说”总库或旧的游戏目录。
-3. **新作品单独建库。** 已有作品复用原库、原名和原章节。已确认没有对应作品且用户已要求保存时，按 yuyan-doc 的[知识库操作](../../yuyan-doc/references/api.md#目录与知识库)在首页“游戏小说”分组内新建知识库，创建请求带当前 `groupId`；未指定名称时用《游戏名》。版本或互斥路线需要并存时在名称或目录中明确区分，不混用进度。
-4. **章节默认在根层。** 新建根层章节不传 `--parent`，不额外包一层游戏名目录。已有卷、路线或其他子目录时遵从实际结构及用户要求，不自动解散或重排。库内只写小说正文和正常章名，不写入来源、大纲、审校表或续写状态。
-5. **目标不明先核实。** 找不到预期分组、出现多个无法区分的作品或创建失败时，重新查询并结合用户指定位置处理；仍无法确定时询问该项，同时保留可独立完成的稿件。不得回退到攻略库、未分组或新建一个旧式总库；写入结果不明时先查实际结果再处理。
-6. **记录与核验。** 本次临时状态可记录核实时间、首页分组、知识库、父目录和章节文档的对应关系；真实 ID、正文和目录快照不写进技能仓库。新建知识库后按 yuyan-doc 核对归属，章节结构变更后合并检查一次树；普通正文更新信任其内置回读核验，冲突时重新读取现稿，不覆盖用户手改。
+The current archive hierarchy is the home-page group “游戏小说” → a separate novel knowledge base for each game → chapter documents. Existing novel knowledge bases use the naming form `《游戏名》`, with chapters directly at the root. Home-page groups and document directories within a knowledge base are different levels.
 
-## 接入与开始新一轮
+1. **Locate afresh every time.** Prioritize the document or location explicitly specified by the user. By default, read `book-groups` and `books`, find the home-page group “游戏小说” by name, and associate live knowledge bases through `bookIds`. Confirm the work using its game title, aliases, edition, and actual chapter content. Book-title brackets are only a name-matching clue, not proof of group membership; the same game's walkthrough knowledge base may be in “游戏攻略”.
+2. **Connect to the actual chapters.** Read the target `books/ID/tree`, verify chapter order, document IDs, and current parent directories, then read the current drafts to be handled. After knowledge-base or directory changes, old document IDs may still work while old knowledge-base IDs and parent mappings are stale. Use old handoffs only as lookup clues, update this task's temporary state from current responses, and do not restore an old combined “游戏小说” knowledge base or old game directories.
+3. **Create a separate knowledge base for a new work.** For existing works, reuse the knowledge base, name, and chapters. Once the absence of a corresponding work is confirmed and the user has requested saving, follow yuyan-doc's [knowledge-base operations](../../yuyan-doc/references/api.md#document-tree-and-knowledge-bases) to create a knowledge base within the home-page group “游戏小说”, including the current `groupId` in the request. If no name is specified, use `《游戏名》`. Distinguish coexisting editions or mutually exclusive routes in the name or directories without mixing progress.
+4. **Place chapters at the root by default.** Omit `--parent` for new root-level chapters; do not add a game-title wrapper directory. Follow existing volumes, route directories, other subdirectories, and user requirements without automatically dissolving or rearranging them. Write only novel prose and normal chapter titles in the knowledge base, not sources, outlines, review tables, or continuation state.
+5. **Verify unclear destinations first.** If the expected group is missing, multiple works cannot be distinguished, or creation fails, query again and use the user's specified location to resolve it. If still uncertain, ask about that item while retaining independently completable drafts. Do not fall back to a walkthrough library, an ungrouped destination, or a new old-style combined library. If a write result is unclear, inspect the actual result before acting.
+6. **Record and verify.** Temporary state may record verification time and mappings between the home-page group, knowledge base, parent directory, and chapter documents. Do not put real IDs, prose, or directory snapshots in the skill repository. Verify group membership after creating a knowledge base using yuyan-doc. After chapter structure changes, check the tree once for the combined changes. For ordinary prose updates, rely on its built-in read-back verification; on conflicts, reread the current draft without overwriting user edits.
 
-读取本书约定、当前可用状态、将写章节的规划、上一章实际结尾和相关证据；不要每轮重读全书，也不要仅凭聊天摘要续写。
+## Connect and start a new round
 
-上次任务已完成且清理内部材料时，从实际正文、已有对话和用户仍提供的原资料重新建立当前状态，不为方便续写擅自留下参考资料库。保留用户命名与文件布局。版本、路线或作者有意偏离确实无法判断时只询问该项。
+Read this book's agreements, currently available state, the planned chapter, the previous chapter's actual ending, and relevant evidence. Do not reread the entire book every round or continue solely from a chat summary.
 
-重点核对人物位置、队伍、生死/伤势、物品归属、能力、关系/承诺、已知/误信/未知的信息。“资料里知道”与“角色已知道”分别记录，保留原作揭示时机。
+If the previous task finished and internal material was cleaned up, rebuild the current state from the actual prose, existing conversation, and original sources the user still provides. Do not retain a reference library without authorization merely to simplify continuation. Preserve the user's names and file layout. Ask only about an edition, route, or deliberate authorial deviation that truly cannot be determined.
 
-内部摘要与正文矛盾时追查真实正文；正文违背原作时，分清旧稿错误、资料待核实与用户明确偏离，不自动把旧稿错误变成设定。不要改用户手稿来迁就摘要。
+Focus on character location, party, life/death and injuries, item ownership, abilities, relationships/commitments, and known/misbelieved/unknown information. Record knowledge in the research separately from what a character knows, preserving the original revelation timing.
 
-## 内部文件职责
+When an internal summary contradicts the prose, trace the actual text. If the prose contradicts the original, distinguish an old-draft error, unverified research, and an explicit user deviation; do not automatically turn an old-draft error into canon. Do not alter the user's manuscript to accommodate a summary.
 
-- `项目.md` 保存本书已定约定与风格，不把推荐方案当用户选择。
-- `原作资料.md` 保存证据及分类；正文、摘要和小说化补充不是外部证据。
-- `主线与章节.md` 保存稳定事件编号及章节映射，改章名不改变事件身份。
-- `续写状态.md` 保存当前任务的有效进度，区分原作约束和本书补充。
-- `章节记录/` 保存每章依据、核对范围及状态差量，供当前写作或修订使用。
+## Internal file responsibilities
 
-资料太多时再拆人物、地点、势力条目，索引也只在临时工作区。每款游戏独立，不把单本书设定或风格推广到其他作品。
+- `project.md` stores this book's settled agreements and style; a recommendation is not a user choice.
+- `source-notes.md` stores evidence and its categories; prose, summaries, and novelization additions are not external evidence.
+- `plot-and-chapters.md` stores stable event IDs and chapter mappings; renaming a chapter does not change an event's identity.
+- `continuation-state.md` stores valid progress for the current task, distinguishing original constraints from this book's additions.
+- `chapter-log/` stores per-chapter evidence, verification scope, and state deltas for current writing or revision. Reuse `章节记录/` in an existing workspace.
 
-## 写作中的保存顺序
+Split character, location, and faction entries only when material grows too large; their index also stays in the temporary workspace. Keep each game independent, without generalizing one book's setting or style to other works.
 
-使用“规划 / 草稿 / 待核实 / 已审校”标记内部进度。“用户已确认”是额外状态，不把未回复当确认，不默认逐章等待批准。
+## Save order during writing
 
-1. 保存正文；存在关键事实缺口时先留为临时待核实稿，不冒充最终稿放入交付目录。
-2. 核对忠实度、连续性与表达，在内部记录实际检查的事件和证据。
-3. 记录本章覆盖、状态变化、小说化补充、未决事项和结束位置。
-4. 更新事件为“未写 / 部分覆盖 / 已覆盖 / 路线不适用”，注明落点和理由。
-5. 用实际正文及检查结果更新有效状态；关键事实尚未核实不能推进正式续写。
+Track internal progress as planned / draft / awaiting verification / reviewed. User-confirmed is an additional status; no reply is not confirmation, and waiting for chapter-by-chapter approval is not the default.
 
-中途断开后核对落盘文件再恢复，不因记录写“完成”就跳过丢失正文。没有核对原作时在内部保留验证缺口，必要时在过程中说明，不能通过附在最终小说后的说明来掩盖。
+1. Save the prose. If a critical factual gap exists, keep a temporary draft awaiting verification rather than placing it in the delivery directory as a final draft.
+2. Check fidelity, continuity, and expression, recording the events and evidence actually checked internally.
+3. Record this chapter's coverage, state changes, novelization additions, unresolved items, and ending position.
+4. Update events as unwritten / partially covered / covered / route not applicable, with locations and reasons.
+5. Update the valid state from actual prose and check results; unverified critical facts must not advance official continuation.
 
-视频取材阶段也须逐批保存：先落盘观察与盲区，再更新实际覆盖、未整理的已返回图片和下一帧/时间戳。使用 `续写状态.md` 的媒体续接字段；上下文交接与内容过大错误按[媒体容量与断点恢复](media-context.md)处理。新会话先读取状态和当前片段的证据，不重新载入全部图片、OCR 或全书资料。
+After an interruption, verify the files saved to disk before resuming. Do not skip missing prose merely because a record says complete. If the original has not been checked, retain the verification gap internally and disclose it during the work if needed; do not conceal it through a note appended to the final novel.
 
-## 修订与变更传播
+Save video research batch by batch as well: first persist observations and blind spots, then update actual coverage, returned images not yet organized, and the next frame/timestamp. Use the media-continuation fields in `continuation-state.md`. Handle context handoffs and oversized-content errors according to [Media capacity and checkpoint recovery](media-context.md). A new session reads state and evidence for the current segment first, rather than reloading all images, OCR, or whole-book research.
 
-区分表达修改和事实/路线改变。语言调整可保持状态；改变事件、人物知识、伤势、物品、承诺、伏笔或时间时，检查直接依赖的后续章节。
+## Revisions and propagation of changes
 
-在授权范围内修复；范围外的关联问题在过程中提出，不静默大改全书。改变版本或路线后重新核对分歧点及覆盖，不沿用旧路线的完成标记。
+Distinguish expression changes from factual/route changes. Language adjustments may leave state intact; changes to events, character knowledge, injuries, items, promises, foreshadowing, or time require checking directly dependent later chapters.
 
-保留用户手改，不删除旧稿以“重建状态”。必要时另存修订稿，在过程中明确最终采用版本，最终交付入口只指向本次完成的小说。技能仓库不保存作品内容或原始游戏资料。
+Repair within the authorized scope. Raise related out-of-scope issues during the work rather than quietly rewriting the whole book. After changing edition or route, recheck divergence points and coverage without reusing completion markers from the old route.
 
-## 续修已有作品
+Preserve the user's manual edits and do not delete old drafts to rebuild state. Save a separate revised draft when necessary, identify the final adopted version during the work, and point final delivery links only to the novel completed in this task. Keep work content and raw game sources out of the skill repository.
 
-用户要求对已有小说再打磨一轮时：
+## Further revision of existing works
 
-1. **定基线。** 找到交接或上下文指定的最新稿；交付位置是外部文档时先读取全部现稿并逐章与本地稿比对。线上有用户手改就以线上为起点合并；旧稿和历史导出只作比较，不能覆盖现稿。把修订前的快照另存到本次临时工作区，修订在独立副本中进行。
-2. **先通读，再动手。** 以没玩过游戏的读者连贯读完授权范围，记下理解断点、动机断点、攻略感、拖沓或说尽的段落，以及值得保留的写法。交接中的问题清单和经验只是线索；不预设本轮一定加长或删减，也不替上一轮的改动辩护。
-3. **按实际问题选层次。** 多轮打磨后的稿件常常只剩针对性问题；改动量不是质量指标。结构、信息顺序或人物知情错误先修，表达随后。
-4. **处理跨章影响。** 补铺垫、删提前知识、统一称呼后，检索全书相关词和回想处，确认前后一致；涉及原作事实的新增仍按资料参考核对。
-5. **写回与核验。** 生成相对修订前快照的最小差异，未改章节不写；能预演时先确认预演结果与定稿完全一致。按章顺序写入，检查目标工具的真实成功回执；冲突时重新读取现稿再制定补丁，结果不明时先查实际是否已写入，不盲目重试。全部完成后回读核对。
-6. **清理与交付。** 确认保存成功后，只清理本轮生成的快照、补丁、回读文件和笔记，保留最新定稿；最终回复只给实际入口与必要的进度结论。
+When the user requests another polishing round on an existing novel:
 
-## 写交接说明
+1. **Set the baseline.** Locate the latest draft specified in the handoff or context. If delivery is to external documents, read all current drafts first and compare them chapter by chapter with local drafts. If the online draft has user edits, merge starting from it. Older drafts and historical exports are for comparison only and must not overwrite the current draft. Save pre-revision snapshots separately in this task's temporary workspace, and revise independent copies.
+2. **Read through before editing.** Read the authorized scope continuously as someone who has never played the game. Note comprehension gaps, motivation gaps, walkthrough-like narration, dragging or overexplained passages, and writing worth preserving. Handoff problem lists and experience are only leads; do not assume this round must lengthen or shorten the work, or defend the previous round's changes.
+3. **Choose the level from actual problems.** After multiple polishing rounds, a manuscript often has only targeted issues left; volume of changes is not a quality measure. Fix structure, information order, or character-knowledge errors before expression.
+4. **Handle cross-chapter effects.** After adding setup, removing premature knowledge, or standardizing names, search related terms and recollections across the book to confirm consistency. Verify additions involving original facts according to the research reference.
+5. **Write back and verify.** Generate the smallest diff against the pre-revision snapshots and do not write unchanged chapters. Where previews are available, first confirm that the preview exactly matches the final draft. Write in chapter order and inspect the destination tool's actual success receipts. On conflict, reread the current draft before preparing a patch. If the result is unclear, check whether the write actually happened before retrying. Read back and verify after all writes finish.
+6. **Clean up and deliver.** After confirming successful saving, clean up only this round's snapshots, patches, read-back files, and notes, retaining the latest final draft. The final response gives only actual links and necessary progress conclusions.
 
-用户要求交接，或任务明显要跨会话继续而临时状态会被清理时，交接说明应能让新会话不读旧对话就开工：
+## Write handoff notes
 
-- 作品范围、版本路线、视角与用户的明确要求和最近反馈；
-- 最新稿位置与辨认方式，旧稿位置及“只作比较”的说明；外部文档的位置、编号与最后成功写入的版本；
-- 上一轮实际做了什么、清理了什么，哪些资料仍在、哪些已不存在；
-- 容易在扩写中写错的原作边界与人物知情限制，注明它们需要再核对、不是原作全部；
-- 写回流程中的安全约束和用户的工作偏好。
+When the user requests a handoff, or the task clearly needs another session and temporary state will be cleaned up, make the notes sufficient for a new session to start without reading the old conversation:
 
-交接说明是给 agent 的工作文件，不放进作品目录，也不混入小说。
+- Work scope, edition and route, viewpoint, and the user's explicit requirements and latest feedback;
+- Latest-draft location and how to identify it, older-draft locations with a comparison-only note, and external document locations, IDs, and last successfully written versions;
+- What the previous round actually did and cleaned up, which sources remain, and which no longer exist;
+- Original boundaries and character-knowledge limits easily mishandled during expansion, noting that they require rechecking and do not represent the entire original;
+- Safety constraints for writing back and the user's workflow preferences.
 
-## 完成与清理
+Handoff notes are working files for agents. Keep them outside the work directory and out of the novel.
 
-授权整条主线或多章时完成全部请求，不在大纲阶段自行结束。实际受输出或工具限制时保存已完成部分和临时续写点，说明真实剩余，不把梗概或部分稿称为完整小说。
+## Completion and cleanup
 
-完成本次请求后，先确认正文已保存且可读取，再清理本次自行生成的参考副本、来源表、视频抽帧、音频提取、证据卡、规划和审校临时文件。只能清理记录明确、由本次创建且不再服务未完成工作的临时路径；不删除用户输入、原始下载、视频、手稿或其他任务文件。清理范围不确定时不执行删除，也不把临时资料作为附件交给用户。
+If the entire main story or multiple chapters are authorized, complete the full request rather than stopping at the outline. If actual output or tool limits intervene, save completed portions and a temporary continuation point, explain what truly remains, and do not call a synopsis or partial draft a complete novel.
 
-未完成的大任务可继续使用独立临时状态；任务结束后不自动建立永久资料库或残留隐藏附件。未来续写从小说和用户原资料重新核对。
+After completing this request, first confirm the prose is saved and readable, then clean up the reference copies, source tables, video frames, audio extracts, evidence cards, plans, and review files generated for this task. Clean only clearly recorded temporary paths created by this task and no longer serving unfinished work. Do not delete user inputs, original downloads, videos, manuscripts, or other tasks' files. If cleanup scope is uncertain, do not delete, and do not deliver temporary research as attachments.
 
-本地小说文件为默认交付。用户指定语燕或其他目标时使用相应技能与真实回执，只写小说正文；无外部写入要求时不创建知识库、不发布、不推送小说。聊天最终回复只呈现小说正文或实际交付入口，不追加完成说明、来源、字数报告或审校结果。
+An unfinished large task may continue using separate temporary state. When it ends, do not automatically establish a permanent research library or leave hidden attachments. Future continuation rechecks the novel and the user's original sources.
+
+Local novel files are the default delivery. For Yuyan or another user-designated destination, use the appropriate skill and actual success receipts, writing only the novel text. Without an external-write request, do not create knowledge bases, publish, or push the novel. The final chat response contains only the novel text or actual delivery links, without completion explanations, sources, character-count reports, or review results.

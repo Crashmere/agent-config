@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 在本地运行：把已推送提交中的共享技能和项目文档同步到服务器副本，并逐文件校验。
-# 用法：sync-docs.sh [--check] [--force] [all | shared | <项目名>...]
-#   不带目标等于 all：shared 加上服务器已有 docs/SOURCE 的全部项目。
-#   --check 只读：报告漂移、是否落后于本地提交、垃圾文件，不写服务器。
-#   --force 服务器副本与记录的来源不一致时仍覆盖（先确认现场修改已回写仓库）。
-# 环境变量：SYNC_HOST（默认 ali）、PROJECTS_DIR（项目 checkout 所在目录，默认 ~/ali）。
+# Run locally: synchronize shared skill and project documentation from pushed commits to server copies, verifying every file.
+# Usage: sync-docs.sh [--check] [--force] [all | shared | <project-name>...]
+#   No target is equivalent to all: shared plus every project with an existing docs/SOURCE on the server.
+#   --check is read-only: report drift, commits behind local HEAD, and junk files without writing to the server.
+#   --force overwrites when a server copy differs from its recorded source; first confirm that live edits were returned to the repository.
+# Environment: SYNC_HOST (default: ali), PROJECTS_DIR (directory containing project checkouts; default: ~/ali).
 set -euo pipefail
 
 host=${SYNC_HOST:-ali}
@@ -28,20 +28,20 @@ done
 sha256() { if command -v sha256sum >/dev/null; then sha256sum; else shasum -a 256; fi | cut -c1-64; }
 die() { echo "error: $*" >&2; exit 1; }
 
-# 打印 "<sha256>  <服务器绝对路径>"；参数为 repo commit，映射从标准输入读取 "<仓库内路径> <服务器路径>"。
+# Print "<sha256>  <absolute-server-path>". Arguments are repository and commit; read mappings as "<repository-path> <server-path>" from stdin.
 manifest() {
   local repo=$1 commit=$2 src dest
   while read -r src dest; do
-    git -C "$repo" cat-file -e "$commit:$src" 2>/dev/null || die "$commit 中不存在 $src"
+    git -C "$repo" cat-file -e "$commit:$src" 2>/dev/null || die "$src does not exist in $commit"
     printf '%s  %s\n' "$(git -C "$repo" cat-file blob "$commit:$src" | sha256)" "$dest"
   done
 }
 
-remote_manifest() { # 服务器路径...（受管理路径不含空格）
+remote_manifest() { # Server paths; managed paths contain no spaces.
   ssh "$host" "for f in $*; do if [ -f \"\$f\" ]; then sha256sum \"\$f\"; else echo \"missing  \$f\"; fi; done"
 }
 
-# 映射：shared 为技能目录全部文件 + /opt/AGENTS.md + MOTD；项目为 AGENTS.md 与 docs/*.md。
+# Mapping: shared includes every skill file plus /opt/AGENTS.md and MOTD; projects include AGENTS.md and docs/*.md.
 mapping() { # target repo commit
   local target=$1 repo=$2 commit=$3 app f
   if [ "$target" = shared ]; then
@@ -67,28 +67,28 @@ sync_target() {
     repo=$projects_dir/$target; app=$(echo "$target" | tr '[:upper:]' '[:lower:]')
     source_file=/opt/$app/docs/SOURCE; subdir=AGENTS.md,docs; managed="AGENTS.md docs"
     junk="/opt/$app/docs"
-    [ -d "$repo/.git" ] || die "找不到 $target 的 checkout：$repo"
+    [ -d "$repo/.git" ] || die "checkout for $target not found: $repo"
   fi
   url=$(git -C "$repo" remote get-url origin | sed -e 's#^git@github.com:#https://github.com/#' -e 's#\.git$##')
   git -C "$repo" fetch -q origin
   commit=$(git -C "$repo" rev-parse HEAD)
   local problem=""
-  git -C "$repo" merge-base --is-ancestor "$commit" '@{upstream}' || problem="HEAD 尚未推送"
+  git -C "$repo" merge-base --is-ancestor "$commit" '@{upstream}' || problem="HEAD has not been pushed"
   # shellcheck disable=SC2086
-  [ -z "$(git -C "$repo" status --porcelain -- $managed)" ] || problem="${problem:+${problem}；}有未提交的文档修改"
+  [ -z "$(git -C "$repo" status --porcelain -- $managed)" ] || problem="${problem:+${problem}; }uncommitted documentation changes"
   if [ -n "$problem" ]; then
-    if $check_only; then echo "warn  ${target}：$problem"; else echo "SKIP  ${target}：$problem"; failed="$failed $target"; return; fi
+    if $check_only; then echo "warn  ${target}: $problem"; else echo "SKIP  ${target}: $problem"; failed="$failed $target"; return; fi
   fi
 
   old=$(ssh "$host" "sed -n 's/^commit=//p' $source_file 2>/dev/null" || true)
   if [ -n "$old" ]; then
-    git -C "$repo" cat-file -e "$old^{commit}" 2>/dev/null || die "$target 本地没有服务器记录的提交 $old"
+    git -C "$repo" cat-file -e "$old^{commit}" 2>/dev/null || die "$target has no local copy of server-recorded commit $old"
     dests=$(mapping "$target" "$repo" "$old" | cut -d' ' -f2)
     expected=$(mapping "$target" "$repo" "$old" | manifest "$repo" "$old")
     # shellcheck disable=SC2086
     actual=$(remote_manifest $dests)
     if [ "$expected" != "$actual" ]; then
-      echo "DRIFT ${target}：服务器副本与记录的 ${old:0:8} 不一致"
+      echo "DRIFT ${target}: server copy differs from recorded commit ${old:0:8}"
       diff <(echo "$expected") <(echo "$actual") || true
       if ! $force; then failed="$failed $target"; return; fi
     fi
@@ -98,18 +98,18 @@ sync_target() {
   ssh "$host" "if [ -e $junk ]; then find $junk -name '._*' -type f; fi" | sed "s/^/junk  /"
 
   if $check_only; then
-    if [ "$old" = "$commit" ]; then echo "OK    $target @ ${commit:0:8}"; else echo "BEHIND ${target}：服务器 ${old:0:8}，本地 ${commit:0:8}"; fi
+    if [ "$old" = "$commit" ]; then echo "OK    $target @ ${commit:0:8}"; else echo "BEHIND ${target}: server ${old:0:8}, local ${commit:0:8}"; fi
     return
   fi
 
-  # 旧提交中有、新提交中没有的受管理文件在服务器上删除。
+  # Remove managed server files that exist in the old commit but not the new commit.
   remove=""
   if [ -n "$old" ]; then
     remove=$(comm -23 <(mapping "$target" "$repo" "$old" | cut -d' ' -f2 | sort) \
                       <(mapping "$target" "$repo" "$commit" | cut -d' ' -f2 | sort) | tr '\n' ' ')
   fi
   mapping "$target" "$repo" "$commit" > "${TMPDIR:-/tmp}/sync-docs-map.$$"
-  # 上传 tar：每个文件按服务器绝对路径打包在 root/ 下，由远端逐个安装。
+  # Upload a tar whose root/ tree mirrors absolute server paths; install each file remotely.
   (
     set -e
     stage=$(mktemp -d)
@@ -142,9 +142,9 @@ chown root:root $source_file.sync-tmp; chmod 0644 $source_file.sync-tmp; mv -f $
   # shellcheck disable=SC2086
   actual=$(remote_manifest $dests)
   if [ "$expected" = "$actual" ]; then
-    echo "OK    $target @ ${commit:0:8}（$(echo "$dests" | wc -l | tr -d ' ') 个文件与提交一致）"
+    echo "OK    $target @ ${commit:0:8} ($(echo "$dests" | wc -l | tr -d ' ') files match the commit)"
   else
-    echo "FAIL  ${target}：同步后校验不一致"; diff <(echo "$expected") <(echo "$actual") || true
+    echo "FAIL  ${target}: post-sync verification differs"; diff <(echo "$expected") <(echo "$actual") || true
     failed="$failed $target"
   fi
 }
@@ -153,5 +153,5 @@ if [ -z "${targets// /}" ] || [[ " $targets " == *" all "* ]]; then
   targets="shared $(ssh "$host" 'for f in /opt/*/docs/SOURCE; do sed -n "s#^repository=.*/##p" "$f"; done' | tr '\n' ' ')"
 fi
 for t in $targets; do sync_target "$t"; done
-ssh "$host" 'n=$(ls -d /tmp/sync-docs.* 2>/dev/null | wc -l); [ "$n" -eq 0 ] || echo "warning: 服务器残留 $n 个 /tmp/sync-docs.* 暂存目录"'
-[ -z "$failed" ] || die "未完成：$failed"
+ssh "$host" 'n=$(ls -d /tmp/sync-docs.* 2>/dev/null | wc -l); [ "$n" -eq 0 ] || echo "warning: $n /tmp/sync-docs.* staging directories remain on the server"'
+[ -z "$failed" ] || die "incomplete:$failed"

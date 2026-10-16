@@ -7,6 +7,8 @@
 
 ## Instruction management
 
+- Write all skills in English, including `SKILL.md`, reference documents, agent metadata, template instructions, and script comments/help. Preserve exact non-English names, UI labels, quotations, matching literals, fixtures, and requested output content when translation would change their meaning or behavior. The skill's authoring language does not determine the user's response or deliverable language.
+- Unless the user explicitly requests another language, write all agent-authored specification and maintenance documents in English. This includes `AGENTS.md`, project and server documentation, technical plans, operational runbooks, decision records, and handoff documents. Preserve exact source-language names, UI labels, quotations, matching literals, fixtures, and required user-facing content. This default does not determine the language of conversation, product copy, creative work, or other user-requested deliverables.
 - Use the `personal-skill-management` skill when organizing agent instructions or creating and maintaining the user's own skills and their `agent-config` GitHub repository.
 - When a personally maintained skill or its scripts prove incorrect during real use, fix the immediate task, then use `personal-skill-management` to reassess and update the skill so the repository remains accurate.
 - If a required skill cannot be found or loaded, quickly investigate its likely source, pause the dependent workflow, and report the missing skill and findings to the user instead of silently substituting another process.

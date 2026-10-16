@@ -1,50 +1,57 @@
-# 重建服务器与新增应用
+<a id="重建服务器与新增应用"></a>
+# Rebuilding Servers and Adding Applications
 
-目标是从 Git 文档/源码与已验证的备份恢复服务形态和备份时点的数据；旧加密包的离线私钥与云侧条件见 ServerPortal docs/RESTORE.md。以下为操作顺序，不是可以不经检查对现有主机运行的安装脚本。
+The goal is to restore the service setup and data at the backup point from Git documentation/source code and verified backups. See ServerPortal docs/RESTORE.md for offline private keys required by older encrypted packages and cloud-side prerequisites. The following is an operational sequence, not an installation script to run on an existing host without inspection.
 
-## 1. 准备来源和边界
+<a id="1-准备来源和边界"></a>
+## 1. Prepare sources and boundaries
 
-- 取得 `Crashmere/agent-config` 与应用清单中的每个源码仓库，读取共享约定、当前状态和各项目 docs。
-- 明确是新空服务器、迁移，还是扩容已有主机。当前基线 Ubuntu LTS / amd64、2 vCPU、约 2 GiB 内存、40 GiB 磁盘；不强制复制旧内核补丁或全部预装软件。
-- 获得独立管理 SSH 访问、经可信渠道确认的新主机指纹、云安全组管理权限。Git 不保存这些秘密；不能从公开文档重建管理员身份。
-- 无数据重建时，每个应用明确新建空库。带数据迁移时，必须执行该应用的最终备份/停写/恢复验证方案；不能默认为用户愿意丢弃旧库。
+- Obtain `Crashmere/agent-config` and every source repository in the application inventory; read the shared conventions, current state, and each project's docs.
+- Establish whether this is a new empty server, a migration, or expansion of an existing host. The current baseline is Ubuntu LTS / amd64, 2 vCPU, about 2 GiB memory, and 40 GiB disk; there is no requirement to reproduce old kernel patches or all preinstalled software.
+- Obtain independent administrator SSH access, the new host fingerprint confirmed through a trusted channel, and cloud security group management access. These secrets are not stored in Git; administrator identity cannot be reconstructed from public documentation.
+- For rebuilding without data, explicitly create an empty database for each application. For migration with data, follow that application's final-backup/write-stop/restoration-validation plan; do not assume the user is willing to discard the old database.
 
-## 2. 建立共享底座
+<a id="2-建立共享底座"></a>
+## 2. Establish the shared foundation
 
-1. 核对 OS/架构、CPU/内存/磁盘、现有监听与服务、时间同步、包源和更新策略；将实际选择写回 current-state。
-2. 通过 `software-installation` 使用 Ubuntu 官方签名包安装 Nginx、libvips-tools、libheif-plugin-libde265 和所需系统工具，确认门户声明校验所需的 python3 可用（仅标准库，无额外 Python 包）。不要照抄旧云供应商的内网镜像；应用在本机构建，服务器不装 Go/Node/Docker/数据库服务。
-3. 使用 Asia/Shanghai 显示时间并配置可靠 NTP。不要盲目改现有主机的 SSH/防火墙，尤其不能把管理员锁在外面。
-4. 先运行 `scripts/sync-docs.sh shared` 建立 `/opt/server-context`、`/opt/AGENTS.md` 与 MOTD，再把 `/root/AGENTS.md` 链接到 `/opt/AGENTS.md`，让下一位维护者一开始就能发现约定。按 [发布材料自动保留](retention.md) 安装 tmpfiles 配置并创建共享锁，再启用应用 backup timer；全部应用健康且预览核对后启用清理 timer。
-5. 按 [共享 HTTPS](https.md) 先用 `assets/nginx-apps-bootstrap.conf` 建 HTTP 验证入口，安装官方 Certbot 并签发 IP 证书后，渲染 `assets/nginx-apps.conf` 切换 HTTPS。先读所有 enabled sites，处理默认站点冲突时保存可恢复副本；不要用覆盖操作破坏现有应用。
-6. 建立 `/etc/nginx/app-locations`，将共享 server 启用到 `sites-enabled/apps`。安装 ServerPortal 及设备认证 include 后再启用最终共享模板；尚未准备好门户时使用 bootstrap 配置，不引用不存在的 auth include。运行 `nginx -t`，成功后启动/重载。
-7. 云安全组/主机防火墙仅开放本次需要的 SSH、HTTP（验证与跳转）及 HTTPS；应用内部端口保持 loopback。是否收窄 SSH 来源由实际访问需求决定，不能拿旧 UFW inactive 当必须复制的安全策略。
+1. Verify OS/architecture, CPU/memory/disk, existing listeners and services, time synchronization, package sources, and update policy; record the actual choices in current-state.
+2. Use `software-installation` to install Nginx, libvips-tools, libheif-plugin-libde265, and required system tools from official signed Ubuntu packages. Confirm python3 is available for portal declaration validation (standard library only, no additional Python packages). Do not copy the old cloud provider's internal package mirror. Applications build locally; do not install Go/Node/Docker/database services on the server.
+3. Use Asia/Shanghai for displayed time and configure reliable NTP. Do not blindly change SSH/firewall settings on an existing host, especially in ways that lock out the administrator.
+4. First run `scripts/sync-docs.sh shared` to create `/opt/server-context`, `/opt/AGENTS.md`, and MOTD, then link `/root/AGENTS.md` to `/opt/AGENTS.md` so the next maintainer can discover conventions immediately. Follow [Automatic retention of release materials](retention.md) to install tmpfiles configuration and create the shared lock before enabling application backup timers. Enable the cleanup timer after all applications are healthy and the preview has been checked.
+5. Follow [Shared HTTPS](https.md): first create the HTTP challenge entry point with `assets/nginx-apps-bootstrap.conf`; install official Certbot and issue an IP certificate, then render `assets/nginx-apps.conf` to switch to HTTPS. Read all enabled sites first and save recoverable copies when resolving default-site conflicts; do not overwrite and break existing applications.
+6. Create `/etc/nginx/app-locations` and enable the shared server at `sites-enabled/apps`. Install ServerPortal and the device-authentication include before enabling the final shared template. Until the portal is ready, use the bootstrap configuration without referencing a nonexistent auth include. Run `nginx -t`, then start/reload only after it succeeds.
+7. Open only the SSH, HTTP (challenge and redirects), and HTTPS access required for this task in cloud security groups/host firewall; keep internal application ports on loopback. Decide whether to restrict SSH sources based on actual access needs; do not treat the old inactive UFW state as a security policy that must be copied.
 
-## 3. 重建或新增每个应用
+<a id="3-重建或新增每个应用"></a>
+## 3. Rebuild or add each application
 
-- 读取项目 docs 的首次安装流程；从源码构建或取得受信产物，核对架构和校验值。各项目的精确构建命令（如 `make linux BASE_PATH=/ledger/`）在项目文档。
-- 为新应用选择未冲突的 slug、路径、端口、运行身份和目录，先查现场再登记。不要假设下一个端口永远可用，也不要借用 Ledger 的数据目录/发布密钥。
-- 建独立 data/backups/config，unit 以应用用户运行；新建空数据或导入经验证备份，二者必须明确区分。
-- 添加应用拥有的 Nginx location 链接，保留共享 server。检验裸路径跳转、页面深链接、静态资源、API、写入来源校验；需要 WebSocket/上传时另行确认反代参数。
-- 新网站默认按 [网站图标约定](conventions.md#网站图标与手机桌面入口) 配齐 favicon、180×180 PNG、共用 head 声明及精确的匿名 GET/HEAD 规则。图标随应用构建发布；上线验收运行通用 `scripts/check-site-icons.py`，同时验证认证边界，不等待用户额外要求。
-- 启动应用、启用开机自启与备份调度，用 `systemctl start <app>-backup.service` 通过 unit 取得首份备份并确认 Result=success，在隔离目标检查恢复；不要用生产写入当测试数据。
-- 项目必须具有 `AGENTS.md` 和 docs 入口，至少说明职责/业务约定、架构、运行目录、配置、启动与健康、数据模型、备份/恢复、发布/回退、诊断及已知限制。
-- 在共享应用清单添加完整条目，更新主机实况和共享配置模板（如果确实有变化）；检查原有全部应用仍健康，防止新 location 抢占旧路径。
+- Read the initial installation process in project docs. Build from source or obtain trusted artifacts, then verify architecture and checksums. Exact build commands for each project (such as `make linux BASE_PATH=/ledger/`) belong in project documentation.
+- Choose nonconflicting slugs, paths, ports, runtime identities, and directories for new applications; inspect the live system before recording them. Do not assume the next port is always available or borrow Ledger's data directory/release key.
+- Create separate data/backups/config directories and run units as the application user. Clearly distinguish creating empty data from importing a verified backup.
+- Add the application-owned Nginx location link and preserve the shared server. Verify bare-path redirects, page deep links, static resources, APIs, and write-origin validation; separately confirm reverse-proxy parameters when WebSockets/uploads are required.
+- By default, equip new websites with a favicon, 180×180 PNG, shared head declarations, and exact anonymous GET/HEAD rules under the [Website icon conventions](conventions.md#website-icons-and-home-screen-shortcuts). Build and release icons with the application. Run the shared `scripts/check-site-icons.py` during deployment acceptance and verify authentication boundaries, without waiting for an additional user request.
+- Start the application, enable startup on boot and backup scheduling, obtain the first backup through its unit with `systemctl start <app>-backup.service`, confirm Result=success, and check restoration to an isolated target; do not write test data to production.
+- The project must have `AGENTS.md` and a docs entry point covering at least responsibilities/business conventions, architecture, runtime directories, configuration, startup and health, data model, backup/restoration, release/rollback, diagnostics, and known limitations.
+- Add a complete entry to the shared application inventory and update the host state and shared configuration templates if they actually changed. Check that all existing applications remain healthy and that the new location does not take over an existing path.
 
-新增应用需接入 [门户声明协议](portal.md)：本机校验、发布前预检、发布后同步和加载哈希回执；首次声明发布自动建立 registry.d 链接。先同步共享校验脚本，再启动使用注册目录的门户。
+New applications must integrate with the [portal declaration protocol](portal.md): local validation, pre-release checks, post-release synchronization, and a receipt for the loaded hash. The first declaration release automatically creates the registry.d link. Synchronize the shared validation script before starting a portal that uses the registry directory.
 
-## 4. 恢复本机发布
+<a id="4-恢复本机发布"></a>
+## 4. Restore local releases
 
-按 [本机发布](release.md) 准备维护电脑工具、受信 SSH 和本机私钥。每个业务应用建立受限身份并安装固定发布脚本；门户保留管理员发布。公钥由 setup-deploy.sh 配置，GitHub 不保存生产 Secrets。恢复备份中的旧 CI 公钥不可直接启用，应替换为当前维护电脑公钥。
+Follow [Local releases](release.md) to prepare the maintenance computer's tools, trusted SSH access, and local private keys. Create a restricted identity and install fixed release scripts for each business application; retain administrator deployment for the portal. setup-deploy.sh configures public keys; GitHub stores no production Secrets. Do not directly enable old CI public keys restored from backups; replace them with the current maintenance computer's public key.
 
-逐个本机构建、发布并核对健康。正常程序发布同步经校验的本应用 portal.json；unit、Nginx 和发布脚本仍由管理员安装，文档用 sync-docs.sh 同步。
+Build locally, deploy, and verify health one application at a time. Normal program releases synchronize the application's validated portal.json; administrators still install units, Nginx configuration, and release scripts, while sync-docs.sh synchronizes documentation.
 
-## 5. 验收与交接
+<a id="5-验收与交接"></a>
+## 5. Acceptance and handover
 
-- 所有应用：直连和代理健康、网页深链接与资源、预期的登录/公网边界、运行身份与写权限、开机启用状态、备份/恢复、本机发布结果。
-- 共享层：端口无冲突、Nginx 语法和请求正确、旧应用不受影响、没有意外对外的内部端口。服务日志和应用日志都要抽查。
-- 文档：把实际 OS/资源/软件/网络/应用清单更新成新服务器状态，删掉旧主机事实；项目里的 IP/路径/命令/配置/安装脚本同步更新。证据不足的项明确标为未核实。
-- 推送所有仓库后运行 `scripts/sync-docs.sh`，并确认发现入口可用；缺凭据、缺数据或尚未验收的应用不能写成已重建。
+- All applications: direct and proxied health, page deep links and resources, expected login/public-access boundaries, runtime identities and write permissions, boot enablement, backup/restoration, and local release results.
+- Shared layer: no port conflicts, correct Nginx syntax and request handling, existing applications unaffected, and no unintentionally exposed internal ports. Spot-check both service logs and application logs.
+- Documentation: update the actual OS/resources/software/network/application inventory to the new server state and remove old host facts; update project IPs/paths/commands/configuration/installation scripts together. Explicitly mark items without sufficient evidence as unverified.
+- Run `scripts/sync-docs.sh` after pushing all repositories and confirm discovery entry points work. Do not mark applications as rebuilt if credentials or data are missing or acceptance is incomplete.
 
-## 可以改进但尚未实施的方向
+<a id="可以改进但尚未实施的方向"></a>
+## Possible improvements not yet implemented
 
-云备份控制台保留策略核对、可用性告警、其他数据的容量管理、更细的权限或域名等，都可按用户需求评估。此处不是待强制执行的任务列表。实施一项后，将其落实到约定/当前状态/所有受影响项目，并删除对应“未实施”描述；若当前需求不需要，不为文档里的建议额外建系统。
+Cloud backup console retention-policy verification, availability alerts, capacity management for other data, more granular permissions, domains, and similar improvements may be evaluated according to user needs. This is not a mandatory task list. After implementing an item, reflect it in conventions/current-state/all affected projects and remove its "not implemented" description. If the current need does not require it, do not build additional systems just because documentation suggests them.

@@ -1,98 +1,120 @@
-# 共享部署约定
+<a id="共享部署约定"></a>
 
-这些是当前采用的基线。允许有证据、有迁移计划地演进；不要仅为了统一形式添加框架、容器、数据库服务或编排平台。项目特有行为不能提升为所有项目的硬性要求。
+# Shared Deployment Conventions
 
-## 职责划分
+These are the baselines currently in use. They may evolve when supported by evidence and a migration plan; do not add frameworks, containers, database services, or orchestration platforms merely for uniformity. Do not turn project-specific behavior into a mandatory requirement for all projects.
 
-| 层 | 维护位置 | 负责什么 |
+<a id="职责划分"></a>
+
+## Responsibilities
+
+| Layer | Maintained in | Responsibility |
 | --- | --- | --- |
-| 通用 agent 行为 | agent-config/AGENTS.md | 安全边界、技能路由，不写应用细节 |
-| 共享服务器 | 本技能 references、assets | 主机状态、应用清单、共享入口、重建与跨项目规则 |
-| 单个项目 | 项目 AGENTS.md、docs、deploy | 业务约定、运行配置、数据、测试、发布和恢复 |
-| 现场 | /etc 与 /opt 下的配置/状态 | 实际运行；修改后必须回写所属源码和文档 |
+| General agent behavior | agent-config/AGENTS.md | Safety boundaries and skill routing; no application details |
+| Shared server | This skill's references and assets | Host state, application inventory, shared entry points, rebuilding, and cross-project rules |
+| Individual project | Project AGENTS.md, docs, and deploy | Business conventions, runtime configuration, data, tests, deployment, and recovery |
+| Live environment | Configuration/state under /etc and /opt | Actual operation; changes must be written back to the owning source and documentation |
 
-共性问题的处理方案同样只有一个来源：可能影响多个应用的问题写在 [common-issues](common-issues.md)，按应用列出参数；项目文档链接过去，不复制流程。只影响单个应用的问题留在该项目。
+Solutions to common issues also have a single source: document issues that may affect multiple applications in [common-issues](common-issues.md), listing parameters by application; project documentation links there instead of copying procedures. Keep issues that affect only one application in that project.
 
-一个配置只设一个维护源。服务器副本和必要的发行材料不是新来源。全局 Nginx server 模板由本技能拥有，应用 location 由应用拥有；不把共享配置寄存在某个业务项目中。
+Each configuration has only one maintained source. Server copies and necessary distribution materials are not additional sources. This skill owns the global Nginx server template; each application owns its locations. Do not place shared configuration in a business application project.
 
-## 网络入口
+<a id="网络入口"></a>
 
-- 当前通过公网 IP 的 HTTPS 443 访问，使用 Let’s Encrypt 的可信 IP 证书。应用共用 Nginx，通过 `/应用名/` 分发；公网 HTTP 80 保留 ACME 验证，其余请求 308 到固定 HTTPS 地址。证书、续期和本机检查入口见 [共享 HTTPS](https.md)。
-- 应用只监听各自 `127.0.0.1:<port>`，在应用清单登记端口；新增前核对 `ss -ltnp`，不假定清单完整。不要给每个应用开放一个公网端口。
-- 共享配置在 `/etc/nginx/sites-available/apps`，启用链接在 `sites-enabled/apps`；HTTPS 与仅回环可达的 HTTP 检查 server include `/etc/nginx/app-locations/*.conf`，每个应用的链接指向自己的配置。HTTPS 根路径及未分配路径跳转 `/portal/`；仅回环检查 server 未分配路径仍返回 404。
-- 修改共享 server 必须检查所有 location 的匹配、重写、Host、转发头、静态资源及深链接。`proxy_pass` 尾斜线是否去前缀是每个应用的接口契约，不能机械复制。
-- 同 IP 的不同路径仍是浏览器同源，不是安全隔离。公网统一由 ServerPortal 设备认证保护；授权设备共用业务数据，应用内不区分账户角色。新应用必须继承共享认证及有效设备 Cookie 的续期响应头；修改应用 add_header 时核对继承，流程见门户维护。
-- 变更域名、TLS、统一鉴权或反代时，核对全部应用的构建前缀、绝对 URL、Origin/Cookie、健康检查、发布和文档；涉及访问方式变化先确认。
+## Network Entry Points
 
-## agent 查看线上真实页面
+- Access currently uses HTTPS on port 443 at the public IP, with a trusted Let's Encrypt IP certificate. Applications share Nginx and are routed through `/<app>/`; public HTTP port 80 remains available for ACME validation and returns 308 redirects to the fixed HTTPS address for other requests. For certificates, renewal, and local inspection entry points, see [Shared HTTPS](https.md).
+- Each application listens only on its own `127.0.0.1:<port>` and registers the port in the application inventory. Check `ss -ltnp` before adding one; do not assume the inventory is complete. Do not open a separate public port for each application.
+- The shared configuration is `/etc/nginx/sites-available/apps`, enabled through the link at `sites-enabled/apps`. The HTTPS server and the loopback-only HTTP inspection server include `/etc/nginx/app-locations/*.conf`, with each application's link pointing to its own configuration. The HTTPS root and unassigned paths redirect to `/portal/`; unassigned paths on the loopback-only inspection server still return 404.
+- When changing the shared server, check every location's matching, rewriting, Host, forwarded headers, static assets, and deep links. Whether the trailing slash in `proxy_pass` strips the prefix is part of each application's interface contract; do not copy it mechanically.
+- Different paths on the same IP still share a browser origin and do not provide security isolation. Public access is protected centrally by ServerPortal device authentication; authorized devices share business data, and applications do not distinguish account roles. New applications must inherit shared authentication and the renewal response headers for valid device cookies. Check inheritance when changing an application's add_header directives; see portal maintenance for the procedure.
+- When changing domains, TLS, shared authentication, or reverse proxies, check every application's build prefix, absolute URLs, Origin/Cookie handling, health checks, deployment, and documentation. Obtain confirmation first if the access method changes.
 
-公网入口需要设备 Cookie，agent 的浏览器和命令行没有授权，也不得从用户浏览器提取 Cookie。查看线上页面统一走 SSH 隧道到仅回环可达的 HTTP 检查入口：在本地运行 `scripts/view-tunnel.sh`（幂等，已有可用隧道时复用，断开后再次运行即重建），然后打开 `http://127.0.0.1:18180/<应用名>/`。路径、前缀和深链接与公网一致，`stop` 关闭，`status` 检查。
+<a id="agent-查看线上真实页面"></a>
 
-- 依赖已有的 SSH 信任，不改变公网暴露或统一认证。本机端口只监听 127.0.0.1。
-- 门户 `/portal/` 自身仍要求登录，不经此方式访问。
-- 看到的是生产真实数据。部分应用（已验证 Ledger）的来源校验会放行经隧道的写请求，因此默认只做浏览、截图和只读请求；保存、删除、导入等写操作按授权表先确认，功能写入测试用合成环境。
+## Agents Viewing Live Pages
 
-## 网站图标与手机桌面入口
+The public entry point requires a device cookie. The agent's browser and command line are not authorized, and the agent must not extract cookies from the user's browser. Always view live pages through an SSH tunnel to the loopback-only HTTP inspection entry point: run `scripts/view-tunnel.sh` locally (idempotent; reuses an existing working tunnel, and running it again after disconnection recreates it), then open `http://127.0.0.1:18180/<app>/`. Paths, prefixes, and deep links match public access. Use `stop` to close the tunnel and `status` to inspect it.
 
-2026-09-28 用户确认：今后的每个网站从首次交付起自动配齐以下内容，作为新增项目的默认工作，不留给用户另行配置。
+- This relies on existing SSH trust and does not change public exposure or shared authentication. The local port listens only on 127.0.0.1.
+- The portal at `/portal/` itself still requires login and is not accessed this way.
+- These pages show real production data. Some applications' origin checks (verified for Ledger) allow write requests through the tunnel, so default to browsing, screenshots, and read-only requests. Obtain confirmation under the authorization table before writes such as saving, deleting, or importing; use a synthetic environment for functional write tests.
 
-- 提供网站自己的 favicon 和不透明的 180×180 PNG，在所有页面共用的 HTML head 显式声明 `rel="apple-touch-icon" sizes="180x180"`。路径带正确应用前缀，检查实际构建产物；不依赖同源根路径的兜底图标。生成脚本与图形源留在项目，PNG 随构建打包，服务器无需图形构建工具。
-- 启用统一认证时，项目 Nginx location 同时配置品牌图标的匿名 GET/HEAD；仅枚举具体名称，构建带哈希时只允许对应图标名称的严格模式。其他文件、页面、API、上传媒体保持认证，不能豁免整个 assets/static。门户自身的公共登录资源由其 Web 层负责。
-- 已采用 manifest 的应用，其公开 manifest 及引用的全部图标也需要独立访问，并核对 start_url/scope；仅为 iPhone 图标无需引入 manifest 或 Service Worker。manifest 不放业务数据或秘密。
-- 发布后运行 `scripts/check-site-icons.py --page-url <本机上游页面> --public-url <HTTPS应用页面>`：从真实 HTML 自动解析图标和 manifest，匿名核对 GET/HEAD、类型、PNG 尺寸及 manifest 图标；可以通过 SSH 在服务器执行，无需登录口令。该脚本适用于任意新应用，不需要维护中央图标列表。页面源必须直接返回 HTML；门户使用本机 `/portal/login`（与登录后的页面共用 head），不能把跳转响应当作页面。
-- Nginx 规则修改还要在合成环境检查不应公开的文件和方法（现有案例见 `scripts/test-public-icons.py`，新增应用扩充案例），再检查生产页面跳转和 API 未授权响应。图标检查是上线验收的一部分，失败必须修复；调用受信共享脚本，不复制校验逻辑。
-- 项目 AGENTS 与运维文档记录真实资源路径、生成方式和共享规则链接。真实 iPhone 的添加桌面结果单独确认，不以桌面浏览器或 HTTP 检查冒充真机测试。排障见 [common-issues](common-issues.md#统一认证后-iphone-桌面图标缺失)。
+<a id="网站图标与手机桌面入口"></a>
 
-## 目录、身份和进程
+## Website Icons and Home Screen Shortcuts
 
-源码仓库与本地目录使用应用名称 `Ledger`、`FeeTable`、`FabricWorld`、`RecipeBox`、`Yuyan`、`ServerPortal`、`AICalendar`；服务器应用目录、URL 前缀、运行/发布用户和 systemd unit 使用对应的小写名称。仓库名称的大小写不改变运行路径。
+Confirmed by the user on 2026-09-28: automatically provide all of the following for every future website from its first delivery, as default work for a new project rather than leaving separate configuration to the user.
+
+- Provide the site's own favicon and an opaque 180×180 PNG. Explicitly declare `rel="apple-touch-icon" sizes="180x180"` in the HTML head shared by all pages. Use the correct application prefix in paths and inspect the actual build output; do not rely on a fallback icon at the origin root. Keep the generation script and graphic sources in the project, and package the PNG with the build so the server needs no graphics build tools.
+- When shared authentication is enabled, also configure anonymous GET/HEAD access to brand icons in the project's Nginx location. Enumerate only specific names; for builds with hashes, allow only strict patterns for the corresponding icon names. Keep authentication on other files, pages, APIs, and uploaded media; do not exempt the entire assets/static directory. The portal's own public login assets are handled by its Web layer.
+- For applications that already use a manifest, the public manifest and every icon it references must also be independently accessible; check start_url/scope. There is no need to introduce a manifest or Service Worker solely for an iPhone icon. Do not put business data or secrets in a manifest.
+- After deployment, run `scripts/check-site-icons.py --page-url <local-upstream-page> --public-url <HTTPS-app-page>`: it automatically parses icons and the manifest from real HTML and anonymously checks GET/HEAD, types, PNG dimensions, and manifest icons. It can run on the server over SSH without a login password. The script supports any new application without maintaining a central icon list. The page source must return HTML directly; for the portal, use the local `/portal/login` (which shares its head with logged-in pages), and do not treat a redirect response as a page.
+- Changes to Nginx rules also require checking files and methods that should not be public in a synthetic environment (existing cases are in `scripts/test-public-icons.py`; extend the cases for new applications), followed by checks of production page redirects and unauthorized API responses. Icon checks are part of deployment acceptance, and failures must be fixed. Invoke the trusted shared scripts rather than copying their validation logic.
+- Record actual resource paths, generation methods, and links to the shared rules in project AGENTS and operations documentation. Confirm the result of adding to the home screen separately on a real iPhone; do not represent desktop browser or HTTP checks as real-device tests. For troubleshooting, see [common-issues](common-issues.md#missing-iphone-home-screen-icons-after-shared-authentication).
+
+<a id="目录身份和进程"></a>
+
+## Directories, Identities, and Processes
+
+Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, and `AICalendar`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
 
 ```text
-/opt/server-context/      共享上下文的受控副本，不放凭据或运行数据
+/opt/server-context/      Controlled copy of shared context; no credentials or runtime data
 /opt/<app>/
-  AGENTS.md              项目维护入口
-  bin/                   程序、维护脚本
-  config/                env、unit、应用 Nginx 配置
-  data/                  应用数据
-  backups/               一致性备份
-  docs/                  项目文档副本及来源标记
-  releases/              需要时保留版本和发布结果
+  AGENTS.md              Project maintenance entry point
+  bin/                   Programs and maintenance scripts
+  config/                env, units, and application Nginx configuration
+  data/                  Application data
+  backups/               Consistent backups
+  docs/                  Project documentation copies and source markers
+  releases/              Versions and deployment results retained as needed
 ```
 
-- 单应用单独的运行用户。程序、脚本、配置由 root 管理；运行用户仅写自己的数据、备份等明确目录。默认数据/备份 0700，敏感配置更严格，不能把 0644 当通用密钥权限。
-- 用 systemd 常驻与开机启动；unit 源放应用 config，通过 `/etc/systemd/system/` 链接。日志进 journal；请求日志按应用/共享入口职责定位。
-- 按需加 `NoNewPrivileges`、`ProtectSystem`、`ReadWritePaths` 等限制，验证不会阻碍真实运行。不要复制一个不适用的沙箱。
-- 当前业务应用与门户都是在本机构建的单文件 Go 程序，服务器不需要 Docker、Go/Node 编译环境或自托管 runner；FabricWorld 与 RecipeBox 另需系统包 libvips。服务器不安装 Node：前端资源在本机构建后嵌入程序，确需 Node 运行时的新应用先经用户确认。新应用可按依赖选择技术；引入共享运行时/容器平台时记录所有应用影响和维护成本。
-- 不清除不属于任务的主机工具、云厂商 agent、定时任务或用户文件。未知 unit 先识别来源。
+- Give each application a separate runtime user. Root manages programs, scripts, and configuration; the runtime user writes only to explicitly designated directories such as its own data and backups. Default data/backup permissions are 0700, with stricter permissions for sensitive configuration; do not treat 0644 as a general permission for secrets.
+- Use systemd for persistent operation and startup at boot. Keep unit sources in the application's config directory and link them through `/etc/systemd/system/`. Logs go to the journal; locate request logs according to application/shared-entry-point responsibilities.
+- Add restrictions such as `NoNewPrivileges`, `ProtectSystem`, and `ReadWritePaths` as needed, and verify that they do not prevent real operation. Do not copy an unsuitable sandbox.
+- The current business applications and portal are all single-file Go programs built locally. The server needs neither Docker, Go/Node build environments, nor a self-hosted runner; FabricWorld and RecipeBox additionally require the system package libvips. Do not install Node on the server: build frontend assets locally and embed them in the program. Obtain user confirmation first for a new application that truly requires a Node runtime. New applications may choose technology according to their dependencies; when introducing shared runtimes/container platforms, record the impact on all applications and the maintenance cost.
+- Do not remove host tools, cloud-provider agents, scheduled tasks, or user files outside the task. Identify the source of unknown units first.
 
-## 数据、备份与发布
+<a id="数据备份与发布"></a>
 
-- SQLite 是进程内库，不是全局服务；各应用独立文件，不能跨应用共用账本。新项目是否使用 SQLite 由其需求决定。
-- 活跃 WAL 库不能只复制主文件；用应用的一致性备份工具。恢复前确认时点和数据损失，保留可恢复的现状，不能把“启动失败”处理成创建空库。
-- 备份 unit 的沙箱不能把源和目标拆成不同挂载点，否则硬链接会失败，见 [common-issues](common-issues.md#systemd-沙箱下照片硬链接备份失败)。启用 timer 后通过 unit 实际运行一次并确认 Result=success。
-- 每个有数据的应用登记备份工具、调度/时区、保留策略、恢复步骤、验证方式和异机状态。共享文档只列概况，精确操作在项目 docs。
-- 业务应用使用独立受限发布身份和本机专用密钥，不使用管理员私钥或允许任意 sudo。ServerPortal 因管理 root 采集器而沿用管理员 SSH，具体边界见 [本机发布](release.md)。所有连接保留 SSH 主机身份校验。
-- 正常发布不带生产数据；schema 更新要设计兼容/回退，不把程序回退误写成数据库回退。
-- 共享机器上控制构建、备份和发布资源。在维护电脑构建、逐应用发布，不为单人服务引入不必要的并发设施。
+## Data, Backups, and Deployment
 
-## 文档卫生
+- SQLite is an in-process library, not a global service. Each application uses separate files; applications must not share a ledger. Whether a new project uses SQLite depends on its requirements.
+- Do not copy only the main file of an active WAL database; use the application's consistent-backup tool. Confirm the recovery point and data loss before restoring, and preserve the current state in a recoverable form. Do not handle a startup failure by creating an empty database.
+- A backup unit's sandbox must not split the source and destination into separate mount points, or hard links will fail; see [common-issues](common-issues.md#photo-hard-link-backups-fail-in-a-systemd-sandbox). After enabling the timer, run the backup through the unit once and confirm Result=success.
+- For every application with data, register its backup tool, schedule/time zone, retention policy, recovery steps, verification method, and off-host backup status. Shared documentation provides only an overview; exact operations belong in project docs.
+- Business applications use separate restricted deployment identities and dedicated local keys, not the administrator's private key or unrestricted sudo. ServerPortal continues to use administrator SSH because it manages a root collector; see [Local Deployment](release.md) for the exact boundaries. Keep SSH host identity verification on all connections.
+- Normal deployments do not include production data. Design schema updates for compatibility/rollback, and do not describe program rollback as database rollback.
+- Control build, backup, and deployment resource use on the shared machine. Build on the maintenance computer and deploy one application at a time; do not introduce unnecessary concurrency infrastructure for a single-user service.
 
-- 写清“当前采用”“用户确认”“尚未核实”“待改进”，不要混为一谈。记录验证日期，易变值给查询方式，不堆进程号、每天的文件名或交易数。
-- 公开仓库不放服务器公网地址与无鉴权路径的组合、私钥/Token、完整敏感配置、真实账目或备份。用 SSH 别名和秘密名称；必要凭据由用户或原有秘密管理系统单独提供。
-- Git 备份文档和配置模板，不备份数据与秘密。重建目标是服务形态可复现，不承诺凭空找回账本、SSH 授权或云安全组。
+<a id="文档卫生"></a>
 
-## 门户资源契约
+## Documentation Hygiene
 
-各应用拥有 deploy/portal.json，描述其目录用途、数据库/媒体、备份、端口/unit、访问路径与 API；修改相关资源时必须在同一提交同步声明、项目 docs 和共享清单。本机发布共用受信校验器，自动预检、发布声明并核对门户回执；门户动态读取 registry.d，不维护中央应用路径数组。新增服务仍需明确资源用途与备份契约，普通数据增减无需修改声明。流程见 [门户维护](portal.md)。启用状态以 current-state 为准，源码存在接入文件不代表生产已经切换。
+- Clearly distinguish "currently in use," "user confirmed," "not yet verified," and "needs improvement." Record verification dates and provide query methods for volatile values rather than accumulating process IDs, daily filenames, or transaction counts.
+- Do not put combinations of server public addresses and unauthenticated paths, private keys/tokens, complete sensitive configurations, real accounts, or backups in public repositories. Use SSH aliases and secret names; required credentials are provided separately by the user or an existing secret-management system.
+- Git backs up documentation and configuration templates, not data or secrets. Rebuilding aims to reproduce the service setup; it does not promise to recover ledgers, SSH authorizations, or cloud security groups from nothing.
 
-## 网页键盘与焦点
+<a id="门户资源契约"></a>
 
-2026-09-30 用户确认：所有现有及今后新增的网页服务，默认拦截 Tab / Shift+Tab 在网页控件之间切换焦点，并取消控件聚焦时的轮廓、阴影、边框或颜色高亮；只有用户明确提出特别需求时才增加例外。全局入口由 agent-config/AGENTS.md 维护，本节记录服务器项目的落实方式。
+## Portal Resource Contract
 
-- 在应用启动时安装统一键盘策略，覆盖首页、表单、菜单、弹窗和懒加载页面，避免组件库或焦点约束逻辑重新接管普通 Tab。不要通过 blur、禁用控件或隐藏文字光标实现。
-- 保留 Ctrl/Command/Alt 组合键、输入法组合输入和业务选中状态。Ledger 的现有行为是用户认可的例外：工作台 Tab 切换明细/洞察、单笔录入的三个字段循环、面板焦点管理均保留；Yuyan 正文与代码区保留缩进、表格单元格导航等编辑操作。
-- 验证实际按键和聚焦后的样式；检查鼠标点击输入、原有快捷键、动态弹窗与桌面/窄屏场景。不要将这项用户选择当成无障碍缺陷自动恢复 Tab 导航或焦点高亮。
+Each application owns deploy/portal.json, describing directory purposes, databases/media, backups, ports/units, access paths, and APIs. When changing related resources, update the declaration, project docs, and shared inventory in the same commit. Local deployment uses a trusted shared validator to automatically preflight, publish the declaration, and check the portal receipt. The portal dynamically reads registry.d and does not maintain a central array of application paths. New services still need explicit resource purposes and backup contracts; ordinary additions or removals of data do not require declaration changes. See [Portal Maintenance](portal.md) for the procedure. Treat current-state as the authority on activation status; integration files in source do not mean production has already switched.
 
-## 个人项目验证标准
+<a id="网页键盘与焦点"></a>
 
-本地验证本次功能后即可发布，不设全量历史回归门槛，不默认新增或保留永久测试。临时脚本用完可删，构建保留必要类型检查。普通交互故障可修复或回退程序；批量改写/删除、迁移、导入覆盖、备份恢复先在隔离副本验证。发布锁、备份、校验、健康检查及失败回退继续保留。具体入口和环境见 [本机发布](release.md)。
+## Web Keyboard and Focus
+
+Confirmed by the user on 2026-09-30: for all existing and future web services, block Tab / Shift+Tab from moving focus between page controls by default, and remove outlines, shadows, borders, or color highlights when controls receive focus. Add exceptions only when the user explicitly requests a special behavior. The global entry point is maintained in agent-config/AGENTS.md; this section records how server projects implement it.
+
+- Install a shared keyboard policy at application startup, covering the home page, forms, menus, dialogs, and lazy-loaded pages, so component libraries or focus-trapping logic do not take over ordinary Tab again. Do not implement it through blur, disabled controls, or hidden text carets.
+- Preserve Ctrl/Command/Alt combinations, IME composition, and business selection states. Ledger's existing behavior is a user-approved exception: preserve Tab switching between the workbench's “明细” and “洞察” views, cycling among the three fields in single-entry input, and panel focus management. Preserve editing operations such as indentation and table-cell navigation in Yuyan's document body and code areas.
+- Verify actual keystrokes and styles after focus; check mouse-click text input, existing shortcuts, dynamic dialogs, and desktop/narrow-screen scenarios. Do not treat this user choice as an accessibility defect and automatically restore Tab navigation or focus highlights.
+
+<a id="个人项目验证标准"></a>
+
+## Validation Standards for Personal Projects
+
+Deploy after locally verifying the functionality changed in this task. Do not require a full historical regression suite or add or retain permanent tests by default. Temporary scripts may be deleted after use; retain necessary type checks in the build. Ordinary interaction failures can be fixed or the program rolled back; validate bulk rewrites/deletions, migrations, overwrite imports, and backup restoration on an isolated copy first. Keep deployment locks, backups, validation, health checks, and rollback on failure. For specific entry points and environments, see [Local Deployment](release.md).

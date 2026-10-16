@@ -1,39 +1,39 @@
 ---
 name: mscd-music-download
-description: 通过 ENA-QWQ/Mscd 配置的第三方音乐接口解析网易云用户和歌单、分析重叠、按差集下载音乐、嵌入歌词与封面并核验文件。用户提到 MSCD/Mscd、用该仓库下载音乐、下载网易云歌单、跳过喜欢或已下载歌曲、无损优先与 MP3 补齐、版本替代、歌词封面标签或下载完整性时使用。
+description: Use the third-party music APIs configured by ENA-QWQ/Mscd to resolve NetEase Cloud Music users and playlists, analyze overlap, download songs after exclusions, embed lyrics and cover art, and verify files. Use when the user mentions MSCD/Mscd, downloading music with that repository, downloading NetEase playlists, skipping liked or already downloaded songs, preferring lossless audio with MP3 fallback, substituting releases, lyrics and cover tags, or download completeness.
 ---
 
-# MSCD 音乐下载
+# MSCD Music Download
 
-将 [ENA-QWQ/Mscd](https://github.com/ENA-QWQ/Mscd) 视为接口配置与请求方式的来源。它是网页前端；本技能的 Node.js 脚本是个人维护的辅助工具，不能称作上游提供的 CLI。第三方服务可能变动，不能承诺任意歌曲、无损来源或完整歌单都可获得。
+Treat [ENA-QWQ/Mscd](https://github.com/ENA-QWQ/Mscd) as the source of API configuration and request patterns. It is a web frontend; this skill's Node.js scripts are personally maintained helpers and must not be described as an upstream CLI. Third-party services may change, so do not promise that every song, lossless source, or complete playlist will be available.
 
-## 工作流程
+## Workflow
 
-1. 恢复用户本次会话中的范围、保存位置、去重条件、音质和版本替代偏好。已经授权的 MP3 补齐或具体替代不再重复询问；不要将过去某一首歌的授权泛化到混音、现场或其他发行。默认优先原条目的原生 FLAC；未授权降级时保留 MP3 候选并询问，同时继续其余歌曲。
-2. 读取 [references/workflow.md](references/workflow.md)，按查询、快照、计划、下载、审计的顺序执行。将所有输出和运行状态放在本次工作目录，音乐放在用户指定位置；不要写入本技能或 `agent-config`。
-3. 检查输出位置的可用空间与现有 `node`、`curl`、`ffmpeg`、`ffprobe`。脚本只用 Node 内置模块；不要安装 npm 或 Python 依赖。缺工具时调用 `software-installation`；只有另需第三方 Python 才调用 `python-environment`。
-4. 将昵称解析为数字 UID，核对身份，区分用户创建与收藏的歌单。分页读取列表。以 `trackIds` 为曲目索引，补查歌曲详情，记录声明数量、返回 ID 数和详情缺失；数量不一致时按 [references/api-and-troubleshooting.md](references/api-and-troubleshooting.md) 交叉核对。
-5. 先生成下载计划。默认按网易云歌曲 ID 去重，多目标歌单同一 ID 只下载一次。按“喜欢的歌单中已有”排除时，使用该歌单快照；按“本地已下载”排除时，核验实际文件与清单，不能只看文件名或旧路径。不同 ID 的同歌名、歌手、时长仅是版本候选，先核对再决定是否排除或替代。
-6. 小并发下载到临时目录，识别实际编码与时长，嵌入标签并完整解码后再发布文件。请求 `br=2000`、文件后缀或接口标注都不能证明无损；绝不能把 MP3 转为 FLAC 冒充无损。允许 MP3 时从本轮可用候选中选择实际码率最高者。
-7. 完成后运行全量审计，读取最终清单，报告成功/失败、FLAC/MP3、实际 MP3 码率、歌词/纯音乐/不可用、封面和发行替代。保留歌单本身的缺口与失败原因；“计划中全部成功”不能掩盖接口少返回的歌曲。
+1. Recover the scope, destination, deduplication criteria, audio quality, and release-substitution preferences from the current conversation. Do not ask again about already authorized MP3 fallback or specific substitutions; do not generalize authorization for one past song to remixes, live versions, or other releases. Prefer native FLAC for the original entry by default; if a downgrade is not authorized, retain MP3 candidates and ask while continuing with the remaining songs.
+2. Read [references/workflow.md](references/workflow.md) and proceed through queries, snapshots, planning, downloading, and auditing in that order. Keep all outputs and runtime state in the current task directory, and music at the user's specified destination; do not write them into this skill or `agent-config`.
+3. Check free space at the output destination and the existing `node`, `curl`, `ffmpeg`, and `ffprobe`. Scripts use only built-in Node modules; do not install npm or Python dependencies. Use `software-installation` for missing tools; use `python-environment` only if third-party Python is separately needed.
+4. Resolve nicknames to numeric UIDs, verify identity, and distinguish playlists the user created from those they saved. Paginate lists. Use `trackIds` as the track index, fetch missing song details, and record declared counts, returned ID counts, and missing details; cross-check discrepancies using [references/api-and-troubleshooting.md](references/api-and-troubleshooting.md).
+5. Generate a download plan first. Deduplicate by NetEase song ID by default, downloading an ID shared across target playlists only once. For exclusions based on songs already in the liked playlist, use that playlist's snapshot; for exclusions based on local downloads, verify actual files and manifests instead of relying on filenames or old paths. Different IDs with matching titles, artists, and durations are only release candidates; verify them before deciding on exclusion or substitution.
+6. Download with low concurrency into a temporary directory, identify actual codecs and durations, embed tags, and fully decode before publishing files. A `br=2000` request, file extension, or API label does not prove lossless audio; never convert MP3 to FLAC and present it as lossless. When MP3 is allowed, choose the highest actual bitrate among candidates available in this attempt.
+7. Run a full audit after completion, read the final manifest, and report successes/failures, FLAC/MP3 counts, actual MP3 bitrates, lyrics/instrumental/unavailable status, cover art, and release substitutions. Retain playlist gaps and failure reasons; success for every planned song must not hide songs omitted by the API.
 
-## 必须保留的行为
+## Required behavior
 
-- 保留原歌单 ID、实际下载 ID、歌名、歌手、专辑、时长和替代说明；替代歌曲沿用原条目的歌单位置。用户同意专辑版时仍需核对艺人、时长和发行差异。
-- 拒绝试听片段；核对 `freeTrialInfo`、实际时长和完整解码。FLAC 检查只能证明本地编码和写标签未破坏音频，不能证明音源母带来历。
-- 将歌词与封面写入音乐文件。FLAC 使用 `LYRICS` 和图片块；MP3 使用标准 ID3 `USLT` 与封面帧。只有自定义 `TXXX:lyrics` 不足以认定 MP3 歌词正确。翻译和逐字歌词可附加保存，播放器支持情况各异。
-- 将“纯音乐，请欣赏”单独归类；它不等于真实歌词。确实没有歌词时明确报告，不杜撰或声称全部歌词齐全。
-- 临时链接用完即弃。使用 HTTPS、参数编码、受控重试和参数数组；不要在日志或清单保存签名下载 URL、Cookie、令牌。脚本不需要账号登录，也不支持凭据参数；公共接口不可见的内容单独说明。
-- 按单曲保存进度，由一个进程汇总清单；同一输出目录不同时开多个下载进程。已有文件只有在元数据、时长、大小与音频哈希核验通过后才跳过。
-- 不覆盖未知同名文件或静默更换已经成功的版本。遇到损坏、旧锁或文件迁移时，先定位实际状态，再按故障说明恢复。
+- Preserve the original playlist ID, actual download ID, title, artists, album, duration, and substitution notes; substituted songs retain the original entry's playlist position. Even when the user approves an album version, verify artists, duration, and release differences.
+- Reject previews; check `freeTrialInfo`, actual duration, and full decoding. FLAC checks can establish only the local encoding and that tagging did not damage the audio, not the provenance of the source master.
+- Write lyrics and cover art into music files. Use `LYRICS` and picture blocks for FLAC, and standard ID3 `USLT` and cover frames for MP3. A custom `TXXX:lyrics` alone is insufficient to establish correct MP3 lyrics. Translated and word-level lyrics may be saved additionally, with support varying by player.
+- Classify “纯音乐，请欣赏” separately; it is not actual lyrics. Explicitly report songs that truly lack lyrics without inventing lyrics or claiming all lyrics are complete.
+- Discard temporary links after use. Use HTTPS, encoded parameters, controlled retries, and argument arrays; do not save signed download URLs, Cookies, or tokens in logs or manifests. Scripts require no account login and accept no credential parameters; separately explain content unavailable through public APIs.
+- Save progress per song and use one process to aggregate the manifest; do not run multiple download processes for the same output directory. Skip existing files only after verifying metadata, duration, size, and audio hashes.
+- Do not overwrite unknown files with the same name or silently change already successful versions. For corruption, stale locks, or relocated files, establish the actual state first, then recover according to the troubleshooting reference.
 
-## 资源入口
+## Resources
 
-- [references/workflow.md](references/workflow.md)：命令、去重边界、替代规则、输出结构、续传与审计。
-- [references/api-and-troubleshooting.md](references/api-and-troubleshooting.md)：上游配置、API 路由、数量差异、封面 403、音质回退、标签和恢复细节。
-- `scripts/library.mjs`：用户/歌曲搜索、歌单读取、重叠分析与下载计划；先看 `--help`。
-- `scripts/download.mjs`：下载、标签写入、续传、汇总和 `--audit`；先看 `--help`。
-- `scripts/common.mjs`、`scripts/audio.mjs`：供脚本复用的网络、路径、元数据与音频核验函数。
-- `scripts/selftest.mjs`：修改脚本后运行 `node --test scripts/selftest.mjs`，用合成音频和模拟接口验证，不连接外部服务。
+- [references/workflow.md](references/workflow.md): commands, deduplication boundaries, substitution rules, output structure, resuming, and auditing.
+- [references/api-and-troubleshooting.md](references/api-and-troubleshooting.md): upstream configuration, API routes, count discrepancies, cover-art 403 errors, quality fallback, tagging, and recovery details.
+- `scripts/library.mjs`: user/song search, playlist retrieval, overlap analysis, and download planning; read `--help` first.
+- `scripts/download.mjs`: downloading, tagging, resuming, aggregation, and `--audit`; read `--help` first.
+- `scripts/common.mjs`, `scripts/audio.mjs`: reusable network, path, metadata, and audio-verification functions for the scripts.
+- `scripts/selftest.mjs`: after script changes, run `node --test scripts/selftest.mjs` to verify with synthetic audio and mock APIs, without connecting to external services.
 
-当实际使用暴露技能或脚本错误时，先完成当前任务，再按 `personal-skill-management` 修正源文件、定向验证并同步仓库。
+When real use exposes a skill or script error, complete the current task first, then use `personal-skill-management` to correct the source files, perform focused validation, and synchronize the repository.

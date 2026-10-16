@@ -11,6 +11,8 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 
 - Use `~/agent-config` as the expected checkout when it exists; otherwise locate or clone `Crashmere/agent-config`.
 - Store personal skills at `skills/<skill-name>/` and treat those directories as the source of truth.
+- Follow the English authoring policy in the global `AGENTS.md` for skill content and supporting materials; retain exact source-language literals when correctness requires them.
+- Apply the global default-English policy when creating or maintaining agent specifications, project or server documentation, technical plans, runbooks, decision records, and handoffs. Do not use that policy to override the requested language of conversations, product content, creative work, or other user-facing deliverables.
 - Keep the repository limited to the user's instructions and skills. Exclude credentials, runtime state, caches, third-party installed copies, and speculative management files.
 - Keep `README.md` in Chinese with a concise inventory linking each skill directly to its `SKILL.md`.
 - Preserve unrelated files and user changes.

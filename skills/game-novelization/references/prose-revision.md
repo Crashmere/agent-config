@@ -1,78 +1,78 @@
-# 自然叙事与去模板化修订
+# Natural narration and revision of formulaic prose
 
-写正文前读“写前确定声音”，初稿完成后或用户要求扩写、润色、去 AI 味时执行后续步骤。这里只处理本技能范围内的游戏改编小说；不凭词频判断文本作者身份，不承诺 AI 检测分数。目标是让文字服务这款游戏、这些人物和当前场景。
+Read “Establish voice before writing” before drafting. Follow the subsequent steps after the first draft or when the user requests expansion, polishing, or removal of AI-like prose. This reference covers only game-adaptation novels within this skill's scope. Do not infer authorship from word frequency or promise AI-detection scores. The goal is to make the prose serve this game, these characters, and the current scene.
 
-## 写前确定声音
+## Establish voice before writing
 
-1. 读取本书风格档案、当前场景的原作依据及相关人物对白。明确谁在感知、此时想做什么、能知道什么，以及场景应带来的情绪；只在内部记必要结论，不让用户重新填写问卷。
-2. 按表达维度采用“用户当前明确要求 → 本书已定表达约定 → 当前场景的原作表达与全书风格 → 通用写作方法”。区分叙述距离、用词、句子节奏、对白、修辞、停顿和旁白；未约定的维度才用下层补齐。表达选择不能越过版本、事实、主线因果和揭示边界。
-3. 用同一游戏的场景与台词、用户认可的本书段落校准声音；样本只能提供表达依据，不能把别处的经历、动作、物件或认知搬进本章。不要把资料不足时的暂定风格当成原作意图。
-4. 先用已有目标、行动、选择、关系和后果组织场景，再选择措辞。细节跟随视角人物当下的注意力；不要先凑“景色—微动作—对白—心理总结”的固定段落，也不规定每段都发生转折。
+1. Read the book's style profile, the original evidence for the current scene, and relevant character dialogue. Establish who is perceiving, what they want now, what they can know, and the scene's intended emotion. Record only necessary conclusions internally rather than making the user complete another questionnaire.
+2. For each expressive dimension, apply this precedence: the user's current explicit requirements → this book's settled expressive agreements → the original expression in the current scene and the book's overall style → general writing methods. Distinguish narrative distance, diction, sentence rhythm, dialogue, rhetoric, pauses, and narration; use lower levels only for unspecified dimensions. Expression choices must not cross edition, fact, main-story causality, or revelation boundaries.
+3. Calibrate voice using scenes and dialogue from the same game and user-approved passages from this book. Samples provide expressive evidence only; do not import experiences, actions, objects, or knowledge from elsewhere into this chapter. Do not treat a provisional style adopted with insufficient material as the original creators' intent.
+4. Organize scenes around existing goals, actions, choices, relationships, and consequences before choosing wording. Let details follow the viewpoint character's current attention; do not first assemble a fixed scenery → microgesture → dialogue → psychological summary paragraph, or require a turn in every paragraph.
 
-## 改稿前锁定保护项
+## Lock protected content before revision
 
-先确认用户要改写还是只审阅，以及允许处理的段落或章节。已有短段落只做表达修订时，利用现有材料判断，不强制重建全书项目或重新收集全部攻略；未核对原作的部分不冒称已核实。
+First confirm whether the user wants rewriting or review only, and which passages or chapters may be handled. For expression-only revision of an existing short passage, judge from available material without requiring a whole-book project rebuild or collecting every walkthrough again. Do not claim unverified portions have been checked against the original.
 
-用户明确要求“补充描写”“场景更充分”或扩写时，直接在所指范围内按[场景展开与地点转移](adaptation-craft.md#场景展开与地点转移)处理，利用已核实素材及与原作相容的非决定性推断展开过程和感受；单纯润色或去 AI 味仍以已述内容为边界。两种任务都不能擅自改变主线事件、关键决定或揭示时机。
+When the user explicitly requests added description, fuller scenes, or expansion, proceed within that scope using [Scene development and location transitions](adaptation-craft.md#scene-development-and-location-transitions). Develop events and feelings using verified material and non-decisive inferences compatible with the original. Ordinary polishing or reducing AI-like prose remains bounded by already stated content. Neither task permits unauthorized changes to main-story events, key decisions, or revelation timing.
 
-在内部保留当前范围中不可随润色改变的内容：
+Internally preserve what polishing must not change within the current scope:
 
-- 谁在何时何地做了什么，先后关系、否定、条件、比较、结果与代价。
-- 台词里的命令、承诺、拒绝、隐瞒、犹疑、称谓和关系变化；用户要求原样保留的短句。
-- 人物已知、误信、猜测和未知；“像是”“可能”“尚未”“只”等承担的不确定性或范围。
-- 伏笔、意象、必要的空间关系、关键物件状态及原作中的情绪过渡。
+- Who did what, when and where; sequence, negation, conditions, comparisons, results, and costs.
+- Dialogue's commands, promises, refusals, concealment, hesitation, forms of address, and relationship changes; short lines the user requires verbatim.
+- What characters know, misbelieve, guess, and do not know; uncertainty or scope carried by words such as “像是”, “可能”, “尚未”, and “只”.
+- Foreshadowing, imagery, necessary spatial relationships, key object states, and the original emotional transitions.
 
-把结构或事实错误交回主线与连续性检查，先修当前有依据且在授权范围内的问题，再润色相关段落。不能把关键事件删掉以使句子流畅，也不能把旧稿中无依据的新增当成必须保护的原作事实。
+Return structural or factual errors to main-story and continuity checks. Fix supported problems within the authorized scope first, then polish the relevant passages. Do not delete key events to smooth sentences, or treat unsupported additions in an old draft as original facts that must be protected.
 
-## 按叙事作用诊断
+## Diagnose by narrative function
 
-先连贯阅读待改范围及必要的前后文，留意哪里让人困惑、分心、失去期待，哪里值得停留，以及哪些已有写法应保留。再判断原因在章节组织、场景推进、人物与信息的关系，还是局部措辞。人物为什么继续前行不清楚，未必能靠添一段风景解决；事件齐全而感受单薄，也未必只需删掉解释句。依据实际问题决定修订层次，不默认每次打磨都要继续扩写、压缩或去模板腔。
+First read the target scope and necessary surrounding text continuously, noticing where readers may become confused, distracted, or lose anticipation, where they should linger, and which existing choices deserve preservation. Then determine whether the cause lies in chapter organization, scene progression, relationships between characters and information, or local wording. An unclear reason for a character to continue may not be solved by adding scenery; complete events with thin emotional experience may not need only explanatory sentences removed. Choose the revision level from actual problems rather than assuming every polishing pass requires further expansion, compression, or removal of formulaic prose.
 
-定位具体句段时，判断它是新增信息、改变行动/关系、建立氛围/视角，还是只复述读者已明白的内容。静默、情绪回环和有意复沓也有作用，不要求每句都提供新事实。下表仅列常见线索，不能替代对整段故事的判断，也不能限定可发现的问题。
+For a specific sentence or passage, judge whether it adds information, changes action/relationships, establishes atmosphere/viewpoint, or merely repeats what readers already understand. Silence, emotional recurrence, and deliberate repetition can also serve a purpose; not every sentence needs a new fact. The table gives common clues, not a substitute for judging the whole passage or a limit on discoverable problems.
 
-| 问题表现 | 有问题时如何处理 | 必须保留的边界 |
+| Symptom | Treatment when it is a problem | Boundary to preserve |
 |---|---|---|
-| 万能套话、空泛拔高、假对比 | 删去无独立意义的包装，直接呈现已有动作、判断或结果 | 否定在排除误解、识别对象或表达人物立场时有意义，不能只留肯定半句 |
-| 同一瞬间多次复述 | 合并“动作概述—细节重播—情绪注解”，保留有作用的信息和变化 | 原作的仪式复沓、犹豫反复、不同时间的重试及后果不同的动作不算重复噪声 |
-| 描写总靠“看、停、确认”引出 | 已在人物视野内的景物可直接呈现，合并没有改变注意力或行动的观察步骤 | 真实的试探、辨认、等待和停顿仍保留，不把这些词当作禁词 |
-| 情绪标签叠加微动作 | 已有对白、选择和后果足够时删掉重复翻译；直接写情绪更准确时保留直写 | 原作确有的伤势、动作失败、习惯与功能性停顿保留；不另造攥拳、颤抖或回忆填空 |
-| 人物对白同声、轮流讲解 | 依据身份、关系和眼下目的调整句法、回应与省略，保留原作的试探、回避、幽默和郑重 | 不强加口头禅、答非所问或残句；原作明确说出的承诺与动机不能被“潜台词”改没 |
-| 叙述者过度解释、章尾升华 | 场景已表达清楚的意思不再复述；保留自然的动作、后果或情绪余波作为停点 | 必要的时间/空间交代和因果连接、原作有意的旁白/独白与哲思仍可保留；不提前揭底 |
-| 句段节奏机械 | 按动作、信息和情绪的推进调整句法与分段，急迫处可短，沉浸处可长 | 不规定字数、长短句交替、排比数量或每章钩子；相似长度本身不构成问题 |
-| 修饰堆叠、比喻泛滥或语域漂移 | 选择准确的名词和动词，去掉同义堆砌；比喻由当前世界、人物和原作意象支撑 | 不一律删除形容词、四字格、排比、破折号或省略号，不把诗性、庄严、冷峻改成日常口语 |
-| 动作衔接句式成串，读来像操作步骤 | 合并没有改变判断或情绪的等待与先后交代，让动作直接接上；需要节奏停顿时换用真实的观察或反应 | 真实的紧张等待、潜行窗口和试错过程保留；不把“才”“再”当禁词，不按次数删 |
-| 场景单薄、像提纲或动作清单 | 定位缺少的空间、过程或情绪承接，按任务范围恢复或展开有效内容 | 不靠无依据的天气、伤势、道具、精确数字或生活琐事制造真实感，也不把已有的留白全部填满 |
+| Generic stock phrases, empty elevation, false contrasts | Remove packaging without independent meaning and directly present existing action, judgment, or result | Negation can exclude a misunderstanding, identify an object, or express a character's position; do not keep only the affirmative half |
+| Repeated accounts of the same instant | Merge action summary → detail replay → emotional annotation while retaining useful information and changes | Original ritual repetition, repeated hesitation, retries at different times, and actions with different consequences are not redundant noise |
+| Description always introduced by “看、停、确认” | Present scenery already in view directly and merge observation steps that do not change attention or action | Preserve actual probing, recognition, waiting, and pauses; do not ban these words |
+| Emotion labels layered with microgestures | Remove repeated interpretation when dialogue, choices, and consequences suffice; retain direct emotion when it is more precise | Keep original injuries, failed actions, habits, and functional pauses; do not invent clenched fists, trembling, or memories to fill space |
+| Characters share one voice or take turns explaining | Adjust syntax, responses, and omissions to identity, relationships, and immediate purpose while preserving original probing, evasion, humor, and solemnity | Do not impose catchphrases, irrelevant answers, or fragments; subtext must not erase explicit original commitments or motives |
+| Narrator overexplains or elevates chapter endings | Do not restate meaning already conveyed by the scene; stop on natural action, consequence, or emotional aftermath | Necessary temporal/spatial grounding and causal links, deliberate original narration/monologue, and philosophical reflection may remain; do not reveal the truth early |
+| Mechanical sentence and paragraph rhythm | Adjust syntax and paragraphing to action, information, and emotion; urgency may be brief and immersion sustained | Do not prescribe character counts, alternating sentence lengths, parallelism quotas, or a hook in every chapter; similar lengths alone are not a problem |
+| Stacked modifiers, excessive metaphors, or register drift | Choose precise nouns and verbs and remove synonymous piling-on; ground metaphors in the current world, characters, and original imagery | Do not ban adjectives, four-character phrases, parallelism, dashes, or ellipses, or turn poetic, solemn, or austere prose into everyday speech |
+| Chains of action transitions read like operating steps | Merge waits and sequencing that change neither judgment nor emotion, connecting actions directly; use real observation or response when a rhythmic pause is needed | Retain tense waiting, stealth windows, and trial and error; do not ban “才” or “再”, or delete by frequency |
+| Thin scenes resembling outlines or action lists | Locate missing spatial grounding, process, or emotional continuity and restore or develop useful content within the task scope | Do not manufacture realism through unsupported weather, injuries, props, exact figures, or daily trivia, or fill every existing silence |
 
-有些问题只在全书层面显形：单句自然的衔接方式、意象或句式，在几十章里反复出现就会形成腔调。通读后若感到某种节奏单调，可用跨章检索定位同类句式，再逐处判断作用，只改纯属惯性的部分。检索结果是定位线索，不是删改配额。
+Some problems emerge only across a whole book: a natural transition, image, or sentence pattern can become mannered when repeated across dozens of chapters. If a read-through reveals monotonous rhythm, search across chapters to locate similar constructions, then judge each use and change only habitual ones. Search results are location clues, not deletion quotas.
 
-必要的重复术语、称谓和物件名称照用，不为词汇多样性乱换同义词。对白标签服务说话者辨认；“说”可以保留，避免每句都带神态说明，也不要为了删标签让人分不清谁在说话。
+Repeat necessary terminology, forms of address, and object names without swapping synonyms for variety. Dialogue tags should identify speakers; “说” may remain. Avoid attaching an expression note to every line, but do not remove tags until speakers become unclear.
 
-## 局部修订与回读
+## Revise locally and reread
 
-全篇扩写时，先用一个有代表性的完整场景校准展开方式，正常自查后继续其余范围，避免整批插完再发现同一种错误。这个步骤用于内部校准，不把已获授权的全篇工作停成等待确认的试写。
+For whole-work expansion, first calibrate development on one representative complete scene, then continue the rest after ordinary self-review. This avoids discovering the same error only after inserting an entire batch. Use the step for internal calibration, not to turn an already authorized whole-work task into a trial draft awaiting confirmation.
 
-1. **按问题选择操作。** 重复就合并，缺少必要经过就补足，声音不合才调整表达。删除前先问会失去什么；能局部解决就不重写整章，通顺且符合本书风格的句段原样保留。
-2. **不把具体化变成造事实。** 不要把“担心”随手换成原文没有的握拳、把“可能认识”改成“认出了”，或给视角人物补出一个“早已看到”的观察时点。新写或明确扩写时允许的小说化编排仍服从改编参考，单纯润色不默认授权扩写事件。
-3. **在原位置展开。** 先找原动作与发现发生在哪里，再把细写放到该处；需要时重组相邻段落。旧概述与新增细写要合并，不能先写已经进屋、读完、归还，再在下一段重新开门、首次看见或继续握着。不要让补段无意增加同一行动的次数；原作有作用的重试或有意回叙仍可保留，并交代时序。
-4. **连着前后文回读。** 按中文语气阅读实际改后的场景，核对上段结束状态、补写过程和下段起点，检查说话者、动作空间与指代。差异摘录只作定位；上下文截断到无法确认先后或“它、那里、刚才”的指向时，读回完整段落或场景。无实际音频播放时不声称已做听感测试。
-5. **对照内容与效果。** 按[扩写后的连续性检查](review.md#扩写后的连续性检查)复核受影响的保护项、人物知识和不确定性，确认没有丢失伏笔、削弱承诺、新增动机或提前揭示。再比较改前改后的语气、重音、节奏和余味：新句更明确或更简洁，不等于更好；若把有效的幽默、迟疑或留白解释平了，恢复旧写或换一种改法。视频细节要与原观察一致；充分细看与选择性入文分别成立，不能因略写而跳过取材，也不能把所有观察都堆进小说。
-6. **按具体问题收敛。** 仍有可定位的问题就继续修对应段落；已自然且边界一致就结束。没有删减比例、词频分数或固定改动量的达标任务，不为证明做过润色反复换说法。
+1. **Choose the operation from the problem.** Merge repetition, supply necessary missing process, and adjust expression only when voice is wrong. Before deleting, consider what would be lost. Do not rewrite a whole chapter when a local fix suffices; preserve fluent passages that fit this book's style.
+2. **Do not turn specificity into invented facts.** Do not casually replace “担心” with a clenched fist absent from the source, change “可能认识” to “认出了”, or add an observation the viewpoint character had supposedly “早已看到”. Novelization choreography allowed in new writing or explicit expansion still follows the adaptation reference; ordinary polishing does not automatically authorize expanding events.
+3. **Expand at the original location.** Find where the original action or discovery occurs, then place the detail there, reorganizing neighboring paragraphs when needed. Merge old summary with new detail: do not first say someone entered, finished reading, and returned an item, then have them open the door, see it for the first time, or still hold it in the next paragraph. Added passages must not accidentally increase the number of times an action occurs. Functional retries or deliberate retrospection in the original may remain, with sequence made clear.
+4. **Reread with the surrounding text.** Read the actual revised scene for Chinese cadence. Connect the preceding paragraph's ending state, added process, and following paragraph's start, checking speakers, action space, and references. Diff excerpts only help locate changes; if truncated context cannot establish sequence or the referents of “它、那里、刚才”, return to the full paragraph or scene. Do not claim a listening test without actual audio playback.
+5. **Compare content and effect.** Use [Continuity checks after expansion](review.md#continuity-checks-after-expansion) to recheck affected protected content, character knowledge, and uncertainty. Confirm no foreshadowing was lost, commitment weakened, motive added, or revelation advanced. Then compare tone, emphasis, rhythm, and aftertaste before and after: clearer or shorter is not necessarily better. If effective humor, hesitation, or ambiguity has been explained away, restore the old wording or try another revision. Video details must match the original observations. Thorough viewing and selective inclusion are separate requirements: summarizing a scene does not justify skipping research, and ample observations need not all enter the novel.
+6. **Converge on specific problems.** Continue revising passages with identifiable issues; stop once the writing is natural and its boundaries consistent. There is no target deletion ratio, word-frequency score, or fixed change volume, and no need to keep rephrasing to prove polishing occurred.
 
-正文文件仅在用户授权改写时保存修订；保留用户手改，必要时另存修订稿。发现超出当前范围的关联问题，按项目流程处理，不扩大成全书重写。
+Save revisions to prose files only when the user authorized rewriting. Preserve manual edits and save a separate revised draft when needed. Handle related issues outside the current scope through the project workflow rather than expanding into a whole-book rewrite.
 
-## 边界示例
+## Boundary examples
 
-下面均为教学用虚构片段，改前文字就是全部可用材料，不为示例假设额外证据。
+The following are fictional teaching passages. The before-text is all the available material; do not assume extra evidence for an example.
 
-- **去掉重复，不补身体反应。** 改前：“她把钥匙推回桌子中央。她不肯收。这是一次拒绝，她已经用行动表明自己不会接受。”可改：“她把钥匙推回桌子中央。她不肯收。”保留拒绝这一明确态度，删掉同义注解；不要再补“手指止不住地发抖”，那是一个新反应。
-- **保留判断强度。** “他像是认得这枚徽章，却没有接话。”不能改成“他认出了徽章，决定隐瞒身世”；后者增加认知、动机和身世。
-- **保留功能性否定。** “带走的是北门的钥匙，不是牢门的。”包含两项辨认信息，不能只因有对比就删掉后半句。
-- **保留作品自己的节奏。** 原作角色迟疑着说“我……还会回来。”，或仪式反复出现“灯尚未熄”，停顿与复沓可以保留；不要仅为通过检查改成“行吧，我回来”或删除后一次复沓。
-- **在动作发生处展开。** 改前：“他推门进屋，读起桌上的信。”若要细写入屋过程，就重组“推门—进屋—读信”这一段；不要在原句之后补“他走到门前，推开门”，让人物无故回到门外。
-- **让状态随动作更新。** 前段已经“把钥匙交还”，后段就不能仍写“攥紧那把钥匙”。补写时一起检查相邻段落，不能只确认新句单独读来顺畅。
+- **Remove repetition without adding a bodily response.** Before: “她把钥匙推回桌子中央。她不肯收。这是一次拒绝，她已经用行动表明自己不会接受。” Possible revision: “她把钥匙推回桌子中央。她不肯收。” Preserve the explicit refusal and remove synonymous commentary; do not add “手指止不住地发抖”, which introduces a new response.
+- **Preserve the degree of certainty.** “他像是认得这枚徽章，却没有接话。” must not become “他认出了徽章，决定隐瞒身世”; the latter adds knowledge, motive, and backstory.
+- **Preserve functional negation.** “带走的是北门的钥匙，不是牢门的。” contains two pieces of identifying information; do not delete the second half merely because it is a contrast.
+- **Preserve the work's own rhythm.** If an original character hesitantly says “我……还会回来。”, or a ritual repeats “灯尚未熄”, the pauses and repetition may remain. Do not change the line to “行吧，我回来” or delete the later repetition merely to pass a check.
+- **Expand where the action occurs.** Before: “他推门进屋，读起桌上的信。” To describe the entrance in detail, reorganize the “推门—进屋—读信” passage; do not append “他走到门前，推开门” after the original sentence and inexplicably return the character outside.
+- **Update state with action.** If an earlier passage already says “把钥匙交还”, a later one cannot still say “攥紧那把钥匙”. Check neighboring paragraphs together when adding prose, rather than confirming only that the new sentence reads smoothly alone.
 
-## 内部记录与交付
+## Internal records and delivery
 
-需要跨章维护时，只在临时章节记录里简记具体问题、采取的修订、保留的功能性写法及回查范围；不建独立评分报告或永久文风库，不将单本书习惯推广到其他游戏。
+When continuity across chapters requires records, briefly note specific problems, revisions made, functional choices preserved, and recheck scope only in temporary chapter logs. Do not create a separate scoring report or permanent style library, or generalize one book's habits to other games.
 
-用户要小说或改稿时，只交付最终正文与正常章名，或其实际文件入口；不附问题清单、改前改后、来源、去 AI 味分数、技术备注或下一步提问。用户明确只要审阅时，给所请求的具体意见而不改正文；格式仍服从该次要求。
+When the user requests a novel or revised draft, deliver only the final prose and normal chapter titles, or actual file links. Do not append problem lists, before/after comparisons, sources, AI-like-prose scores, technical notes, or next-step questions. If the user explicitly requests review only, provide the requested concrete feedback without modifying the prose; follow the format required for that request.

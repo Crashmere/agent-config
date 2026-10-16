@@ -1,10 +1,10 @@
-# 可编辑画板
+# Editable drawings
 
-适用于指定空间布局的树、数据页、扫描路径、架构和事务示意。普通说明、SQL 和表格优先使用原生文档块，自动布局的流程可用 Mermaid。`imageBoard` 只组合图片；`drawing` 保存可编辑图形，两者不互换。
+Use for trees, data pages, scan paths, architecture, and transaction diagrams requiring a specified spatial layout. Prefer native document blocks for ordinary explanations, SQL, and tables; use Mermaid for automatically laid-out flows. `imageBoard` only composes images, while `drawing` stores editable graphics; they are not interchangeable.
 
-## 生成、审阅、插入
+## Generate, review, and insert
 
-画板生成使用 Yuyan 自己的 Excalidraw 适配层，避免手填随机种子、版本等内部字段。第一次按 preview 参考准备浏览器与已提交源码构建；已有依赖不重复安装：
+Drawing generation uses Yuyan's own Excalidraw adapter, avoiding manually populated internal fields such as random seeds and versions. On first use, prepare the browser and a build from committed source as described in the preview reference; do not reinstall existing dependencies:
 
 ```sh
 node "$YUYAN_DOC" preview-setup
@@ -13,9 +13,9 @@ node "$YUYAN_DOC" upload --kind drawing --input "$work_dir/drawing/drawing.yuyan
 node "$YUYAN_DOC" upload --kind drawing --input "$work_dir/drawing/drawing.yuyan.json"
 ```
 
-`drawing` 默认 Chromium，支持 `--browser webkit`；总期限默认 60000 毫秒。生成只启动临时本机实例，浏览器限制同源访问，不连接生产、不修改用户文档。复用 `preview-setup` 缓存，缺失或源码过期立即报错，不隐式构建或安装。输出目录必须不存在；输出包、预览及必要图片，返回包/图片字节数和检索文字。包已包含预览，计算长期占用时不要重复加预览文件大小。
+`drawing` defaults to Chromium and supports `--browser webkit`; the default total deadline is 60000 milliseconds. Generation starts only a temporary local instance, restricts browser access to the same origin, and neither connects to production nor modifies user documents. It reuses the `preview-setup` cache and fails immediately if it is missing or stale relative to source, without implicit builds or installation. The output directory must not exist. It contains the package, preview, and required images; the result reports package/image byte counts and searchable text. The package already contains the preview, so do not count the preview file size again when calculating long-term storage use.
 
-简单输入：`{"template":"tree"}`。模板支持 `page`（数据页）、`tree`（B+ 树）、`scan`（索引扫描）、`timeline`（事务时间线）；空白用于交互绘制，不能作为无元素的持久化包。也可用 `elements` 数组代替 template，采用 Excalidraw 的 element skeleton：
+Simple input: `{"template":"tree"}`. Templates support `page` (data page), `tree` (B+ tree), `scan` (index scan), and `timeline` (transaction timeline). A blank canvas is for interactive drawing and cannot be persisted as an element-free package. You can also replace template with an `elements` array using Excalidraw element skeletons:
 
 ```json
 {
@@ -28,28 +28,28 @@ node "$YUYAN_DOC" upload --kind drawing --input "$work_dir/drawing/drawing.yuyan
 }
 ```
 
-需要图片时 `files` 采用引擎 BinaryFiles（fileId、dataURL、mimeType、created），image 元素引用 fileId；仅支持 PNG/JPEG/GIF/WebP/BMP。它只在生成/编辑内存和独立导出中使用 Base64，上传包里的图片为 Yuyan 内容寻址引用。
+When images are needed, `files` uses the engine's BinaryFiles (fileId, dataURL, mimeType, created), with image elements referencing fileId. Only PNG/JPEG/GIF/WebP/BMP are supported. Base64 is used only in memory during generation/editing and in standalone exports; images in uploaded packages use Yuyan content-addressed references.
 
-先实际查看预览，核对中文、数字、箭头方向、端点和图例。SVG 可用浏览器查看，PNG 可直接用图片工具；需要整篇排版时在插入后按 preview 参考局部预览。不要用“生成成功”代替图形语义检查。
+Actually inspect the preview first, checking Chinese text, numbers, arrow directions, endpoints, and legends. View SVG in a browser or PNG with an image tool. If whole-document layout needs checking, preview the relevant section after insertion as described in the preview reference. Successful generation does not replace checking the diagram's meaning.
 
-生成预览固定为 1 倍导出比例，尺寸不随设备像素密度变化；SVG 使用 XML 序列化，保留不换行空格与画框裁切。若旧网页在高分屏上连简单图形也报 `unsupported or unsafe SVG preview`，先通过“下载 → 可编辑文件”保留未应用的画板，再加载修复后的网页并恢复草稿或导入文件。CLI 生成缓存也需随已提交的 Yuyan 源码执行 `preview-setup` 更新；不要手改预览尺寸或关闭服务端安全校验来绕过错误。
+Generated previews use a fixed 1x export scale; dimensions do not vary with device pixel density. SVG uses XML serialization, preserving nonbreaking spaces and frame clipping. If an older web page reports `unsupported or unsafe SVG preview` even for simple graphics on a high-density screen, first preserve the unapplied drawing through “下载 → 可编辑文件”, then load the fixed web page and restore the draft or import the file. Update the CLI generation cache with `preview-setup` against committed Yuyan source as well. Do not manually change preview dimensions or disable server-side safety validation to bypass the error.
 
-upload 先读取包同目录的图片并核对哈希，再上传图片和包，返回完整 `node`。`--dry-run` 只检查本地输入，不连接生产。随后 `read --out` 当前文档，用 `edit` 的 splice/replace 插入整个块；新文档用 create。服务端会核对包、派生文字及预览属性，不能手造 src/text 绕过上传。
+upload first reads images beside the package and verifies their hashes, then uploads the images and package and returns a complete `node`. `--dry-run` checks only local input and does not connect to production. Next, `read --out` the current document and insert the whole block with `edit` splice/replace operations; use create for a new document. The server checks the package, derived text, and preview attributes; do not fabricate src/text to bypass upload.
 
-## 修改与读取
+## Editing and reading
 
-- `schema --node drawing` 查看属性；`read --scope keyword` 可匹配图内派生文字，并返回所属画板。
-- 显示调整只改 width（100–2400）、blockAlign（left/center/right）、caption，不改 src 和派生字段。
-- 编辑图形可在网页打开画板，或读取 `api --path drawings/ID`，以 elements 修改后重新生成并审阅；上传新包，用局部 replace 替换原节点并保留说明、宽度和对齐。
-- 图内文字不直接参与正文的文本替换，不能改派生 text 模拟改图；新文本必须进入场景并重建预览。
-- 同实例复制节点可复用原包。跨实例必须上传完整包及依赖，不直接复用另一个实例的素材地址。
+- Use `schema --node drawing` to inspect attributes. `read --scope keyword` can match derived text inside a drawing and return the containing drawing.
+- For display changes, edit only width (100–2400), blockAlign (left/center/right), and caption; do not change src or derived fields.
+- To edit graphics, open the drawing in the web UI, or read `api --path drawings/ID`, modify elements, regenerate, and review. Upload the new package and replace only the original node, preserving caption, width, and alignment.
+- Text inside drawings does not directly participate in body text replacement. Do not modify derived text to simulate changing a diagram; new text must enter the scene and its preview must be rebuilt.
+- Copies within the same instance can reuse the original package. Across instances, upload the complete package and dependencies; do not directly reuse another instance's media URLs.
 
-## 导出、预览与兼容
+## Export, preview, and compatibility
 
-单篇 export 包含原生 JSON、Markdown/HTML、画板包、单份预览及图片。画板文件是 `<ID>.yuyan.json`，图片与其同目录；HTML figure 里保留预览和源文件链接。`download --src /drawings/ID/file|preview --out FILE` 下载对应内容。独立 `.excalidraw` 文件通过网页画板的“可编辑文件”下载，其中临时嵌入所需图片。
+A single-document export includes native JSON, Markdown/HTML, drawing packages, one copy of each preview, and images. Drawing files are `<ID>.yuyan.json`, with images in the same directory; the HTML figure preserves preview and source-file links. `download --src /drawings/ID/file|preview --out FILE` downloads the corresponding content. Download standalone `.excalidraw` files through “可编辑文件” in the web drawing UI; required images are temporarily embedded in them.
 
-重导完整 Markdown 文件夹使用项目导入工具，仅对空的隔离实例演练。局部恢复到现有知识库用 upload + revision 保护的 edit；不能整库重导覆盖已有编辑。缺源文件、缺图片或哈希不符必须停止。
+Use project import tools to reimport a complete Markdown folder, rehearsing only on an empty isolated instance. For partial restoration into an existing knowledge base, use upload plus revision-protected edit; do not reimport a whole library over existing edits. Stop on missing source files, missing images, or hash mismatches.
 
-`preview --media-dir <导出目录或attachments目录> --offline` 可复用本地包与图片；远端读取只 GET 快照所属实例的实际媒体。不匹配的包/图片拒绝预览。未知格式/引擎版本保留原包并停止写入，不删除未知内容；服务可能仍提供安全静态预览。
+`preview --media-dir <export-directory-or-attachments-directory> --offline` can reuse local packages and images. Remote reads only GET actual media from the snapshot's instance. Mismatched packages/images are rejected for preview. For unknown format/engine versions, retain the original package and stop writes; do not delete unknown content. The service may still provide a safe static preview.
 
-画板包和依赖图片受正文、回收站、历史和模板保护；未引用包的一小时宽限期也保护图片。上传后及时写入文档，不能把未引用素材当作长期仓库。既有图片重绘需另行逐图审阅，图片放进画板不等于减少了位图占用。
+Drawing packages and dependent images are protected by references in bodies, trash, history, and templates. The one-hour grace period for unreferenced packages also protects their images. Insert uploads into documents promptly; unreferenced media is not long-term storage. Redrawing existing images requires separate review of each image; placing images inside a drawing does not by itself reduce bitmap storage.

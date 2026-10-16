@@ -1,4 +1,4 @@
 interface:
-  display_name: "AI 日历导入"
-  short_description: "按需归纳 AI 使用主题，保存完整聊天与原始资料，并展示指定来源标签"
-  default_prompt: "使用 $ai-calendar-import 整理最近一周的 AI 使用记录，标记来源并将完整聊天和日历摘要导入服务。"
+  display_name: "AI Calendar Import"
+  short_description: "Import AI usage, full chats, and originals with source labels"
+  default_prompt: "Use $ai-calendar-import to organize the past week's AI usage records, label their sources, and import full conversations and calendar summaries into the service."
