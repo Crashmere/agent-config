@@ -1,8 +1,6 @@
 ---
 name: translate-pdf
-description: |
-  Translate PDF documents into another language with faithful meaning, natural prose, consistent terminology, and verified text and image coverage. Preserve document structure and styling where feasible.
-  Use for complete PDF translations, especially long reports with tables, figures, technical terms, or cross-page sentences; also use to review or improve an existing PDF translation.
+description: "Translate or review complete PDFs with faithful meaning, natural prose, consistent terminology, preserved structure, and verified text and image coverage."
 ---
 
 # PDF Translation

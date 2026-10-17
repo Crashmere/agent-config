@@ -1,6 +1,6 @@
 ---
 name: mscd-music-download
-description: Use the third-party music APIs configured by ENA-QWQ/Mscd to resolve NetEase Cloud Music users and playlists, analyze overlap, download songs after exclusions, embed lyrics and cover art, and verify files. Use when the user mentions MSCD/Mscd, downloading music with that repository, downloading NetEase playlists, skipping liked or already downloaded songs, preferring lossless audio with MP3 fallback, substituting releases, lyrics and cover tags, or download completeness.
+description: "Use ENA-QWQ/Mscd APIs to analyze and download NetEase Cloud Music playlists with exclusions, metadata, lyrics, cover art, and verification."
 ---
 
 # MSCD Music Download

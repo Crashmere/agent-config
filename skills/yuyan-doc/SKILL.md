@@ -1,6 +1,6 @@
 ---
 name: yuyan-doc
-description: "Operate the user's personal Yuyan (语燕) knowledge base: find, read, create, write, and edit specific parts of documents; use code, formulas, Mermaid, complex tables, colors, columns, collapsible blocks, image crops and compositions, editable drawings, attachments, document links, templates, and snippets; and manage the document tree, history, and exports. Use when the user mentions documents in Yuyan/语燕 or provides a /yuyan/docs/ link. Delegate service development, deployment, and database backup or recovery to the project and server-operations."
+description: "Operate the user's Yuyan (语燕) knowledge base to read, create, edit, format, organize, and export documents, including /yuyan/docs/ links."
 ---
 
 # Yuyan Documents

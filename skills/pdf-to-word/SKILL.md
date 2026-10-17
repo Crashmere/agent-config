@@ -1,7 +1,6 @@
 ---
 name: pdf-to-word
-description: >-
-  Convert PDFs into usable Word DOCX documents with content accuracy first, editable text and tables where reliable, and verified rendering. Use for PDF-to-Word conversion, converting PDFs into editable documents, batch PDF-to-DOCX conversion, scanned or broken-text PDFs, and diagnosing or improving conversion quality. Apply local OCR, font recovery, layout reconstruction, source-image fallbacks, and continuous improvement of the conversion workflow and tools after real use.
+description: "Convert PDFs to accurate, usable DOCX files with editable content where reliable and verified rendering, including batch, scanned, or broken-text PDFs."
 ---
 
 # PDF to Word

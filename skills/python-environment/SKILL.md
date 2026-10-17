@@ -1,6 +1,6 @@
 ---
 name: python-environment
-description: Manage isolated Python environments and dependencies safely. Use whenever a task requires running or testing Python code with third-party packages, creating or selecting a virtual environment, installing or changing Python dependencies, choosing among uv, pip, Poetry, or other project tooling, or troubleshooting interpreter, package, import, native extension, DLL, or Windows Python security-blocking issues.
+description: "Manage Python environments and dependencies for third-party packages, environment selection or creation, dependency changes, and Python troubleshooting."
 ---
 
 # Python Environment

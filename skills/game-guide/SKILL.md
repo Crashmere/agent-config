@@ -1,6 +1,6 @@
 ---
 name: game-guide
-description: "Collect comprehensive game guides from multilingual web sources, organize them in Chinese for players of the Simplified Chinese edition, and use yuyan-doc to save them in the game's own knowledge base under the homepage game guides group. Use when the user requests complete guides, wants to create or extend a game-guide library, asks to save guides in Yuyan, or explicitly invokes this skill."
+description: "Collect multilingual game guides, organize them in Chinese, and save them to the game's Yuyan knowledge base for comprehensive walkthrough libraries."
 ---
 
 # Game Guide Collection

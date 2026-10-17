@@ -1,6 +1,6 @@
 ---
 name: yt-dlp-download
-description: Use yt-dlp to search for and fully download YouTube videos, choose video quality and audio tracks, preserve chapters, subtitles, thumbnails, and descriptions, handle large files, resuming, aria2 parallel downloads, and errors such as 403/500, and verify final files. Use when the user mentions yt-dlp/ytdlp, downloading YouTube videos or collections, resuming unfinished downloads, or checking download completeness. Delegate video content analysis, game guides, and novelization to the corresponding skills, and software installation and upgrades to software-installation.
+description: "Search for and download complete YouTube videos or collections with yt-dlp, preserving selected media, metadata, subtitles, chapters, and resumability."
 ---
 
 # YouTube Video Download

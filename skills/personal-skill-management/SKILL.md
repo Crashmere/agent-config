@@ -1,6 +1,6 @@
 ---
 name: personal-skill-management
-description: Organize agent instructions and create, review, restructure, document, deploy, and continuously improve the user's personal skills in Crashmere/agent-config. Use when deciding whether behavior belongs in AGENTS.md or a skill, resolving overlapping responsibilities, maintaining the personal skill repository, investigating a missing required skill, or correcting a personal skill or bundled script after real use exposes a problem.
+description: "Manage, review, deploy, and improve the user's personal skills and agent-config repository, including instruction placement, overlaps, and real-use corrections."
 ---
 
 # Personal Skill Management
@@ -29,7 +29,7 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 ## Create or restructure a skill
 
 1. Use `skill-creator` for every new skill and substantial restructuring. Initialize new skills under `~/agent-config/skills`.
-2. Use a lowercase hyphenated folder name matching the frontmatter `name`. Put purpose and triggering conditions in `description`; keep operational guidance in imperative form.
+2. Use a lowercase hyphenated folder name matching the frontmatter `name`. Treat `description` as scarce, always-loaded routing metadata: use one English sentence, normally no more than 160 characters, containing only the primary capability and distinctive trigger terms. Put feature inventories, procedures, exclusions, delegation, and operational guidance in the body.
 3. Include `agents/openai.yaml`. Add other resources only when they provide reusable value, and remove placeholders and unused files.
 4. Apply progressive disclosure:
    - keep core decisions, primary workflow, resource navigation, and safety boundaries in `SKILL.md`;
@@ -37,6 +37,14 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
    - move repeated deterministic operations to `scripts/` and output-only material to `assets/`;
    - state when optional resources should be read or run, avoid deep reference chains, and do not split short content without a material context benefit.
 5. Add only a concise routing or safety rule to `AGENTS.md` when always-on guidance is necessary; never duplicate the full skill there.
+
+## Protect the shared metadata budget
+
+- Keep the combined descriptions of active personal skills at or below 2,400 characters. Recalculate the aggregate after adding skills or broadly rewriting descriptions; a short individual description can still contribute to catalog-wide truncation.
+- Preserve routing accuracy while compressing: retain the capability, rare trigger names, product names, and distinctive file or URL terms that separate the skill from its neighbors.
+- Shorten user-owned descriptions first when TRAE reports metadata truncation. Disable only genuinely unused or redundant skills or plugins through supported TRAE configuration after considering the lost capability.
+- Do not edit system, plugin-provided, installer-managed, third-party, or cached skill metadata to recover budget. Verify the active catalog with TRAE's own prompt renderer rather than inferring success from repository files alone.
+- Do not sacrifice useful capabilities merely to remove the warning. If every skill remains listed and only third-party descriptions are shortened, keep their distinctive routing terms visible where possible and report the remaining catalog pressure.
 
 ## Complete the applicable workflow
 

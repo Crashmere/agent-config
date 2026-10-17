@@ -1,6 +1,6 @@
 ---
 name: software-installation
-description: Choose, install, upgrade, remove, and troubleshoot software using an appropriate trusted distribution channel, using the available Mole skill for macOS software removal and storage cleanup when applicable. Use when the user asks to install, update, or uninstall a CLI, desktop application, package manager, runtime, system component, or developer tool; clean up storage; compare installation methods; resolve PATH or duplicate-installation problems; or verify an installation.
+description: "Install, upgrade, remove, and troubleshoot software from trusted sources, including applications, CLIs, runtimes, package managers, and storage cleanup."
 ---
 
 # Software Installation

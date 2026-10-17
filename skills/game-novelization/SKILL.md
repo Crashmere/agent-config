@@ -1,6 +1,6 @@
 ---
 name: game-novelization
-description: "Faithfully adapt a game's main story into a Chinese novel that stands on its own: verify the edition, route, characters, and plot; use user-provided walkthroughs, game videos, subtitles, and online sources to plan chapters and write, continue, expand, polish, further revise, and review existing manuscripts. Make the story understandable to readers who have never played the game, reduce walkthrough-like narration and formulaic AI prose, match the original narrative and audiovisual style, and deliver only the novel text. Use for game novelization, main-story adaptation, plot-based novels, retellings from a character's perspective, and their outlines or chapters; maintain separate projects for multiple games. Use game-guide for walkthrough collection alone. Do not use by default for original stories, alternate-universe rewrites, or interactive game development."
+description: "Adapt a game's verified main story into a standalone Chinese novel, including outlines, chapters, continuations, revisions, and manuscript review."
 ---
 
 # Game Story Novelization

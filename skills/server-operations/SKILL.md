@@ -1,6 +1,6 @@
 ---
 name: server-operations
-description: Maintain the user's personal Linux servers and multi-application deployments, including SSH host ali, shared Nginx/systemd infrastructure, application inventory, cross-project architecture changes, reproducible rebuilding, and current-state documentation. Use before inspecting, deploying, changing, or troubleshooting these servers or their hosted projects such as Ledger, and when adding another application or updating server maintenance context.
+description: "Maintain the user's personal Linux servers and hosted projects, including SSH host ali, shared infrastructure, deployments, inventory, and server documentation."
 ---
 
 <a id="服务器与多应用维护"></a>

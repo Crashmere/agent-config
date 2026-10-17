@@ -14,6 +14,14 @@ Read this reference when a change requires repository documentation, validation,
 2. Expand validation only for shared infrastructure, cross-skill behavior, high-risk changes, or when focused checks cannot establish confidence. Do not rerun unrelated end-to-end workflows by default.
 3. Do not install missing dependencies, recreate unavailable environments, or change the repository solely for optional broad validation. Use an available focused check and disclose meaningful unverified areas.
 
+## Check the shared skill-metadata budget
+
+1. After adding a skill or changing several descriptions, measure every active personal frontmatter description, not only the edited files. Keep each description normally at or below 160 characters and their combined total at or below 2,400 characters.
+2. Run `traecli debug prompt-input 'skill budget probe'` and inspect the rendered `### Available skills` catalog. Confirm that the edited descriptions are active, count the listed skills, and compare any suspected shortened description with its source; repository-only length checks do not prove that the full active catalog fits TRAE's shared budget.
+3. When validating from a TUI log, use a fresh session and inspect its newest `traex_core_skills::render` entry. An already running session may retain the catalog loaded at startup, while the standalone debug command does not write its result to `traecli-tui.log`.
+4. If truncation remains, preserve distinctive routing terms while shortening user-owned descriptions again. Consider `[[skills.config]]` with `enabled = false` only for genuinely unused or redundant capabilities, using a `name` or absolute `path` selector supported by the installed TRAE version.
+5. Never edit installed system skills, plugin caches, installer-managed skills, or other third-party metadata for budget relief. If all skills remain listed and useful third-party sources dominate the remaining fixed budget, retain those capabilities and report the measured constraint instead of optimizing for a warning-free catalog.
+
 ## Make the skill discoverable
 
 1. After adding, renaming, or removing a skill, run `scripts/sync-skill-links.sh` from the skill directory. Its default mode reports missing, conflicting, and stale links without changing them.

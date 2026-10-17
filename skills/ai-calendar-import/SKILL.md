@@ -1,6 +1,6 @@
 ---
 name: ai-calendar-import
-description: Manually organize AI usage history and import it into the personal AICalendar service. Extract dates and user message counts from local TraeX history or user-provided exports, summarize topics, preserve full conversations and original materials, generate stable records, preview, submit in batches, and read back to verify. Use only when the user requests importing, backfilling, or organizing AI calendar records, or explicitly invokes this skill. Do not automatically record ordinary chats or install hooks or scheduled tasks.
+description: "Import or backfill AI usage history into the personal AICalendar service, including TraeX history, user exports, previews, and verification."
 ---
 
 # AI Calendar Import

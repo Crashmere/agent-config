@@ -1,6 +1,6 @@
 ---
 name: comfyui-operations
-description: Install, configure, operate, maintain, and troubleshoot ComfyUI on Windows, macOS, or Linux, locally or on a user-authorized remote machine. Use when TraeCode needs to install or update ComfyUI, deploy checkpoints or other models, configure background startup and access, manage workflows and outputs, call the ComfyUI API, or diagnose noise, mosaic, black images, missing images, stale caches, model architecture mismatches, VAE problems, accelerator compatibility, or repeated-generation instability. Use python-environment for all Python interpreter, virtual-environment, dependency, PyTorch package, and import troubleshooting work; combine with windows-ssh when the target is a remote Windows PC.
+description: "Install, operate, maintain, and troubleshoot ComfyUI on local or authorized remote Windows, macOS, or Linux systems."
 ---
 
 # ComfyUI Operations
