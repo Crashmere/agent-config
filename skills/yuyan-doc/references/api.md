@@ -11,6 +11,7 @@
 | book-groups | Home page knowledge base groups and revision |
 | recent / titles | Recent documents / document title index |
 | stats | Total body character counts site-wide and per knowledge base; returns `{chars: number, bookChars: {[bookId: string]: number}}`, matching the home page and the bottom-right corner of each card |
+| calendar/periods | All state-calendar periods, ordered by start date, end date, and ID |
 | search?q=关键词 | Server-side full-text matching. All space-separated terms must appear in the title or body (up to the first 10 distinct terms); titles containing more terms rank first. Up to 50 results, not unlimited paginated search |
 | link-targets | Live documents and H1–H6 sections, including actual slugs; excludes trash |
 | docs/ID/preview?heading=slug | Document/section summary |
@@ -31,6 +32,22 @@ Documents whose editing load (body node count, including text nodes, plus charac
 Title pinyin is returned by the server and can filter results; do not introduce another pinyin dictionary. When finding documents with duplicate names, inspect both the knowledge base and parent, then return the real link for the selected document.
 
 Use `node "$YUYAN_DOC" api --path stats` for site-wide and per-knowledge-base character counts. `chars` is the site-wide total; `bookChars` is indexed by knowledge base ID strings, with an entry for every live knowledge base and 0 for empty ones. For example, read `bookChars["12"]` for knowledge base ID 12. Counts match the reading page and tree: each non-whitespace Unicode character counts once, and only current live bodies are counted. Document titles, tree groups, trashed documents/knowledge bases, history, and templates are excluded. With no knowledge bases, the response is `{chars: 0, bookChars: {}}`.
+
+## State calendar
+
+The state calendar is a global Yuyan timeline for overlapping periods, independent of knowledge bases and document bodies. Read all periods with `GET calendar/periods`. Each result contains `id`, `title`, `note`, inclusive `startDate` and `endDate` in `YYYY-MM-DD`, `precision` (`year`, `month`, or `day`), `color`, `revision`, `createdAt`, and `updatedAt`.
+
+Use the generic API for writes:
+
+| Method and path | Body |
+|---|---|
+| POST calendar/periods | title, note, startDate, endDate, precision, color |
+| PUT calendar/periods/ID | Complete period fields plus the current baseRevision |
+| DELETE calendar/periods/ID | baseRevision; requires `--confirm` after an explicit deletion request |
+
+Titles contain 1–120 Unicode characters after trimming and notes at most 2,000. Colors are `emerald`, `blue`, `violet`, `amber`, `rose`, `cyan`, `slate`, or `lime`. Dates are inclusive and ordered. A `year` period must start on January 1 and end on December 31; a `month` period must start on the first day of a month and end on the final day of a month; `day` retains exact dates. Preserve the user's chosen precision rather than deriving it from the dates.
+
+For an update or deletion, first read the list and use that period's current revision. A stale revision returns 409 with the latest revision; reread and reconcile the user's intended change instead of replacing `baseRevision`. Creation is non-idempotent: after a network failure, read the list to see whether it succeeded before retrying. After any successful write, read the list once and verify the affected period, requested boundaries, and preservation of unrelated overlaps.
 
 ## Document tree and knowledge bases
 
