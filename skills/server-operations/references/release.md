@@ -15,12 +15,12 @@ The shared implementation is scripts/release.py. Each project's deploy/release.s
 <a id="验证构建和部署"></a>
 ## Validation, build, and deployment
 
-1. Validate the current changes locally. For UI, check actual desktop/mobile use cases; for calculation or import logic, use representative examples. Retain necessary type checks in the build. Work already validated during development does not require repeating full tests at release time.
+1. Validate the current changes locally. For UI, check the affected interaction and only the viewport or input modes that could realistically behave differently; do not default every cosmetic or reversible change to desktop, mobile, keyboard, screenshots, and multiple browsers. For calculation or import logic, use representative examples. Retain necessary type checks in the build. Stop when the focused checks pass, and do not repeat work already validated during development at release time.
 2. Commit a clear source snapshot and run git push origin main. Pushing only backs up the source and triggers no production operation.
 3. Run make release in the project: export only Git-committed files, install locked dependencies in an isolated build directory, and run make linux to produce a static Linux amd64 program. Business applications also validate and save deploy/portal.json from the same commit.
 4. make deploy reuses build artifacts from the same commit and builds only if none exist. It rejects uncommitted tracked changes, commits not backed up to origin/main, and artifacts with mismatched hashes. Untracked files are excluded from the snapshot.
 5. Upload from the local machine over SSH. The fixed server script handles backup, candidate validation, atomic replacement, and startup health checks; then synchronize the declaration, verify the portal receipt, and check that unauthorized public endpoints return 401.
-6. Run scripts/sync-docs.sh after pushing documentation changes; documentation-only changes do not require program deployment.
+6. Run scripts/sync-docs.sh after pushing managed documentation changes; a routine release does not itself require an operations, verification, or current-state entry, and documentation-only changes do not require program deployment.
 
 The local `.local/releases/<full-commit>/` directory stores program, manifest.json, business applications' portal.json, and last-deployment.json. The manifest records the source commit, SHA-256, tool versions, and build commands. It proves only build/declaration checks and must not be presented as a functional validation record. These materials are neither committed to Git nor automatically cleaned up. Use make releases to inspect them.
 
