@@ -137,3 +137,13 @@ Attributes: `version: 1`, `title` (up to 120 Unicode characters), `grain: year|m
 ```
 
 To edit a calendar, read the block from the full snapshot, preserve its other attributes and period IDs, and replace `attrs.periods` in one document patch. `schema --node calendar` discovers defaults; `validate`, `create`, and `edit` reuse the project's calendar validator. Keyword reads include titles, dates, and notes. Export embeds the complete model in a `section[data-calendar]` HTML block with a readable fallback table; retain `data-calendar-content` for editable reimport. Document history, templates, snippets, copies, and native backup preserve the block. Once used, rollback requires a program that recognizes `calendar`.
+
+### Calendar clipboard strings
+
+The component's `复制日历` action exports `YYCAL1:` plus compact JSON `[title, grain, center, periods]`. Grain is `y|m|d`; center is an ISO date or empty for today. Each period is `[title, start, end?, color?, note?]`. Dates use `YYYY`, `YYYY-MM`, or `YYYY-MM-DD` and retain precision. End has the same precision; empty/missing end means the starting unit. Empty/missing color means `emerald`; missing note means empty. Trailing empty fields are omitted. JSON escaping preserves all text and multiline notes in one line. IDs, revisions, and timestamps do not travel; decoding assigns local sequential IDs. Unknown versions and invalid content fail without mutation.
+
+Example: `YYCAL1:["学习与休整","m","2026-10-18",[["专注学习","2026-09","2026-12","blue","完成基础课程"],["休整","2026-10-16","2026-10-25","rose","与学习状态重叠"]]]`.
+
+`calendar --input FILE --format string|json [--out FILE]` converts locally, using Yuyan's actual codec and validator through `document.mjs`; `--format` specifies the output format. String output accepts one `calendar` node JSON; JSON output accepts a complete clipboard string and produces one insertable `calendar` node. Output files must be new; stdin is supported. There is no service connection or write. Use normal revisioned document edits to insert or replace the decoded node; see [editing](editing.md#calendar-string-transfer).
+
+In the UI, reading and editing both allow copying. Editing imports directly from the clipboard into that component with one-step undo, without a preview or confirmation; clipboard/read errors alone open a correction prompt. Valid pending edits are preserved before replacement; incomplete pending edits stay visible until completed. Import is not a global-calendar API operation.

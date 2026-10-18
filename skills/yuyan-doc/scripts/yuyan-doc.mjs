@@ -20,6 +20,8 @@ read --doc ID_OR_URL [--out snapshot.json]
     [--scope full|outline|node|section|keyword] [--path 2/0] [--keyword TEXT]
     [--format json|markdown]        Snapshot always contains complete original JSON
 validate --input FILE [--format json|markdown] [--out content.json]
+calendar --input FILE --format string|json [--out FILE]
+                                   Convert one calendar node to a portable string or back; local only
 create --book ID --title TITLE [--parent ID] [--kind doc|group]
     [--input FILE --format json|markdown | --template ID] [--out snapshot.json]
 edit --snapshot FILE --patch FILE [--out next-snapshot.json]
@@ -200,6 +202,23 @@ async function main() {
   if (command === 'preview' || command === 'preview-setup') result = await (await import('./preview.mjs')).previewCommand(o, command === 'preview-setup');
   else if (command === 'drawing') result = await (await import('./drawing.mjs')).generateCommand(o);
   else if (command === 'schema') result = (await tools()).describe(o.node);
+  else if (command === 'calendar') {
+    assert(o.input && ['string', 'json'].includes(o.format), 'calendar requires --input and output --format string|json.');
+    const fmt = await tools(), data = await input(o.input);
+    try {
+      if (o.format === 'string') {
+        const node = JSON.parse(data);
+        assert(node?.type === 'calendar', 'Input must be one calendar node.');
+        fmt.validate({ type: 'doc', content: [node] });
+        const text = fmt.calendarTransfer.encodeCalendar({ ...fmt.schema.nodeFromJSON(node).attrs });
+        result = o.out ? { file: await outputFile(o.out, text + '\n') } : { text };
+      } else {
+        const content = { type: 'calendar', attrs: fmt.calendarTransfer.decodeCalendar(data) };
+        fmt.validate({ type: 'doc', content: [content] });
+        result = o.out ? { file: await outputFile(o.out, json(content)) } : { content };
+      }
+    } catch (error) { throw new Failure('invalid_calendar', error.message); }
+  }
   else if (command === 'validate') {
     assert(o.input, 'validate requires --input.');
     const fmt = await tools(), content = await contentInput(fmt);

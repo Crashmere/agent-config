@@ -32,7 +32,7 @@ For testing or another configured endpoint, use `--server http://127.0.0.1:19084
 | Rich text, code, formulas, tables, columns, images, and attachments | [Document format](references/format.md), reading the sections needed; check attributes with `schema --node TYPE` |
 | Generate/upload/modify editable drawings and technical diagram templates | [Editable drawings](references/drawing.md), `drawing` / `upload --kind drawing` |
 | Templates, snippets, history, restore, copy/move/delete; dissolve tree groups, extract groups into knowledge bases, convert knowledge bases into groups, move documents in from other knowledge bases, create a knowledge base in a specified group, and move/reorder knowledge bases | [API and knowledge base operations](references/api.md) |
-| Insert or edit an independent calendar inside a document | [Document calendars](references/format.md#document-calendars), document `create` / `edit` |
+| Insert/edit independent document calendars or transfer clipboard strings | [Document calendars](references/format.md#document-calendars), local `calendar --format string|json`, document `create` / `edit` |
 | Review or manage global state periods on the year/month/day calendar | [State calendar](references/api.md#state-calendar), `api` |
 | Download media or export a single document | [Reading, writing, and targeted edits](references/editing.md#media-and-export) |
 | Check the current layout with screenshots, image proportions on narrow screens, or formula/diagram layout | [Local reading page preview](references/preview.md), `preview`; use `preview-setup` for initial preparation or code updates |

@@ -88,6 +88,17 @@ Reusing an old snapshot causes a conflict; start the next round from the latest 
 
 Before creating/editing, the script checks that every image and attachment URL is accessible. Edits protect the original with `baseRevision` and `sessionRevision`, then read back and compare the title and complete body after saving and request a result snapshot. Success returns `verified:true`; the agent need not repeat these checks with another round of requests. A successful write followed by failure returns a receipt. If only recording the snapshot failed, check the current body, then call `api --method POST --path docs/42/snapshot` without resubmitting the body. Read the history list separately only when troubleshooting a snapshot failure or when the user requests history.
 
+## Calendar string transfer
+
+Use the local converter for clipboard strings; do not duplicate or hand-encode the format.
+
+```sh
+node "$YUYAN_DOC" calendar --input calendar-node.json --format string --out calendar.txt
+node "$YUYAN_DOC" calendar --input calendar.txt --format json --out imported-calendar.json
+```
+
+The JSON input/output is one `calendar` node, not a full snapshot. To extract it, select the calendar from a fresh document snapshot by its content path. To import, use the decoded node in a `replace` operation at that path, or `splice` to insert a new independent component; preserve the surrounding document. Submit the ordinary `edit` using the fresh snapshot so conflicts and readback are handled normally. Apply valid strings directly within the user's requested scope; do not add a preview or confirmation. For invalid input, report the decoder's error and request corrected text. Conversion alone never writes a document.
+
 ## Verification and stopping conditions
 
 | Situation | Required checks and stopping conditions |
