@@ -35,6 +35,8 @@ Use `node "$YUYAN_DOC" api --path stats` for site-wide and per-knowledge-base ch
 
 ## State calendar
 
+These endpoints operate only on the global calendar. For independent calendars embedded in documents, use document JSON edits as described in [Document calendars](format.md#document-calendars).
+
 The state calendar is a global Yuyan timeline for overlapping periods, independent of knowledge bases and document bodies. Read all periods with `GET calendar/periods`. Each result contains `id`, `title`, `note`, inclusive `startDate` and `endDate` in `YYYY-MM-DD`, `precision` (`year`, `month`, or `day`), `color`, `revision`, `createdAt`, and `updatedAt`.
 
 Use the generic API for writes:
@@ -119,7 +121,7 @@ Generic API writes return the service response. Then read the necessary tree, li
 
 ## Drawings and client compatibility
 
-drawing-v1 in `api/meta` features indicates drawing support. The new CLI automatically sends `X-Yuyan-Features: drawing-v1`. Saving or canceling editing of a current document containing drawings rejects older clients; revision checks still apply.
+drawing-v1 in `api/meta` features indicates drawing support. The new CLI automatically sends `X-Yuyan-Features: drawing-v1,calendar-v1`. Saving or canceling editing of a current document containing drawings or calendar components rejects clients missing the corresponding feature token; revision checks still apply.
 
 Publish packages with `upload --kind drawing`, not generic API writes. It calls POST /api/drawings and returns a complete drawing node. Packages are limited to 12 MiB; dependent images must already exist with matching types. GET drawings/ID reads the package. Media download paths omit /api; use download with `/drawings/ID/file` or `/drawings/ID/preview`. Unknown versions cannot be edited; retaining the original file and a server-validated static preview is allowed. See [Editable drawings](drawing.md).
 

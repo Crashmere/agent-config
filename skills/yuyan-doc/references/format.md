@@ -125,3 +125,15 @@ Reference links are ordinary text link marks, without Lark-style @mentions, comm
 Native JSON covers implemented body capabilities. Markdown is convenient for ordinary writing; content beyond Markdown is preserved through the project's existing HTML rules. Arbitrary web applications, scripts, and custom CSS are not accepted. Temporary UI states such as visual code formatting, keyboard selection, hover previews, and reading position need not be reproduced as CLI commands. Fulfill the user's intent by changing the final document structure.
 
 During maintenance, compare nodes, attributes, marks, and actual APIs to determine whether new formats require updates to this reference's examples/validation. An unchanged schemaVersion of 1 does not mean capabilities are unchanged. Prefer the shared schema; keep only this skill's operation orchestration in scripts.
+
+## Document calendars
+
+`calendar` is an atomic block with no child content or marks. Each occurrence owns its periods inside the document body; copied calendars remain independent. Use document create/edit with revision checks, not the global `/calendar/periods` API, for these blocks.
+
+Attributes: `version: 1`, `title` (up to 120 Unicode characters), `grain: year|month|day`, `center` (an ISO date, or an empty string for today), and `periods` (up to 2,000 entries). Every entry has a unique positive safe-integer `id` within that block, required `title` (1–120 characters), `note` (0–2,000 characters), `startDate`, `endDate`, `precision`, and `color`. Dates are inclusive ISO dates from 1000 through 9999. Year precision requires January 1 and December 31 boundaries; month precision requires the first and last days of its boundary months. Colors: `emerald`, `blue`, `violet`, `amber`, `rose`, `cyan`, `slate`, `lime`. Periods may overlap. IDs have no meaning outside their own component.
+
+```json
+{"type":"calendar","attrs":{"version":1,"title":"学习与休整","grain":"month","center":"2026-10-18","periods":[{"id":1,"title":"专注学习","note":"完成基础课程","startDate":"2026-09-01","endDate":"2026-12-31","precision":"month","color":"blue"},{"id":2,"title":"休整","note":"与学习状态重叠","startDate":"2026-10-16","endDate":"2026-10-25","precision":"day","color":"rose"}]}}
+```
+
+To edit a calendar, read the block from the full snapshot, preserve its other attributes and period IDs, and replace `attrs.periods` in one document patch. `schema --node calendar` discovers defaults; `validate`, `create`, and `edit` reuse the project's calendar validator. Keyword reads include titles, dates, and notes. Export embeds the complete model in a `section[data-calendar]` HTML block with a readable fallback table; retain `data-calendar-content` for editable reimport. Document history, templates, snippets, copies, and native backup preserve the block. Once used, rollback requires a program that recognizes `calendar`.
