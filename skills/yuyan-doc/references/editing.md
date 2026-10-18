@@ -97,7 +97,7 @@ node "$YUYAN_DOC" calendar --input calendar-node.json --format string --out cale
 node "$YUYAN_DOC" calendar --input calendar.txt --format json --out imported-calendar.json
 ```
 
-The JSON input/output is one `calendar` node, not a full snapshot. To extract it, select the calendar from a fresh document snapshot by its content path. To import, use the decoded node in a `replace` operation at that path, or `splice` to insert a new independent component; preserve the surrounding document. Submit the ordinary `edit` using the fresh snapshot so conflicts and readback are handled normally. Apply valid strings directly within the user's requested scope; do not add a preview or confirmation. For invalid input, report the decoder's error and request corrected text. Conversion alone never writes a document.
+The JSON input/output is one `calendar` node, not a full snapshot. To extract it, select the calendar from a fresh document snapshot by its content path. To import, use the decoded node in a `replace` operation at that path, or `splice` to insert a new independent component; preserve the surrounding document. The clipboard transport opens the imported calendar and does not preserve collapse state; normal JSON/HTML edits and exports preserve optional `attrs.collapsed`. Rename or fold the existing block by replacing only `attrs.title` or `attrs.collapsed` in a fresh-snapshot patch. Submit the ordinary `edit` using the fresh snapshot so conflicts and readback are handled normally. Apply valid strings directly within the user's requested scope; do not add a preview or confirmation. For invalid input, report the decoder's error and request corrected text. Conversion alone never writes a document.
 
 ## Verification and stopping conditions
 
