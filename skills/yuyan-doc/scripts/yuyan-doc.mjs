@@ -126,49 +126,22 @@ async function exportMedia(content, publicBase) {
   return { resources: [...resources.values()], links };
 }
 
-function validateCalendarPeriod(body, needsRevision) {
-  assert(body && typeof body === 'object' && !Array.isArray(body), 'Calendar period input must be a JSON object.');
-  assert(typeof body.title === 'string' && body.title.trim() && Array.from(body.title.trim()).length <= 120, 'Calendar period title must contain 1–120 characters.');
-  assert(typeof body.note === 'string' && Array.from(body.note.trim()).length <= 2000, 'Calendar period note must contain at most 2,000 characters.');
-  assert(['year', 'month', 'day'].includes(body.precision), 'Calendar period precision must be year, month, or day.');
-  assert(['emerald', 'blue', 'violet', 'amber', 'rose', 'cyan', 'slate', 'lime'].includes(body.color), 'Unsupported calendar period color.');
-  const parseDate = (value, label) => {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
-    assert(match, `Calendar period ${label} must use YYYY-MM-DD.`);
-    const [year, month, day] = match.slice(1).map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day));
-    assert(year >= 1000 && year <= 9999 && date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day, `Calendar period ${label} is invalid.`);
-    return { year, month, day };
-  };
-  const start = parseDate(body.startDate, 'startDate'), end = parseDate(body.endDate, 'endDate');
-  assert(body.startDate <= body.endDate, 'Calendar period endDate cannot be earlier than startDate.');
-  if (body.precision === 'year') assert(start.month === 1 && start.day === 1 && end.month === 12 && end.day === 31, 'A year period must cover complete years.');
-  if (body.precision === 'month') {
-    const endDay = new Date(Date.UTC(end.year, end.month, 0)).getUTCDate();
-    assert(start.day === 1 && end.day === endDay, 'A month period must cover complete months.');
-  }
-  if (needsRevision) assert(Number.isSafeInteger(body.baseRevision) && body.baseRevision > 0, 'This operation requires the current baseRevision.');
-}
-
 async function api() {
   assert(o.path && !o.path.startsWith('/') && !o.path.split('?')[0].includes('..') && !o.path.split('?')[0].includes('%') && !o.path.includes('\\'), 'Use a relative API path, e.g. books/1/tree. Put query values in a URL-encoded query.');
   const method = (o.method || 'GET').toUpperCase();
   const route = o.path.split('?')[0];
   // A bounded escape hatch for product operations; document content always uses validated commands.
-  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|calendar\/periods|recent|stats|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions|\/recent-changes)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
+  const read = /^(meta|books(?:\/\d+(?:\/tree)?)?|book-groups|recent|stats|titles|link-targets|search|trash|templates(?:\/[a-f0-9]{32})?|docs\/\d+(?:\/view|\/preview|\/backlinks|\/versions|\/recent-changes)?|versions\/\d+(?:\/view)?|attachments\/[a-f0-9]{32}\/preview|drawings\/[a-f0-9]{32})$/;
   const writes = {
-    POST: /^(books|templates|calendar\/periods|docs\/batch|docs\/\d+\/(move|dissolve|extract|restore|snapshot)|books\/\d+\/(restore|to-group)|versions\/\d+\/restore)$/,
+    POST: /^(books|templates|docs\/batch|docs\/\d+\/(move|dissolve|extract|restore|snapshot)|books\/\d+\/(restore|to-group)|versions\/\d+\/restore)$/,
     PATCH: /^(books\/\d+|templates\/[a-f0-9]{32})$/,
-    PUT: /^(books\/order|book-groups|calendar\/periods\/\d+)$/,
-    DELETE: /^(books\/\d+|docs\/\d+|templates\/[a-f0-9]{32}|calendar\/periods\/\d+|trash(?:\/(?:books|docs)\/\d+)?)$/,
+    PUT: /^(books\/order|book-groups)$/,
+    DELETE: /^(books\/\d+|docs\/\d+|templates\/[a-f0-9]{32}|trash(?:\/(?:books|docs)\/\d+)?)$/,
   };
   assert(method === 'GET' ? read.test(route) : writes[method]?.test(route), 'Unsupported API operation. Use create/edit for document content and title.');
   assert(method !== 'GET' || !o.input, 'GET does not accept a body.');
   const body = o.input ? await jsonInput(o.input) : undefined;
   if (method === 'POST' && route === 'templates') { const fmt = await tools(); fmt.validate(body?.content); }
-  if (method === 'POST' && route === 'calendar/periods') validateCalendarPeriod(body, false);
-  if (method === 'PUT' && /^calendar\/periods\/\d+$/.test(route)) validateCalendarPeriod(body, true);
-  if (method === 'DELETE' && /^calendar\/periods\/\d+$/.test(route)) assert(Number.isSafeInteger(body?.baseRevision) && body.baseRevision > 0, 'This operation requires the current baseRevision.');
   if ((route === 'book-groups' && method === 'PUT') || (/^templates\//.test(route) && method !== 'GET') || /^versions\/\d+\/restore$/.test(route)) {
     assert(Number.isSafeInteger(body?.baseRevision) && body.baseRevision >= 0, 'This operation requires the current baseRevision.');
   }

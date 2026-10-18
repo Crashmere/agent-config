@@ -128,7 +128,7 @@ During maintenance, compare nodes, attributes, marks, and actual APIs to determi
 
 ## Document calendars
 
-`calendar` is an atomic block with no child content or marks. Each occurrence owns its periods inside the document body; copied calendars remain independent. Use document create/edit with revision checks, not the global `/calendar/periods` API, for these blocks.
+`calendar` is an atomic block with no child content or marks. Each occurrence owns its periods inside the document body; copied calendars remain independent. Use document create/edit with revision checks for these blocks.
 
 Attributes: `version: 1`, `title` (up to 120 Unicode characters), `grain: year|month|day`, `center` (an ISO date, or an empty string for today), and `periods` (up to 2,000 entries). Every entry has a unique positive safe-integer `id` within that block, required `title` (1–120 characters), `note` (0–2,000 characters), `startDate`, `endDate`, `precision`, and `color`. Dates are inclusive ISO dates from 1000 through 9999. Year precision requires January 1 and December 31 boundaries; month precision requires the first and last days of its boundary months. Colors: `emerald`, `blue`, `violet`, `amber`, `rose`, `cyan`, `slate`, `lime`. Periods may overlap. IDs have no meaning outside their own component.
 
@@ -146,4 +146,4 @@ Example: `YYCAL1:["学习与休整","m","2026-10-18",[["专注学习","2026-09",
 
 `calendar --input FILE --format string|json [--out FILE]` converts locally, using Yuyan's actual codec and validator through `document.mjs`; `--format` specifies the output format. String output accepts one `calendar` node JSON; JSON output accepts a complete clipboard string and produces one insertable `calendar` node. Output files must be new; stdin is supported. There is no service connection or write. Use normal revisioned document edits to insert or replace the decoded node; see [editing](editing.md#calendar-string-transfer).
 
-In the UI, reading and editing both allow copying. Editing imports directly from the clipboard into that component with one-step undo, without a preview or confirmation; clipboard/read errors alone open a correction prompt. Valid pending edits are preserved before replacement; incomplete pending edits stay visible until completed. Import is not a global-calendar API operation.
+In the UI, reading and editing both allow copying. Editing imports directly from the clipboard into that component with one-step undo, without a preview or confirmation; clipboard/read errors alone open a correction prompt. Valid pending edits are preserved before replacement; incomplete pending edits stay visible until completed.
