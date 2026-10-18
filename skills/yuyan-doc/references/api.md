@@ -37,9 +37,11 @@ Use `node "$YUYAN_DOC" api --path stats` for site-wide and per-knowledge-base ch
 
 These endpoints operate only on the global calendar. For independent calendars embedded in documents, use document JSON edits as described in [Document calendars](format.md#document-calendars).
 
-The state calendar is a global Yuyan timeline for overlapping periods, independent of knowledge bases and document bodies. Read all periods with `GET calendar/periods`. Each result contains `id`, `title`, `note`, inclusive `startDate` and `endDate` in `YYYY-MM-DD`, `precision` (`year`, `month`, or `day`), `color`, `revision`, `createdAt`, and `updatedAt`.
+The standalone calendar page and sidebar entry are retired, and `/calendar` redirects home. Its stored periods and APIs remain available for explicit export/recovery or maintenance requests, independent of knowledge bases and document bodies. Use document components for new calendars. Read all periods with `GET calendar/periods`. Each result contains `id`, `title`, `note`, inclusive `startDate` and `endDate` in `YYYY-MM-DD`, `precision` (`year`, `month`, or `day`), `color`, `revision`, `createdAt`, and `updatedAt`.
 
-Use the generic API for writes:
+To export the retained data, save `api --path calendar/periods` output outside any public repository, extract its `data` array, and wrap its semantic fields (`id`, `title`, `note`, `startDate`, `endDate`, `precision`, `color`) in one calendar node. Encode with `calendar --input node.json --format string --out calendar.txt`. The global page did not persist a calendar title or viewport on the server; use `日历` and choose a suitable view around the exported date range. Decode the string and compare every period field except internal IDs against the saved response before delivery. Preserve the raw response alongside the string, and do not delete legacy records merely because the page was removed.
+
+The generic API retains the following writes for explicit legacy-maintenance requests:
 
 | Method and path | Body |
 |---|---|

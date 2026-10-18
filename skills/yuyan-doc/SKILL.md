@@ -33,13 +33,13 @@ For testing or another configured endpoint, use `--server http://127.0.0.1:19084
 | Generate/upload/modify editable drawings and technical diagram templates | [Editable drawings](references/drawing.md), `drawing` / `upload --kind drawing` |
 | Templates, snippets, history, restore, copy/move/delete; dissolve tree groups, extract groups into knowledge bases, convert knowledge bases into groups, move documents in from other knowledge bases, create a knowledge base in a specified group, and move/reorder knowledge bases | [API and knowledge base operations](references/api.md) |
 | Insert/edit independent document calendars or transfer clipboard strings | [Document calendars](references/format.md#document-calendars), local `calendar --format string|json`, document `create` / `edit` |
-| Review or manage global state periods on the year/month/day calendar | [State calendar](references/api.md#state-calendar), `api` |
+| Export/recover legacy periods from the retired standalone calendar | [State calendar](references/api.md#state-calendar), `api` |
 | Download media or export a single document | [Reading, writing, and targeted edits](references/editing.md#media-and-export) |
 | Check the current layout with screenshots, image proportions on narrow screens, or formula/diagram layout | [Local reading page preview](references/preview.md), `preview`; use `preview-setup` for initial preparation or code updates |
 
 ## Core workflow
 
-For global-calendar tasks, use the state-calendar workflow in the API reference instead of the document locate/read/edit steps below. Document calendars use the ordinary document workflow and remain independent of the global calendar. Preserve the interval's chosen precision, canonical inclusive date boundaries, color, note, and revision; after a write, read the period list once to verify the requested result.
+For explicit legacy global-calendar export or maintenance tasks, use the state-calendar workflow in the API reference instead of the document locate/read/edit steps below. The standalone page and sidebar entry are retired; `/calendar` redirects home. Create new calendars as document components. Document calendars use the ordinary document workflow and remain independent of the global calendar. Preserve the interval's chosen precision, canonical inclusive date boundaries, color, note, and revision; after a write, read the period list once to verify the requested result.
 
 1. **Locate.** Find the target ID through titles, search, or the tree. Resolve duplicate names using the knowledge base and parent; do not guess IDs from names. URLs only extract a document ID for the currently configured service; they do not switch servers. Section hashes do not automatically become edit locations: read the outline to locate the section first.
 2. **Read.** For large documents, start with `read --scope outline`, then read by `section`, `node`, or `keyword`. Add `--out` before editing to save a full snapshot; partial output is not the complete original.
