@@ -5,7 +5,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from archive_conversations import pack, snapshot, json_bytes
+from archive_conversations import snapshot, json_bytes
+from archive_volumes import pack_conversation
 
 
 def stamp(value):
@@ -88,4 +89,4 @@ def archive_thread(thread, rollout, history, source, directory, source_label=Non
         header={'source':source,'conversation_id':thread['id'],'title':(thread['name'] or thread['title'] or 'AI 会话')[:160],'coverage':'partial','note':'保存该会话当前可取得的全部日志和投影，包含所选日期以外的上下文；源平台已删除的内容和仅有引用的附件不能保证恢复。原始文件保留压缩、重放和未完成末行，可供后续重新解析。'}
         if source_label: header['source_label']=source_label
         if rollout is None: header['note'] += ' 本机原始 rollout 已缺失，仅保存仍可取得的消息投影和轮次元数据；零值时间显示为未知。'
-        return pack(header,messages,sources,directory/(thread['id']+'.jsonl.gz'), source_names=names)
+        return pack_conversation(header,messages,sources,directory/(thread['id']+'.jsonl.gz'), source_names=names)

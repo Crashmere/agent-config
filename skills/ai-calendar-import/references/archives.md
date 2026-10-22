@@ -17,6 +17,16 @@ python3 scripts/archive_conversations.py prepare --archive /private/task/archive
 python3 scripts/archive_conversations.py submit --plan /private/task/archive-plan.json
 ```
 
+Oversized Trae conversations are automatically split into ordered volumes, and
+`archives/index.json` includes every volume. The first volume keeps the original
+conversation ID; subsequent volumes use `-volume-NNN`. Each volume preserves a
+`reassembly.json` source file containing the ordered message volumes, original
+source filenames, byte lengths, SHA-256 values, and exact source-part order.
+Read message volumes in order; concatenate each original file's source parts and
+verify its original SHA-256. Upload and verify every indexed volume before the
+calendar summaries. Do not rerun extraction to recover an interrupted upload;
+reuse the existing archives and fixed upload plans.
+
 Complete archives before importing calendar summaries; each step is independently retryable, so do not claim an atomic batch commit across the two APIs. Trae extraction accepts `--source-label "Trae · 工作电脑"`; generic pack accepts the same parameter to override the displayed source label. The stable source does not change when the label is renamed. If archiving succeeds but summary import fails, retain the archive and keep retrying the original summary plan.
 
 Labels are stored in the service manifest. With the same gzip content, changing only source_label in the manifest, generating a new plan, and running prepare/submit again updates the displayed label without creating another snapshot. Do not edit an existing fixed plan or rewrite an original export merely to change a label. An omitted or empty label preserves the service's existing value. Synchronize calendar record labels separately through summary upsert; the two APIs do not modify each other. The website archive list supports filtering by label keywords.

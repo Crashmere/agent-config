@@ -189,7 +189,7 @@ def extract(args):
             if start <= day <= end:
                 days[day.isoformat()].append((when, text, origin))
         if days and not args.summary_only:
-            archives.append(archive_thread(thread, path, history, args.source, archive_directory, args.source_label))
+            archives.extend(archive_thread(thread, path, history, args.source, archive_directory, args.source_label))
         for day, rows in sorted(days.items()):
             rows.sort(key=lambda r: r[0])
             existing_title = (thread['name'] or thread['title'] or '').strip()
