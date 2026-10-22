@@ -34,3 +34,7 @@ Skills 的说明、参考文档、元数据和模板指引统一使用英语；A
 
 - [server-operations](./skills/server-operations/SKILL.md)：维护个人 Linux 服务器的共享部署约定、当前主机与应用清单、跨项目架构变更、服务器重建及文档同步；项目细节留在各自 docs。
 - [windows-ssh](./skills/windows-ssh/SKILL.md)：通过 SSH 安全连接、检查和操作远程 Windows 电脑，并处理 OpenSSH、文件传输、编码和命令转义问题。
+
+## 外部 Skill 记录
+
+- [the-pirate-bay](https://github.com/glittercowboy/taches-cc-resources/tree/main/skills/the-pirate-bay)：通过 apibay.org 搜索种子，按画质、做种数和上传者状态筛选电影及剧集，查看文件列表并获取磁力链接。
