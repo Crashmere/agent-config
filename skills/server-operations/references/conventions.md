@@ -95,7 +95,7 @@ Source repositories and local directories use the application names `Ledger`, `F
 
 - Clearly distinguish "currently in use," "user confirmed," "not yet verified," and "needs improvement." Record verification dates and provide query methods for volatile values rather than accumulating process IDs, daily filenames, or transaction counts.
 - Do not put combinations of server public addresses and unauthenticated paths, private keys/tokens, complete sensitive configurations, real accounts, or backups in public repositories. Use SSH aliases and secret names; required credentials are provided separately by the user or an existing secret-management system.
-- Git backs up documentation and configuration templates, not data or secrets. Rebuilding aims to reproduce the service setup; it does not promise to recover ledgers, SSH authorizations, or cloud security groups from nothing.
+- Git backs up documentation and configuration templates, not data or secrets. Aura also publishes user-authorized Apple-client installation assets through GitHub Releases; its hosted client build has no production access. Rebuilding aims to reproduce the service setup; it does not promise to recover ledgers, SSH authorizations, or cloud security groups from nothing.
 
 <a id="门户资源契约"></a>
 
