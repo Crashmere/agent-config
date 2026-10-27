@@ -27,6 +27,25 @@
 - Keep changes safe, scoped, and relevant to the task.
 - Explain destructive actions and ask for confirmation before running them.
 
+## Design principles
+
+- Before adding a design, check whether existing components, interfaces, workflows, or data models can support it. When designs share a responsibility, consider consolidating them or extracting their common behavior.
+- Balance reuse and generality against implementation, comprehension, and maintenance costs. Introduce abstractions when concrete shared needs justify them; keep their scope proportional to those needs. Explain the tradeoffs that materially affect the chosen design.
+
+## Technical communication and documentation
+
+Apply these rules to technical replies, design documents, code explanations, comments, and maintenance documentation.
+
+- Organize the explanation around the reader's task and decisions. Introduce the outcome or key design early, then explain the causal relationships or data flow needed to understand it. Keep a coherent abstraction level within each passage and connect implementation details to the design they explain.
+- Allocate detail according to its effect on understanding and decisions. Explain core logic, consequential tradeoffs, and constraints that affect correctness or use. Summarize routine parsing, format conversion, validation, and error handling unless they determine business semantics or whether the design works. Include a detail when omitting it could cause a material misunderstanding or a different implementation.
+- Give each point one main place where it is explained. An overview may identify key decisions; later sections should add mechanisms, evidence, or implementation details. Refer back briefly when needed. Remove repeated importance claims, conclusions that merely restate a section, and transitions that only announce the next section.
+- When revising a document, rewrite affected passages into a coherent account of the current design, state, and constraints. Remove superseded conclusions, abandoned branches, and conversation-dependent notes about what was previously discussed or what the document omits. Retain concise reasons that explain current choices to a new reader; preserve historical decisions in records whose purpose requires that history.
+- State actual behavior, conditions, and consequences directly. Include limitations when they affect the reader's decisions, with the relevant condition and consequence beside the affected content. Remove defensive qualifications and artificial contrasts that address no concrete ambiguity or risk.
+- Explain value through specific mechanisms and evidence. Replace generic claims about stability, flexibility, performance, or importance with what a component does, when it does it, and the resulting benefit or cost. Remove evaluative language that adds no information. Comments should explain non-obvious reasons or constraints rather than restating adjacent code.
+- Use familiar, precise words and explicit verbs. Keep the subjects, conditions, and connections needed for smooth reading; allow short sentences and natural phrasing while maintaining a serious, plain tone. Trim repetition and filler before compressing useful explanation. Use one consistent term for each concept throughout the document.
+- Choose structure to fit the content. Use prose for reasoning, lists for genuinely parallel items, and tables for comparisons or mappings. Add headings, examples, code snippets, and diagrams when they clarify the explanation. Scale the structure to the problem rather than filling a fixed template or splitting continuous reasoning into many tiny sections.
+- Distinguish existing behavior, proposed behavior, and consequential unknowns. Ground factual claims in code, configuration, interfaces, or reliable sources, and support performance figures, compatibility promises, and verification conclusions with evidence. State defined behavior plainly and attach uncertainty to the specific unresolved matter.
+
 ## Testing and investigation discipline
 
 - Minimize unnecessary tests and test runs. Before adding or running a test, identify the concrete behavior or failure it would check, whether that situation can realistically occur, how likely it is, and whether detecting it justifies the effort. Skip tests without a meaningful answer.
