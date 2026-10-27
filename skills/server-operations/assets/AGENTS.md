@@ -4,6 +4,7 @@
 Before operating this server or deploying a new application, read `/opt/server-context/SKILL.md`, then follow its navigation to the shared conventions, current application inventory, and target project documentation.
 
 - Shared documentation source: `skills/server-operations/` in `https://github.com/Crashmere/agent-config`. The server's `/opt/server-context/` is a synchronized copy; see its `SOURCE` for provenance.
+- Identify the target host from the shared inventory. The applications run on `ali`; `nas` is a separately prepared ASUS laptop. For `nas`, read `/opt/server-context/references/nas-host.md` before changing laptop power, storage, or networking.
 - Project details come from each project's own repository. The current projects are Ledger, FeeTable, FabricWorld, RecipeBox, Yuyan, ServerPortal, AICalendar, and Aura. Use the shared application inventory to locate `/opt/<app>/AGENTS.md` and `/opt/<app>/docs/README.md`; provenance is in the corresponding `docs/SOURCE`.
 - Read the current state, then verify it with read-only checks. Do not assume the live system is unchanged just because a service is documented. Do not read or print unrelated credentials/business data.
 - Use only the authorization table in `/opt/server-context/SKILL.md` to decide what to complete and report versus what needs confirmation first. Documentation maintenance, known-junk cleanup, and applying existing solutions all belong in the proceed category.

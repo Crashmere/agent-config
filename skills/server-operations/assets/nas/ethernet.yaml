@@ -1,0 +1,8 @@
+network:
+  version: 2
+  ethernets:
+    enp2s0:
+      dhcp4: true
+      optional: true
+      dhcp4-overrides:
+        route-metric: 100

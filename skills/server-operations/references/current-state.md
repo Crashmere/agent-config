@@ -5,8 +5,9 @@
 AICalendar's web redesign and backup scope changes were last checked on 2026-10-09; health and authentication entry points for all seven sites were last checked on 2026-10-07 (Beijing time). The baseline host inventory was checked on 2026-09-28: the host, five business applications, ServerPortal, and shared HTTPS entry point were all rechecked in the live environment, and the user confirmed successful login on the actual device. The web keyboard and focus policy was updated and deployed on 2026-09-30; see shared configuration below. Backups and data retention were reviewed read-only on 2026-10-01, also confirming that Alibaba Cloud Backup was already running; see cloud backup below. This is a current snapshot that may be overwritten with updates, not a historical log. Add or revise entries only for shared architecture, application inventory, runtime, data layout, backup or recovery, authentication or access, deployment, or another durable operational contract; keep routine feature and visual release history in Git or project design records. Recheck volatile versions and states; unlisted resources must not be assumed absent.
 
 <a id="主机"></a>
+<a id="host"></a>
 
-## Host
+## Host `ali`
 
 | Item | Current state |
 | --- | --- |
@@ -20,6 +21,14 @@ AICalendar's web redesign and backup scope changes were last checked on 2026-10-
 | Host firewall | UFW inactive; this does not establish the state of all netfilter rules or cloud-side protection |
 | Cloud security group | SSH/HTTP/HTTPS reachability verified externally; complete rules have not been audited through the cloud API. Verify separately before future rule changes |
 | Package sources | Signed Ubuntu repositories, currently using Alibaba Cloud's internal mirror; do not copy that mirror address when changing providers |
+
+## Host `nas`
+
+The ASUS G733 laptop was prepared as a separate Linux host on 2026-10-28. It runs Ubuntu 26.04.1 LTS, with a Ryzen 9 5900HX, 64 GB installed RAM, and two 1 TB NVMe SSDs. The Intel SSD holds an ext4 root filesystem and EFI partition; the Samsung SSD retains its unmounted BitLocker partition. The local SSH alias `nas` uses root public-key authentication and a dedicated maintenance-computer key. Obtain the address from local SSH configuration.
+
+Networking currently uses Wi-Fi and DHCP; a router reservation has not been configured. The Ethernet interface supports DHCP and is optional during startup. Charging stops at 80%, the firmware profile is `quiet`, CPU energy preference is `balance_power`, and lid closure is configured to keep the host running. Kernel runtime power management can suspend the NVIDIA GPU when idle. Time is Asia/Shanghai with chrony synchronization; automatic Ubuntu security updates and weekly SSD TRIM are enabled. See [NAS laptop operations](nas-host.md) for configuration sources, verification, and recovery.
+
+No business application, public HTTPS entry point, VPN, or application backup schedule has been installed on `nas`. All applications and the remaining host-specific sections below describe `ali`; preparation of `nas` has not switched production.
 
 <a id="已部署应用共享变更必须逐行核对"></a>
 

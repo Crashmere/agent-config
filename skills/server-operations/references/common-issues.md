@@ -5,6 +5,12 @@ This file records issues that may affect multiple applications and their shared 
 
 For each issue, document the symptoms and decision criteria, affected applications, handling steps, cleanup and acceptance checks, and improvements that have not yet been implemented. Rewrite an entry when its solution is superseded; Git preserves the history.
 
+## Network startup waits for an unplugged interface
+
+On `nas`, Wi-Fi acquired an address but `systemd-networkd-wait-online.service` timed out after two minutes, leaving the host degraded. The installer configured the unplugged Ethernet interface as required, and Netplan generated a wait-online command that waited for it as well as Wi-Fi. This host-level delay would affect every application depending on `network-online.target`.
+
+Mark the unused Ethernet interface `optional: true` in Netplan and enable `dhcp4` so it works when a cable is connected. Keep the working Wi-Fi configuration and its credentials intact. The source for this host is `assets/nas/ethernet.yaml`; install it mode 0600 at `/etc/netplan/80-nas-ethernet.yaml`, run `netplan generate`, then `systemctl daemon-reload`, `networkctl reload`, and `networkctl reconfigure enp2s0`. Reset and start the failed wait-online unit, then verify Result=success and a new SSH connection. This procedure avoids restarting the active Wi-Fi interface.
+
 <a id="门户-api-列表与服务不一致"></a>
 ## Portal API List Does Not Match the Service
 

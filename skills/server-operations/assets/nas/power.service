@@ -1,0 +1,15 @@
+[Unit]
+Description=Apply NAS laptop charging and power preferences
+After=systemd-udev-trigger.service
+ConditionPathExists=/sys/firmware/acpi/platform_profile
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /opt/server-context/assets/nas/apply-power.sh
+RemainAfterExit=yes
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

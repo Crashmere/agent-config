@@ -12,6 +12,7 @@ Use this skill as the entry point for shared operations context, without relying
 ## What to read first
 
 1. Always start with [Shared conventions](references/conventions.md) and [Current server and application inventory](references/current-state.md).
+   For SSH host `nas`, also read [NAS laptop operations](references/nas-host.md); it is a separate host from `ali`.
 2. Read the target project's `AGENTS.md`, `docs/README.md`, and `docs/OPERATIONS.md`, then read architecture/API/release documentation as the task requires. The inventory lists repository and server documentation locations.
 3. For release, build, or testing strategy, first read [Local releases and on-demand validation](references/release.md). For changes, deployments, or documentation updates, you must read [Completing changes and documentation](references/maintenance.md); for new applications, migrations, or server replacement, also read [Rebuilding and adding applications](references/rebuild.md).
 4. For release failures or troubleshooting, first consult [Common issues and shared solutions](references/common-issues.md) and directly follow any existing solution.
@@ -42,7 +43,7 @@ If the applicable column is unclear, use the left column when the action is reve
 ## Getting started
 
 - Inspect each repository's working tree and remote commits before connecting through a trusted SSH alias.
-- Remote SSH commands do not automatically load remote instructions; explicitly read `ssh ali 'cat /opt/AGENTS.md'`. Neither the existence of AGENTS.md nor a login notice guarantees that every client will follow it.
+- Remote SSH commands do not automatically load remote instructions; explicitly read the target host's `/opt/AGENTS.md`, for example `ssh nas 'cat /opt/AGENTS.md'` or `ssh ali 'cat /opt/AGENTS.md'`. Neither the existence of AGENTS.md nor a login notice guarantees that every client will follow it.
 - To view real production pages in a browser or from the command line, run `scripts/view-tunnel.sh`; see the [Shared conventions](references/conventions.md#agents-viewing-live-pages).
 - Spot-check facts relevant to the task: listeners, units, Nginx includes, directory owners, versions, backups, and health. Run `bash /opt/server-context/scripts/inspect.sh` on the server for basic status without accounting records; verify cloud security groups separately.
 - Documentation is a snapshot of the last verification, the live system is the actual state, and Git is the maintenance source. Investigate discrepancies rather than blindly overwriting the live system from documentation or declaring unexpected drift a new convention.
