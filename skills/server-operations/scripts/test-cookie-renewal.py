@@ -44,11 +44,12 @@ try:
         with socket.socket() as reservation:
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
-        apps = ['ledger', 'feetable', 'fabricworld', 'recipebox', 'yuyan']
+        apps = [('ledger', 18080), ('feetable', 18081), ('fabricworld', 18082),
+                ('recipebox', 18083), ('yuyan', 18084), ('aura', 18087)]
         locations = []
-        for index, app in enumerate(apps):
+        for app, app_port in apps:
             locations.append((args.locations / (app + '.conf')).read_text().replace(
-                '127.0.0.1:' + str(18080 + index), '127.0.0.1:' + str(upstream.server_port)))
+                '127.0.0.1:' + str(app_port), '127.0.0.1:' + str(upstream.server_port)))
         auth = args.auth.read_text().replace('127.0.0.1:18085', '127.0.0.1:' + str(upstream.server_port))
         config = temporary / 'nginx.conf'
         config.write_text('daemon off; master_process off;\n'
@@ -65,7 +66,7 @@ try:
             except OSError:
                 time.sleep(.05)
         checks = 0
-        for app in apps:
+        for app, _ in apps:
             for credential in ['synthetic', '', 'invalid']:
                 headers = {'Cookie': '__Host-portal_device=' + credential} if credential else {}
                 request = urllib.request.Request(f'http://127.0.0.1:{port}/{app}/healthz', headers=headers)
@@ -77,7 +78,7 @@ try:
                     assert response.status == (200 if credential == 'synthetic' else 401), app
                     assert response.headers.get_all('Set-Cookie', []) == ([cookie] if credential == 'synthetic' else []), app
                 checks += 1
-        print(f'PASS {checks} checks: all five apps renew only valid credentials, once, preserving cookie attributes.')
+        print(f'PASS {checks} checks: all {len(apps)} apps renew only valid credentials, once, preserving cookie attributes.')
 finally:
     if process is not None and process.poll() is None:
         process.terminate()

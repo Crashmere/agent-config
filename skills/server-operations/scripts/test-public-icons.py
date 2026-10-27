@@ -23,6 +23,7 @@ cases = {
     'fabricworld': (18082, ['favicon.ico', 'fabricworld.svg', 'apple-touch-icon.png']),
     'recipebox': (18083, ['favicon.ico', 'recipebox.svg', 'apple-touch-icon.png']),
     'yuyan': (18084, ['static/favicon.svg', 'static/apple-touch-icon.png']),
+    'aura': (18087, ['favicon.svg', 'apple-touch-icon.png']),
 }
 
 class Upstream(http.server.BaseHTTPRequestHandler):

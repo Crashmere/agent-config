@@ -57,7 +57,7 @@ Confirmed by the user on 2026-09-28: automatically provide all of the following 
 
 ## Directories, Identities, and Processes
 
-Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, and `AICalendar`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
+Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, `AICalendar`, and `Aura`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
 
 ```text
 /opt/server-context/      Controlled copy of shared context; no credentials or runtime data
@@ -74,7 +74,7 @@ Source repositories and local directories use the application names `Ledger`, `F
 - Give each application a separate runtime user. Root manages programs, scripts, and configuration; the runtime user writes only to explicitly designated directories such as its own data and backups. Default data/backup permissions are 0700, with stricter permissions for sensitive configuration; do not treat 0644 as a general permission for secrets.
 - Use systemd for persistent operation and startup at boot. Keep unit sources in the application's config directory and link them through `/etc/systemd/system/`. Logs go to the journal; locate request logs according to application/shared-entry-point responsibilities.
 - Add restrictions such as `NoNewPrivileges`, `ProtectSystem`, and `ReadWritePaths` as needed, and verify that they do not prevent real operation. Do not copy an unsuitable sandbox.
-- The current business applications and portal are all single-file Go programs built locally. The server needs neither Docker, Go/Node build environments, nor a self-hosted runner; FabricWorld and RecipeBox additionally require the system package libvips. Do not install Node on the server: build frontend assets locally and embed them in the program. Obtain user confirmation first for a new application that truly requires a Node runtime. New applications may choose technology according to their dependencies; when introducing shared runtimes/container platforms, record the impact on all applications and the maintenance cost.
+- The current business applications and portal are all single-file Go programs built locally. The server needs neither Docker, Go/Node build environments, nor a self-hosted runner; FabricWorld and RecipeBox additionally require the system package libvips; Aura uses libvips, ExifTool, and FFmpeg. Aura also bundles a locally built Swift PhotoKit companion; the Mac release build requires Apple Command Line Tools. Do not install Node on the server: build frontend assets locally and embed them in the program. Obtain user confirmation first for a new application that truly requires a Node runtime. New applications may choose technology according to their dependencies; when introducing shared runtimes/container platforms, record the impact on all applications and the maintenance cost.
 - Do not remove host tools, cloud-provider agents, scheduled tasks, or user files outside the task. Identify the source of unknown units first.
 
 <a id="数据备份与发布"></a>
