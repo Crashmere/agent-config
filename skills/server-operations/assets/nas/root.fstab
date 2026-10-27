@@ -1,0 +1,5 @@
+# nas: render actual filesystem UUIDs before installing /etc/fstab.
+UUID=__NAS_ROOT_UUID__ / ext4 defaults,noatime 0 1
+UUID=__NAS_BOOT_UUID__ /boot ext4 defaults 0 2
+UUID=__NAS_EFI_UUID__ /boot/efi vfat defaults 0 1
+/swap.img none swap sw 0 0

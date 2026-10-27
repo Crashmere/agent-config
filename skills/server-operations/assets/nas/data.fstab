@@ -1,2 +1,0 @@
-# nas: render the actual filesystem UUID before adding this entry to /etc/fstab.
-UUID=__NAS_DATA_UUID__ /data ext4 defaults,noatime,nofail,x-systemd.device-timeout=10s 0 2
