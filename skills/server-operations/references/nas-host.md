@@ -30,7 +30,7 @@ The power unit is enabled at multi-user startup. After source synchronization, i
 
 NVIDIA runtime power management is already automatic. During preparation it reached `runtime_status=suspended` after idle time. Hardware probes can wake it temporarily; inspect its sysfs runtime status without repeatedly running GPU enumeration tools. No GPU removal, driver blacklisting, or manual PCI unbinding is configured. Wall power has not been measured.
 
-The battery reported about 62 Wh full-charge capacity versus 90 Wh design capacity during preparation. A charge limit does not forcibly discharge a battery already above that limit. Keep vents clear when running with the lid closed. Full power-loss recovery, physical lid behavior, and boot-time persistence must be checked on the actual machine before unattended production use.
+The battery reported about 62 Wh full-charge capacity versus 90 Wh design capacity during preparation. A charge limit does not forcibly discharge a battery already above that limit. Keep vents clear when running with the lid closed. Physical lid closure was verified through logind's `LidClosed=true` and a successful SSH connection; the host remained running and the NVIDIA GPU was suspended. Full power-loss recovery and boot-time persistence still require an actual restart before unattended production use.
 
 To remove the power policy, disable `nas-power.service` and remove the logind drop-in, then reload logind. Restore the previous `balanced` firmware profile, `balance_performance` CPU preference, and 100% charge threshold when appropriate. Network rollback removes only the added Ethernet overlay and regenerates Netplan; preserve the installer Wi-Fi configuration.
 
