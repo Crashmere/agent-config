@@ -48,7 +48,7 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 
 ## Complete the applicable workflow
 
-- Read [references/repository-workflow.md](references/repository-workflow.md) when updating README, validating changes, synchronizing client links, committing, pushing, or reporting repository work. Run `scripts/sync-skill-links.sh` from that workflow instead of recreating client links manually.
+- Read [references/repository-workflow.md](references/repository-workflow.md) when updating global instructions or README, validating changes, synchronizing client links, committing, pushing, or reporting repository work. Run `scripts/sync-skill-links.sh` from that workflow instead of recreating client links manually.
 - Read [references/maintenance.md](references/maintenance.md) when a personal skill or bundled script fails in real use, or when a required skill cannot be found or loaded.
 
 ## Boundaries

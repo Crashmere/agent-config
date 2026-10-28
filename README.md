@@ -8,6 +8,8 @@ Skills 的说明、参考文档、元数据和模板指引统一使用英语；A
 
 - [AGENTS.md](./AGENTS.md)：全局行为约束，包括 Python 环境安全、软件安装、指令管理、测试与排查投入原则和通用工作规范。
 
+Trae 与 Codex 通过符号链接共享此文件；Cursor 的 User Rules 要求每次开始任务时读取此文件。维护全局指令后，按 `personal-skill-management` 流程检查并补齐客户端链接，后续内容更新无需复制。
+
 ## 配置与 Skill 维护
 
 - [personal-skill-management](./skills/personal-skill-management/SKILL.md)：整理 Agent 指令，创建和维护个人 Skill，并同步更新本仓库、README、本机接入和 GitHub 版本。

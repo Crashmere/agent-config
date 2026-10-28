@@ -28,6 +28,12 @@ Read this reference when a change requires repository documentation, validation,
 2. Review the report, then run `scripts/sync-skill-links.sh --apply` to create missing links for the supported clients. The script may create their `skills` directories, but never overwrites an existing path. Resolve conflicts explicitly and review stale links manually.
 3. Re-run report-only mode and verify that at least Trae and Codex resolve the repository-owned `SKILL.md`.
 
+## Keep global instructions connected
+
+1. After maintaining the repository-root `AGENTS.md`, run `scripts/sync-skill-links.sh --instructions-only` and then `scripts/sync-skill-links.sh --instructions-only --apply` to create missing instruction links. These links point Trae's `~/.trae/AGENTS.md` and Codex's `~/.codex/AGENTS.md` to the shared repository file, so subsequent source edits propagate without copying.
+2. Resolve reported conflicts explicitly; the script preserves existing files and links. Re-run report-only mode and use the client's prompt inspection when available to verify that it loads the shared instructions.
+3. Cursor's global User Rules are client-managed settings, separate from its skill directories. Use a rule that requires reading and following `~/agent-config/AGENTS.md` before work, and verify the current User Rules through Cursor when changing this integration. Keep this source-reading rule instead of maintaining a second copy of the instruction body. Do not infer global instruction loading from a `~/.cursor/skills` or `~/.agents/skills` link.
+
 ## Commit and report
 
 1. Review the final diff and preserve unrelated changes.
