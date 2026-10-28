@@ -5,6 +5,12 @@ This file records issues that may affect multiple applications and their shared 
 
 For each issue, document the symptoms and decision criteria, affected applications, handling steps, cleanup and acceptance checks, and improvements that have not yet been implemented. Rewrite an entry when its solution is superseded; Git preserves the history.
 
+## Whole-host freezes with no retained panic
+
+On `nas`, both the local console and network have stopped responding, including an overnight idle episode; the user also reports freezes under Windows. Retained logs contained no conclusive panic, OOM, or storage failure. Preserve journals and hardware state before further resets, check activity and SMART/self-test evidence, and investigate hardware/firmware alongside Linux drivers when the symptom crosses operating systems. An abruptly ending journal does not identify the exact freeze time or prove a thermal, memory, or driver cause.
+
+The current `nas` mitigation and diagnostic sources are maintained in [NAS freeze diagnostics](nas-host.md#freeze-diagnostics): balanced firmware profile, disabled boost, C1 idle restriction, and more frequent persistent health records. The cause remains unresolved; overnight observation and, if recurrence continues, offline memory/DIMM checks are required. All eight hosted applications remain on `ali`, whose runtime settings are unaffected. Recheck `nas` stability before migration; a successful boot, SMART pass, or partial userspace memory test alone does not establish reliability.
+
 ## Network startup waits for an unplugged interface
 
 On `nas`, Wi-Fi acquired an address but `systemd-networkd-wait-online.service` timed out after two minutes, leaving the host degraded. The installer configured the unplugged Ethernet interface as required, and Netplan generated a wait-online command that waited for it as well as Wi-Fi. This host-level delay would affect every application depending on `network-online.target`.

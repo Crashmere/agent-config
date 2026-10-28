@@ -25,15 +25,16 @@ Timezone is Asia/Shanghai. The existing chrony service provides time synchroniza
 | Source | Installed configuration | Behavior |
 | --- | --- | --- |
 | `assets/nas/logind.conf` | `/etc/systemd/logind.conf.d/80-nas-server.conf` | Lid, suspend key, and hibernate key do not suspend the host; idle action is ignored |
-| `assets/nas/apply-power.sh` and `power.service` | `/opt/server-context/assets/nas/apply-power.sh` and `/etc/systemd/system/nas-power.service` | At boot, apply 80% charge limit, firmware `quiet` profile, CPU `balance_power`, and keyboard backlight off |
+| `assets/nas/apply-power.sh` and `power.service` | `/opt/server-context/assets/nas/apply-power.sh` and `/etc/systemd/system/nas-power.service` | Apply 80% charge limit, firmware `balanced`, CPU `balance_power`, boost disabled, C2/C3 requests disabled on every CPU, and keyboard backlight off |
+| `assets/nas/grub-stability.cfg` | `/etc/default/grub.d/95-nas-stability.cfg` | Append `processor.max_cstate=1` so the `acpi_idle` driver excludes deeper states before userspace starts |
 
 The power unit is enabled at multi-user startup. After source synchronization, install the configuration files, run `systemctl daemon-reload`, then restart `nas-power.service`. Reload logind settings with `systemctl kill --kill-whom=main --signal=HUP systemd-logind.service`; restarting logind is unnecessary.
 
-NVIDIA runtime power management is already automatic. During preparation it reached `runtime_status=suspended` after idle time. Hardware probes can wake it temporarily; inspect its sysfs runtime status without repeatedly running GPU enumeration tools. No GPU removal, driver blacklisting, or manual PCI unbinding is configured. On 2026-10-28, the user measured approximately 11 W average wall power with a power meter in the prepared, closed-lid state. The measurement duration was not provided; this result does not establish power consumption under media-processing load.
+NVIDIA runtime power management is automatic. During preparation it reached `runtime_status=suspended` after idle time. Hardware probes can wake it temporarily; inspect its sysfs runtime status without repeatedly running GPU enumeration tools. No GPU removal, driver blacklisting, or manual PCI unbinding is configured. On 2026-10-28, the user measured approximately 11 W average wall power with a power meter under the earlier `quiet` policy with boost enabled and unrestricted CPU idle states. The diagnostic C1 limit can increase idle power, and disabled boost reduces peak throughput. Its wall power has not been measured; the earlier value does not apply to this policy or establish media-processing power consumption.
 
 The battery reported about 62 Wh full-charge capacity versus 90 Wh design capacity during preparation. A charge limit does not forcibly discharge a battery already above that limit. Keep vents clear when running with the lid closed. Physical lid closure was verified through logind's `LidClosed=true` and a successful SSH connection; the host remained running and the NVIDIA GPU was suspended. Charging and firmware preferences persisted through the storage-migration restarts. Automatic startup after a complete power loss remains unverified.
 
-To remove the power policy, disable `nas-power.service` and remove the logind drop-in, then reload logind. Restore the previous `balanced` firmware profile, `balance_performance` CPU preference, and 100% charge threshold when appropriate. Network rollback removes only the added Ethernet overlay and regenerates Netplan; preserve the installer Wi-Fi configuration.
+To roll back the diagnostic power changes, restore the earlier `quiet` profile, enable boost, and remove `/etc/default/grub.d/95-nas-stability.cfg`, then run `update-grub` with both boot mounts present. Restore the matching `apply-power.sh` source so the unit does not reapply the diagnostic controls. For a host started without the kernel C1 limit, write `0` to each C2/C3 `disable` file to restore those states immediately. Once the host has booted with `processor.max_cstate=1`, a separately authorized restart without that parameter is required to expose deeper states again. Keep the charge limit, lid policy, and network settings independent of this diagnostic rollback. Removing the entire preparation policy additionally disables `nas-power.service`, removes the logind drop-in and reloads logind, and restores charging/energy preferences as needed. Network rollback removes only the added Ethernet overlay and regenerates Netplan; preserve the installer Wi-Fi configuration.
 
 ## Tools and storage checks
 
@@ -47,7 +48,7 @@ The user accepted the linear layout's failure behavior: neither SSD is a mirror,
 
 The conversion passed a one-shot LVM boot, a reboot through the new EFI default, and a final reboot after adding the Intel physical volume. Secure Boot remained enabled. `/`, `/opt`, and `/data` reported the same filesystem device; a hard link from `/opt` to `/data` and ordinary-user read/write checks passed. The completed filesystem reported approximately 2.01 TB total and 1.99 TB available in decimal units. SSH, Wi-Fi, the charge limit, firmware profile, and wait-online unit recovered after the final restart; no failed services remained.
 
-During migration, `nas` became unresponsive while an SSH-streamed archive was transferring; the local console also stopped responding. After a user-assisted restart, the previous journal contained no conclusive panic, OOM, disk timeout, or media-error evidence. Samsung's staged filesystem replayed its journal cleanly. A locally generated archive with bounded resources and a resumable 8 MiB/s transfer subsequently completed. The cause of the single freeze remains unresolved. A CPU temperature near 90 degrees Celsius was observed during archive work, without proof of causation; firmware `balanced` and disabled CPU boost were used temporarily during migration to lower temperature.
+For recurring freezes and the diagnostic power policy, see [Freeze diagnostics](#freeze-diagnostics). The successful storage-migration boots verify the boot and filesystem layout; they do not establish long-term hardware stability.
 
 Installed from Ubuntu repositories: ripgrep, smartmontools, nvme-cli, libvips-tools, libheif-plugin-libde265, ExifTool, and FFmpeg. The existing curl, ca-certificates, rsync, and Python 3 remain available. smartmontools monitoring and weekly `fstrim.timer` are enabled. Application builds remain on the maintenance computer.
 
@@ -62,6 +63,35 @@ ssh nas 'cat /sys/bus/pci/devices/0000:01:00.0/power/runtime_status'
 ssh nas 'lsblk -o NAME,MODEL,SIZE,FSTYPE,MOUNTPOINTS; timedatectl'
 ssh nas 'findmnt /; findmnt /boot; findmnt /boot/efi; df -hT /'
 ssh nas 'pvs; vgs; lvs --segments -o lv_name,vg_name,lv_size,segtype,devices'
+```
+
+## Freeze diagnostics
+
+On 2026-10-28, the user reported that `nas` froze after being left overnight and again after a restart/login, and that the same laptop had also frozen under Windows. During the earlier storage migration, the local console and network became unresponsive during archive transfer. No conclusive panic, OOM, disk timeout, or media-error evidence was retained. A CPU temperature near 90 degrees Celsius was observed during compression, without evidence that temperature caused that freeze.
+
+The overnight boot's retained journal and sysstat data end at 02:40:05. CPU idle time in the last several ten-minute samples was approximately 99.9%, with zero I/O wait; this does not identify the precise freeze time. The subsequent failed boot's persisted journal ends during early userspace initialization, so it does not establish a password/authentication cause. Both drives again reported zero media/data-integrity errors. The machine has two matching Samsung 32 GB DDR4-3200 modules, no ECC, and BIOS G733QR.331. Windows recurrence requires investigating hardware/firmware alongside Linux drivers; absence of logged errors does not exclude memory, power, or controller faults.
+
+The current diagnostic policy removes deep CPU idle requests and boost and restores the firmware's balanced fan policy. It is a reversible mitigation under evaluation, not an established root-cause fix. `acpi_idle` was verified as the active driver before choosing `processor.max_cstate=1`; do not copy Intel-only parameters or use `idle=poll` as a permanent low-power policy. The power script applies the equivalent sysfs restriction on the running host. Regenerate GRUB after installing its overlay; a new boot must be checked independently, and overnight stability remains to be established. NVIDIA, NVMe APST, PCIe ASPM, Wi-Fi, and the LVM layout retain their existing settings so later changes can be evaluated separately.
+
+| Source | Installed configuration | Purpose |
+| --- | --- | --- |
+| `assets/nas/journald.conf` | `/etc/systemd/journald.conf.d/80-nas-diagnostics.conf` | Persistent journal, 15-second synchronization, 512 MiB journal cap |
+| `assets/nas/sysstat-collect-timer.conf` | `/etc/systemd/system/sysstat-collect.timer.d/80-nas-diagnostics.conf` | Change existing sysstat collection from ten minutes to one minute |
+| `assets/nas/sysstat-collect-service.conf` | `/etc/systemd/system/sysstat-collect.service.d/80-nas-diagnostics.conf` | Add temperature/fan/load sampling after collection |
+| `assets/nas/record-health.sh` | `/opt/server-context/assets/nas/record-health.sh` | Read CPU/ACPI/NVMe temperatures, fan RPM, available memory, load, power profile, boost, and NVIDIA runtime state; emit one journal line |
+
+Temperature values in `nas-health` are millidegrees Celsius; fan values are RPM. `hwmon` numbering can change at boot, so use the sensor name and device mapping when comparing records. The sampler excludes GPU and Wi-Fi temperature probes, which can wake devices. Reload systemd and restart the existing collector timer after installing the overlays. Restart journald to load its drop-in and run `journalctl --sync`; a sudden hard freeze can still lose its final seconds, and a blocked storage/kernel path can prevent logging altogether.
+
+The installed Ubuntu `kdump-tools` service already loads a crash kernel (`/sys/kernel/kexec_crash_loaded=1`) and NMI watchdog is enabled. No dump was present during inspection. Automatic panic/reboot settings were not added. Logs and pre-change hardware state are retained privately under `/root/nas-diagnostics/20261028` and on the maintenance Mac under `~/ali/backups/nas-diagnostics-20261028`; they are outside Git and separate from the verified pre-LVM recovery backup. The day's sysstat file had a truncated record following the hard resets; preserve it before moving it aside and starting a new collector file.
+
+`memtester` and `stress-ng` were added from signed Ubuntu repositories for bounded hardware checks. A userspace test checks only its allocated memory, under the current power policy; it cannot clear all 64 GB or verify the previous boost/idle behavior. If freezing continues, boot an offline MemTest86 USB and test the two DIMMs separately when errors appear or the combined configuration remains unstable. Check the AC adapter, battery/connector condition, fan operation, and cooling path. Make subsequent CPU, NVMe, graphics, or firmware changes one at a time, preserve the failure evidence, and remeasure wall power before returning to a lower-power policy. A short test or successful reboot alone does not justify moving applications from `ali` to `nas`.
+
+```sh
+ssh nas 'journalctl --list-boots; journalctl -k -b -1 --no-pager'
+ssh nas 'journalctl -u sysstat-collect.service --since today --no-pager -g nas-health'
+ssh nas 'sar -u -r -q; cat /sys/devices/system/cpu/cpuidle/current_driver'
+ssh nas 'cat /proc/cmdline; cat /sys/module/processor/parameters/max_cstate'
+ssh nas 'cat /sys/devices/system/cpu/cpufreq/boost; kdump-config show'
 ```
 
 Shared docs synchronize with `SYNC_HOST=nas skills/server-operations/scripts/sync-docs.sh shared` from the pushed agent-config checkout. This creates `/opt/server-context`, `/opt/AGENTS.md`, and the login notice. `/root/AGENTS.md` links to `/opt/AGENTS.md`. The separate `ali` copy must receive shared inventory changes through the same script with its default host.
