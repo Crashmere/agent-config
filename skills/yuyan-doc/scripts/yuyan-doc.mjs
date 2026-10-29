@@ -36,7 +36,7 @@ preview --snapshot FILE --out NEW_DIRECTORY
     [--browser webkit|chromium] [--theme light|dark]
 
 Common: --repo PATH (default YUYAN_REPO or ~/ali/Yuyan)
-        --ssh ALIAS (default YUYAN_SSH or ali; uses an ephemeral SSH tunnel)
+        --ssh ALIAS (default YUYAN_SSH or vps; uses an ephemeral SSH tunnel)
         --server URL (YUYAN_SERVER; bypass SSH, useful for isolated instances)
         --public-url URL (YUYAN_PUBLIC_URL; document links)
         --cookie-file FILE (optional one-line Cookie header; never print it)

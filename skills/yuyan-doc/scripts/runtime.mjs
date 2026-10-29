@@ -45,13 +45,15 @@ export async function connect(options, { manageSignals = true, signal } = {}) {
     publicBase = baseURL(options['public-url'] || process.env.YUYAN_PUBLIC_URL || base.href);
     source = base.href;
   } else {
-    const host = options.ssh || process.env.YUYAN_SSH || 'ali';
+    const host = options.ssh || process.env.YUYAN_SSH || 'vps';
     assert(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(host), 'Use a configured SSH host alias.');
     const sshOptions = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10'];
     const config = execFileSync('ssh', ['-G', ...sshOptions, host], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     const hostname = /^hostname (.+)$/m.exec(config)?.[1];
     assert(hostname, 'Cannot resolve the SSH hostname.');
-    publicBase = baseURL(options['public-url'] || process.env.YUYAN_PUBLIC_URL || `https://${hostname.includes(':') ? `[${hostname}]` : hostname}/yuyan/`);
+    const publicHost = hostname.includes(':') ? `[${hostname}]` : hostname;
+    const publicPort = host === 'vps' ? ':8443' : '';
+    publicBase = baseURL(options['public-url'] || process.env.YUYAN_PUBLIC_URL || `https://${publicHost}${publicPort}/yuyan/`);
     source = `ssh:${host}:127.0.0.1:18084`;
     const listener = net.createServer();
     await new Promise((ok, fail) => { listener.once('error', fail); listener.listen(0, '127.0.0.1', ok); });
