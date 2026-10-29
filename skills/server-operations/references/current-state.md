@@ -1,21 +1,21 @@
 <a id="当前服务器与应用清单"></a>
 # Current Server and Application Inventory
 
-**Migration phase: preparation/staging; production cutover is not recorded as complete.** The source production applications remain on `ali` until the final consistent transfer and NAS activation are accepted. The authorized target is all eight application instances and authoritative data on `nas`, with `ali` HTTPS 443 and `vps` HTTPS 8443 forwarding to that same NAS state. VPS's existing sing-box proxy keeps TCP 443. [NAS migration](nas-migration.md) owns the shared topology, cutover, manual backup, and recovery contract.
+**Migration phase: application and gateway cutover accepted on 2026-10-30 (Asia/Shanghai).** All eight application instances and authoritative data are active on `nas`. The primary `vps` HTTPS 8443 entrance and compatibility `ali` HTTPS 443 entrance forward to that same NAS state; VPS's sing-box proxy retains TCP 443. Physical device trust/logins and a first external backup remain outstanding. [NAS migration](nas-migration.md) owns the shared topology, manual backup, and recovery contract.
 
-This inventory records durable roles and constraints, not a release log. Recheck actual listeners, enabled units, source markers, and recovery receipts; a committed template or staging copy is not an active production instance.
+The cutover stopped ALI writers before final capture and verified all 4,066 transferred data entries against the frozen source. Eight isolated candidates passed native checks without creating additional upgrade snapshots. Cold post-first-start validation preserved all previous SQLite columns, row multiplicities and BLOB content, non-database files, and five Portal device grants before the next history-retention slot. Runtime, three TLS/authenticated entrances, branding, isolated upload/streaming/Range behavior, and the existing VPS proxy passed acceptance; maintenance gates were removed. These checks do not establish physical device CA trust, every user-device login, or an external recovery set.
 
-Verified preparation has installed the NAS local CA/leaf renewal timer and eight runtime accounts with empty application roots. NAS-to-VPS reverse forwarding has all eight loopback application listeners plus management 22022, and the trusted `nas-via-vps` maintenance alias works while the existing LAN `nas` alias remains unchanged. VPS has an HTTP-01-only Nginx bootstrap on public 80, an isolated Certbot 5.8 environment, and its production IP certificate; proxy 443 is unchanged. These listeners have no active NAS application upstreams yet, and ALI's eight production applications remain running. LAN bulk SSH copies have timed out despite continuous NAS health sampling; use the verified maintenance route without treating the symptom as a confirmed freeze or silently changing network configuration.
+NAS application units, Portal collector, Nginx, both reverse tunnels, and certificate/power maintenance are active and enabled. Each gateway exposes only its approved public entrance; application listeners and NAS management 22022 remain loopback-only. The trusted `nas-via-vps` alias supplements the unchanged LAN `nas` alias after LAN bulk SSH transfers timed out during migration. That transport symptom does not establish another hardware freeze. This inventory records roles and consequential acceptance limits; recheck listeners, units, source markers, and recovery receipts before maintenance.
 
 <a id="主机"></a>
 <a id="host"></a>
 ## Hosts
 
-| Host | Current role before cutover | Role after accepted cutover |
+| Host | Current role | State and recovery boundary |
 | --- | --- | --- |
-| `ali` | Eight production applications, public HTTPS 443, local application backups/retention and independent HBR client | Public HTTPS 443 gateway to NAS; old application units and backup/retention/HBR clients stopped and disabled, existing materials retained |
-| `nas` | Prepared Ubuntu laptop; migration configuration/artifacts are staging | Only active application host, authoritative data, LAN local-CA HTTPS 443, Portal Web/collector, manual external backup operation |
-| `vps` | AlmaLinux VM with working sing-box REALITY/Vision on TCP 443 | Existing proxy unchanged plus public web HTTPS 8443 and restricted loopback forwarding to NAS |
+| `ali` | Compatibility public HTTPS 443 gateway to NAS | Original application programs/configuration/data/history remain frozen; retired application, backup, retention, and HBR units are inactive and disabled at boot |
+| `nas` | Only active application host, authoritative data, LAN local-CA HTTPS 443, Portal Web/collector | Both gateways reach this state; manual external backup is unavailable until a real volume/UUID is configured |
+| `vps` | Primary public web HTTPS 8443 gateway and independent sing-box REALITY/Vision TCP 443 proxy | Application/management forwarding stays loopback-only; current private gateway/proxy recovery has not been independently captured |
 
 Use the trusted SSH aliases `ali`, `nas`, and `vps`; retrieve real addresses and selected identities from local SSH configuration. Strict host-key verification remains enabled. NAS initiates reverse SSH connections to both gateways because this deployment does not use IPv6 ingress or NAT hole punching.
 
@@ -23,7 +23,7 @@ Use the trusted SSH aliases `ali`, `nas`, and `vps`; retrieve real addresses and
 
 Ubuntu 26.04.1 LTS / amd64 on Alibaba Cloud ECS/KVM; 2 vCPU, approximately 1.7 GiB visible RAM, 40 GiB ext4 root, no swap or separate application-data mount. Nginx 1.28.3 and Certbot's official snap provide trusted public-IP HTTPS on 443, HTTP-01/redirects on 80, and loopback inspection. Chrony uses Asia/Shanghai; signed Ubuntu security updates do not automatically reboot.
 
-Root SSH is key-only. UFW was inactive when checked; complete cloud security-group/netfilter rules are not audited. Aliyun Assist/security components are host/provider tools, not application dependencies. Retain their files unless separately authorized. The HBR client is a separate backup mechanism, described below.
+Root SSH is key-only. UFW was inactive when checked; complete cloud security-group/netfilter rules are not audited. Aliyun Assist/security components remain host/provider tools. HBR is stopped and disabled, as described below. Preserve the frozen ALI installation without further application upgrades, backup additions, documentation synchronization, or cleanup; its original unit definitions remain linked but inactive. Forwarding and public certificate renewal continue. The frozen state excludes subsequent NAS writes and is not an automatic failover target.
 
 ### NAS Platform
 
@@ -31,27 +31,27 @@ Ubuntu 26.04.1 LTS / amd64 on an ASUS G733 laptop, Ryzen 9 5900HX, 64 GB install
 
 NAS currently uses Wi-Fi DHCP; Ethernet supports optional DHCP. The user deferred router address reservation and additional stability investigation, retaining the present address as the migration input. A DHCP address change requires coordinated SSH/Origin/leaf-certificate/shortcut updates. Fully unattended startup after complete power loss is unverified.
 
-The power policy keeps lid closure awake, caps charging at 80%, uses `balance_power`/`balanced`, disables boost, and restricts `acpi_idle` to C1. Persistent journal and minute health sampling remain active. The latest home check showed about 35 hours of uninterrupted runtime, 2,095 samples with a largest 61-second gap, no failed services, and zero media-integrity errors on both SSDs. This is idle-operation evidence, not confirmation of the earlier cross-OS freeze cause or loaded-service stability. [NAS operations](nas-host.md) owns diagnostics, power sources, storage, and recovery.
+The power policy keeps lid closure awake, caps charging at 80%, uses `balance_power`/`balanced`, disables boost, and restricts `acpi_idle` to C1. Persistent journal and minute health sampling remain active. Pre-cutover idle sampling and migration runtime checks passed, but the earlier cross-OS freeze cause and long-term loaded-service stability remain unresolved. [NAS operations](nas-host.md) owns diagnostics, power sources, storage, and recovery.
 
 ### VPS Platform
 
 AlmaLinux 9.8 x86_64/KVM, 2 vCPU with a Xeon SierraForest guest model, approximately 1 GiB RAM, 544 MiB swap, 20 GiB disk with ext4 `/boot` and `/`. NetworkManager DHCP on `eth0`, public IPv4, provider DNS, Asia/Shanghai/chrony. Guest CPU features/topology do not establish dedicated cores or superiority to ALI; provider bandwidth, quotas, billing, filtering, and storage redundancy remain unverified.
 
-Root SSH is key-only. Firewalld is active; TCP 443 serves the proxy. Web migration adds HTTP 80 and HTTPS 8443 under the approved gateway setup, without changing the proxy's 443 listener. DNF security updates never reboot automatically; the image retains `selinux=0 audit=0`. Do not copy Ubuntu APT/snap/UFW or Alibaba-agent assumptions. [VPS operations](vps-host.md) and [Proxy operations](vps-proxy.md) own host/proxy details.
+Root SSH is key-only. Firewalld allows SSH, proxy TCP 443, ACME HTTP 80, and web HTTPS 8443. Nginx and public certificate renewal are active; the proxy's 443 listener and client parameters were unchanged by migration. DNF security updates never reboot automatically; the image retains `selinux=0 audit=0`. Do not copy Ubuntu APT/snap/UFW or Alibaba-agent assumptions. [VPS operations](vps-host.md) and [Proxy operations](vps-proxy.md) own host/proxy details.
 
-The proxy is sing-box 1.14.4, `vps-proxy.service`, using retained `xray` runtime identity and VLESS + REALITY + Vision. Yuyan document 833, titled `VPS配置`, is the client's maintained settings record. Retired Xray is stopped and disabled. User-confirmed iPhone/China Mobile 5G access belongs to proxy acceptance, not web gateway acceptance.
+The proxy is sing-box 1.14.4, `vps-proxy.service`, using the retained `xray` runtime identity and VLESS + REALITY + Vision. Yuyan document 833, titled `VPS配置`, is the client's maintained settings record. The installed macOS Hiddify 4.1.1 app's real core passed a public proxy HTTPS request alongside web acceptance; user-confirmed iPhone/China Mobile 5G access remains separate evidence. Approved pre-change archives and retired Xray software were removed without changing live proxy/gateway configuration or restarting either service; preserve the active `xray` identity.
 
 <a id="已部署应用共享变更必须逐行核对"></a>
 ## Application Inventory
 
-Paths, users, and ports below are shared by the ALI source and NAS target. Before cutover, ALI remains the active source; NAS copies must not accept independent writes. The seven business backup unit files may remain as inactive historical assets, but no such timer is enabled on NAS.
+Paths, users, and ports below belong to the active NAS instances and are unchanged from the frozen ALI installation. ALI has no active business instance or collector; its public routes use NAS reverse forwards. Legacy backup unit files remain inactive source assets, not enabled NAS schedules.
 
 | Application / source | Prefix / loopback port | Root / identities | Main units and dependencies |
 | --- | --- | --- | --- |
 | [Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` / 18080 | `/opt/ledger`; `ledger`, `ledger-deploy` | `ledger.service`; local FabricWorld integration |
 | [FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` / 18081 | `/opt/feetable`; `feetable`, `feetable-deploy` | `feetable.service` |
-| [FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` / 18082 | `/opt/fabricworld`; `fabricworld`, `fabricworld-deploy` | `fabricworld.service`; libvips; 640 MiB memory limit |
-| [RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` / 18083 | `/opt/recipebox`; `recipebox`, `recipebox-deploy` | `recipebox.service`; libvips; 640 MiB limit; 5 GiB photo quota |
+| [FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` / 18082 | `/opt/fabricworld`; `fabricworld`, `fabricworld-deploy` | `fabricworld.service`, native `fabricworld-cleanup.service/timer`; libvips; 640 MiB memory limit |
+| [RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` / 18083 | `/opt/recipebox`; `recipebox`, `recipebox-deploy` | `recipebox.service`, native `recipebox-cleanup.service/timer`; libvips; 640 MiB limit; 5 GiB photo quota |
 | [Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` / 18084 | `/opt/yuyan`; `yuyan`, `yuyan-deploy` | `yuyan.service`; 384 MiB limit, GOMEMLIMIT 320 MiB; gzip deployment |
 | [ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` / 18085 | `/opt/serverportal`; Web user `serverportal`, administrator deployment | `serverportal.service`, root `serverportal-agent.service`; local Unix socket |
 | [AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` / 18086 | `/opt/aicalendar`; `aicalendar`, `aicalendar-deploy` | `aicalendar.service`; 192 MiB limit, GOMEMLIMIT 144 MiB; independent Bearer ingest |
@@ -90,27 +90,29 @@ Loopback inspection is available only through authorized SSH. It can access real
 <a id="手工数据归档"></a>
 ## Manual Data Archives
 
-Routine NAS backups require a real external mount/UUID. That external volume is not yet identified, so the Portal job is intentionally unavailable until configured. It must not create an internal fallback. The migration's initial independent cold Mac recovery archive is a separate protection step, not a successful external-drive backup or real-device recovery drill. Completion and coverage must be recorded when actually verified. [NAS migration](nas-migration.md#manual-full-backups) owns the pause/copy/resume/compress/verify workflow and agent-only gateway package.
+Routine NAS backups require a real external mount/UUID. No volume is identified, so the Portal job is intentionally unavailable without an internal fallback. The user waived an additional retained migration recovery point: task-created Mac seeds/private packages and temporary gateway recovery material were removed after acceptance. Accepted NAS candidates, migration staging, and obsolete historical data copies were also removed; small acceptance receipts remain. The frozen ALI installation remains the migration-point fallback; it cannot recover later NAS writes. [NAS migration](nas-migration.md#manual-full-backups) owns the pause/copy/resume/compress/verify workflow and separately agent-collected gateway package.
 
-Existing real materials remain protected: maintenance-computer `~/ali/backups/`, ALI native/manual/Portal exports and `/opt/backup-exports`, the older five-application `ali-data-*` archive, and the verified approximately 2.3 GiB pre-LVM NAS root archive under `backups/nas-lvm-*`. Their adjacent private manifests record recovery points and coverage; older partial/five-app packages are not substitutes for the new eight-app full scope. None enters Git, is overwritten, or is deleted by this migration.
+Protected pre-existing materials include maintenance-computer `~/ali/backups/`, frozen ALI native/manual/Portal exports and `/opt/backup-exports`, the older five-application `ali-data-*` archive, and the verified approximately 2.3 GiB pre-LVM NAS root archive and diagnostics on the maintenance Mac. Private manifests record their historical recovery points and coverage. They are preserved, outside Git, and do not provide a current eight-application NAS/CA/tunnel or VPS private gateway/proxy recovery set. Redundant NAS pre-LVM/storage/diagnostic copies were removed only after byte verification against the protected Mac material; the Mac originals remain intact.
 
-After cutover, NAS retains no routine backup data or archive cache internally. Temporary local upgrade protection is the explicit exception and is removed only after runtime and affected-data acceptance. Manual recovery restores application state rather than an OS/disk image; writes after the last successful complete backup can be lost.
+NAS retains no routine backup data, backup staging, or backup archive cache internally. Normal application data and derived caches remain part of live state. Temporary local upgrade protection is the explicit exception and is removed only after runtime and affected-data acceptance; unresolved failures remain protected. No current independent NAS/VPS private recovery set has been captured. Manual recovery restores application state rather than an OS/disk image, and writes after a selected recovery point can be lost.
 
 <a id="云备份"></a>
 ## Cloud Backup
 
-ALI's `hbrclient.service` and `hbrclientupdater.service` at `/opt/alibabacloud/hbrclient` are independent of application timers and Portal exports. Their file-backup scan included application `/opt` state and local snapshots; direct live SQLite/WAL scans are not equivalent to consistent native snapshots. Job records showed 30-day retention; console scheduling, storage usage, billing, and actual expiration were not audited.
+ALI's `hbrclient.service` and `hbrclientupdater.service` at `/opt/alibabacloud/hbrclient` are inactive and disabled. They were independent of application timers and Portal exports. Their historical file-backup scan included application `/opt` state and local snapshots; direct live SQLite/WAL scans were not equivalent to consistent native snapshots. Job records showed 30-day retention; console scheduling, storage usage, billing, and actual expiration were not audited.
 
-The authorized cutover stops and disables both clients, preserving local vendor files and historical cloud recovery points. Stopping local clients does not delete cloud backups or establish that a provider-side schedule/billing item was canceled. Further cloud account, retention, or subscription cleanup requires its own review and confirmation. No Alibaba backup/security agent is copied to VPS.
+Cutover preserved vendor files and historical cloud recovery points. Stopping local clients does not delete cloud backups or establish that a provider-side schedule/billing item was canceled. Further cloud account, retention, or subscription cleanup requires its own review and confirmation. No Alibaba backup/security agent is copied to VPS.
 
 <a id="其他软件后台任务和已知问题"></a>
 ## Maintenance and Known Constraints
 
 - Applications are locally built static Go amd64 programs with embedded frontend assets. NAS uses signed Ubuntu runtime packages for libvips/HEIF, ExifTool, and FFmpeg where needed; VPS runs only gateway/proxy dependencies. Do not add Node/Go build environments, Docker, database services, or CI deploy keys.
 - NAS diagnostic/power, chrony, security updates, SSD TRIM, and active public certificate renewal remain enabled. Manual backup policy does not stop unrelated system maintenance. Host reboot and changes outside the authorized migration use the shared authorization table.
-- No backup/retention scheduler is enabled on NAS. Legacy ALI application/retention/HBR tasks stop after final capture; their retained material is not routine junk. [Retention](retention.md) describes temporary upgrade protection and historical ALI materials.
+- NAS routine backup and backup/release-pruning schedules are disabled. FabricWorld and RecipeBox native cleanup timers are active and enabled for their existing expired-record/media rules, coordinated with full backups and deployments through shared locks; they create no snapshots or backup-pruning work. Retired ALI application/backup/retention/HBR tasks remain inactive and disabled with frozen material preserved. [Retention](retention.md) describes temporary upgrade protection and historical ALI materials.
 - The ASUS laptop's freeze cause, full-power-loss restart behavior, DHCP permanence, gateway provider limits, and actual external-drive/device-trust acceptance remain explicit constraints. There is no automatic old-ALI data failover or external availability alert.
-- VPS proxy recovery archives currently remain on its own disk; Yuyan 833 does not contain the server private key. A complete gateway recovery package must include current private proxy state, not only client links or Nginx configuration.
+- Yuyan 833 does not contain the VPS server private key. A complete external gateway recovery package must capture current private proxy state, Nginx, certificates, and access configuration; client links and historical pre-change archives do not establish this coverage.
+
+AICalendar's maintained default client now uses VPS HTTPS 8443; private ALI/NAS configurations retain old-plan compatibility and direct LAN transfers. All three passed TLS/Bearer read-only status checks, with command-scoped NAS CA trust. Yuyan agent operations default to the trusted `vps` SSH alias. The Mac Aura preference remains at the compatibility ALI entrance with its existing client state; changing to NAS/VPS requires that client's new-origin login, and NAS requires device CA trust. Do not extract browser cookies or rewrite fixed upload plans to change endpoints.
 
 <a id="重新核对"></a>
 ## Rechecking
