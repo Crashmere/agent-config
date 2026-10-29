@@ -23,6 +23,8 @@ The OpenSSH Include occurs before the image's explicit password and root-login s
 
 Firewalld is enabled at boot, with `public` as the default and the NetworkManager connection on `eth0` assigned to it. The user-authorized personal proxy uses TCP 443; it is not a web HTTPS application. Essential established traffic, loopback, and ICMP follow firewalld defaults. Inspect active zones, services, and the nftables ruleset before changing exposure. Further public exposure requires authorization; copying `ali`'s inactive UFW state is not a host requirement. See [Personal proxy operations](vps-proxy.md) for runtime, Hiddify imports, updates, and recovery.
 
+The proxy's connection and Hiddify settings are maintained in the user's Yuyan document 833, titled `VPS配置`, on `ali`. Future client/access changes must directly update that existing document through `yuyan-doc`; the detailed ownership, confidentiality, and recovery rules are in [Personal proxy operations](vps-proxy.md#client-configuration-record).
+
 The image boots with `selinux=0 audit=0`; SELinux remains disabled. Enabling it requires a separate policy, relabel, and reboot plan. Guest CPU vulnerability reporting includes MDS mitigation limitations; provider host microcode/isolation cannot be established from the guest alone.
 
 ## Updates and Reboot
