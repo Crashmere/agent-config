@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from urllib.parse import urlsplit
 
 
 def run(args, cwd=None, capture=False, **kwargs):
@@ -114,24 +115,43 @@ def ssh(cfg, command, stream=None):
             "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=15",
             "-o", "ServerAliveCountMax=4"]
     if cfg.get("restricted", True):
-        key = Path(os.environ.get("RELEASE_KEY", "~/.ssh/ali_deploy_ed25519")).expanduser()
+        host = os.environ.get("RELEASE_HOST", "nas")
+        default_keys = {"nas": "~/.ssh/nas_deploy_ed25519", "ali": "~/.ssh/ali_deploy_ed25519"}
+        configured_key = os.environ.get("RELEASE_KEY", default_keys.get(host))
+        if not configured_key:
+            raise ValueError("Set RELEASE_KEY explicitly for deployment host " + host)
+        key = Path(configured_key).expanduser()
         if not key.is_file():
             raise ValueError("Local deployment key not found: " + str(key))
         args += ["-i", str(key), "-o", "IdentitiesOnly=yes", "-l", cfg["app"] + "-deploy"]
-    args += [os.environ.get("RELEASE_HOST", "ali"), command]
+    args += [os.environ.get("RELEASE_HOST", "nas"), command]
     run(args, stdin=stream)
 
 
 def public_check(cfg):
-    host = os.environ.get("RELEASE_HOST", "ali")
-    settings = run(["ssh", "-T", "-G", host], capture=True).stdout
-    hostname = next(line.split(None, 1)[1] for line in settings.splitlines()
-                    if line.startswith("hostname "))
-    if ":" in hostname:
-        hostname = "[" + hostname + "]"
+    origin = os.environ.get("RELEASE_PUBLIC_ORIGIN")
+    if origin is None:
+        host = os.environ.get("RELEASE_HOST", "nas")
+        edge_host = "vps" if host == "nas" else host
+        settings = run(["ssh", "-T", "-G", edge_host], capture=True).stdout
+        hostname = next(line.split(None, 1)[1] for line in settings.splitlines()
+                        if line.startswith("hostname "))
+        if ":" in hostname:
+            hostname = "[" + hostname + "]"
+        origin = "https://" + hostname + (":8443" if host == "nas" else "")
+    parsed = urlsplit(origin)
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password
+            or parsed.path not in ("", "/") or parsed.query or parsed.fragment):
+        raise ValueError("RELEASE_PUBLIC_ORIGIN must be an exact HTTPS origin, without a path or credentials.")
+    origin = origin.rstrip("/")
     path = "/portal/api/session" if cfg["app"] == "serverportal" else "/" + cfg["app"] + "/healthz"
-    status = run(["curl", "--silent", "--show-error", "--proto", "=https", "--max-time", "15",
-                  "-o", os.devnull, "-w", "%{http_code}", "https://" + hostname + path], capture=True).stdout
+    command = ["curl", "--silent", "--show-error", "--proto", "=https", "--max-time", "15"]
+    if os.environ.get("RELEASE_CA_FILE"):
+        ca = Path(os.environ["RELEASE_CA_FILE"]).expanduser()
+        if not ca.is_file():
+            raise ValueError("Local CA file not found: " + str(ca))
+        command += ["--cacert", str(ca)]
+    status = run(command + ["-o", os.devnull, "-w", "%{http_code}", origin + path], capture=True).stdout
     if status != "401":
         raise ValueError("Public authentication check expected 401, got " + status)
 
