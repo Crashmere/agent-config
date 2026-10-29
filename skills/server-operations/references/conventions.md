@@ -2,7 +2,7 @@
 
 # Shared Deployment Conventions
 
-These are the baselines currently in use. They may evolve when supported by evidence and a migration plan; do not add frameworks, containers, database services, or orchestration platforms merely for uniformity. Do not turn project-specific behavior into a mandatory requirement for all projects.
+These are the shared contracts for the NAS application host and ALI/VPS gateways. [Current-state](current-state.md) records the actual cutover phase; [NAS migration](nas-migration.md) owns cross-host traffic and recovery. Do not add frameworks, containers, database services, or orchestration platforms merely for uniformity or turn project-specific behavior into a mandatory requirement for all projects.
 
 <a id="职责划分"></a>
 
@@ -23,10 +23,11 @@ Each configuration has only one maintained source. Server copies and necessary d
 
 ## Network Entry Points
 
-- Access currently uses HTTPS on port 443 at the public IP, with a trusted Let's Encrypt IP certificate. Applications share Nginx and are routed through `/<app>/`; public HTTP port 80 remains available for ACME validation and returns 308 redirects to the fixed HTTPS address for other requests. For certificates, renewal, and local inspection entry points, see [Shared HTTPS](https.md).
+- NAS LAN access uses local-CA HTTPS 443. ALI public HTTPS 443 and VPS public HTTPS 8443 use their respective trusted IP certificates and forward to the same NAS instances. VPS TCP 443 remains the existing personal proxy. Applications keep `/<app>/`; gateway HTTP 80 serves ACME and fixed HTTPS redirects, including VPS `:8443`. For signing, renewal, and local inspection, see [Shared HTTPS](https.md).
 - Each application listens only on its own `127.0.0.1:<port>` and registers the port in the application inventory. Check `ss -ltnp` before adding one; do not assume the inventory is complete. Do not open a separate public port for each application.
-- The shared configuration is `/etc/nginx/sites-available/apps`, enabled through the link at `sites-enabled/apps`. The HTTPS server and the loopback-only HTTP inspection server include `/etc/nginx/app-locations/*.conf`, with each application's link pointing to its own configuration. The HTTPS root and unassigned paths redirect to `/portal/`; unassigned paths on the loopback-only inspection server still return 404.
+- Host-role server sources are `assets/nginx-nas.conf` and `assets/nginx-gateway.conf`, installed in the target distribution's enabled Nginx configuration. Authenticated HTTPS and loopback-only HTTP inspection include `/etc/nginx/app-locations/*.conf`, distributed from each application's route source. HTTPS root/unassigned paths redirect to `/portal/`; unassigned loopback inspection paths return 404.
 - When changing the shared server, check every location's matching, rewriting, Host, forwarded headers, static assets, and deep links. Whether the trailing slash in `proxy_pass` strips the prefix is part of each application's interface contract; do not copy it mechanically.
+- Preserve full request Host/port with `$http_host` and overwrite `X-Forwarded-Proto`; VPS `:8443` must survive the upstream hop. Exact allowed Origins contain NAS, ALI, and VPS with its port. Home traffic uses relative application/media URLs and never redirects through a public gateway.
 - Different paths on the same IP still share a browser origin and do not provide security isolation. Public access is protected centrally by ServerPortal device authentication; authorized devices share business data, and applications do not distinguish account roles. New applications must inherit shared authentication and the renewal response headers for valid device cookies. Check inheritance when changing an application's add_header directives; see portal maintenance for the procedure.
 - When changing domains, TLS, shared authentication, or reverse proxies, check every application's build prefix, absolute URLs, Origin/Cookie handling, health checks, deployment, and documentation. Obtain confirmation first if the access method changes.
 
@@ -34,7 +35,7 @@ Each configuration has only one maintained source. Server copies and necessary d
 
 ## Agents Viewing Live Pages
 
-The public entry point requires a device cookie. The agent's browser and command line are not authorized, and the agent must not extract cookies from the user's browser. Always view live pages through an SSH tunnel to the loopback-only HTTP inspection entry point: run `scripts/view-tunnel.sh` locally (idempotent; reuses an existing working tunnel, and running it again after disconnection recreates it), then open `http://127.0.0.1:18180/<app>/`. Paths, prefixes, and deep links match public access. Use `stop` to close the tunnel and `status` to inspect it.
+All user-facing entrances require a device cookie. The agent's browser and command line are not authorized, and the agent must not extract cookies from the user's browser. View live pages through `scripts/view-tunnel.sh`, selecting the active gateway/host's loopback HTTP inspector; after migration the maintained default is VPS loopback port 80. The local endpoint is `http://127.0.0.1:18180/<app>/`, with the same paths/prefixes/deep links. Use `stop` to close the tunnel and `status` to inspect it.
 
 - This relies on existing SSH trust and does not change public exposure or shared authentication. The local port listens only on 127.0.0.1.
 - The portal at `/portal/` itself still requires login and is not accessed this way.
@@ -66,7 +67,7 @@ Source repositories and local directories use the application names `Ledger`, `F
   bin/                   Programs and maintenance scripts
   config/                env, units, and application Nginx configuration
   data/                  Application data
-  backups/               Consistent backups
+  backups/               Legacy native-snapshot directory; not used by NAS releases or routine backups
   docs/                  Project documentation copies and source markers
   releases/              Versions and deployment results retained as needed
 ```
@@ -82,9 +83,10 @@ Source repositories and local directories use the application names `Ledger`, `F
 ## Data, Backups, and Deployment
 
 - SQLite is an in-process library, not a global service. Each application uses separate files; applications must not share a ledger. Whether a new project uses SQLite depends on its requirements.
-- Do not copy only the main file of an active WAL database; use the application's consistent-backup tool. Confirm the recovery point and data loss before restoring, and preserve the current state in a recoverable form. Do not handle a startup failure by creating an empty database.
-- A backup unit's sandbox must not split the source and destination into separate mount points, or hard links will fail; see [common-issues](common-issues.md#photo-hard-link-backups-fail-in-a-systemd-sandbox). After enabling the timer, run the backup through the unit once and confirm Result=success.
-- For every application with data, register its backup tool, schedule/time zone, retention policy, recovery steps, verification method, and off-host backup status. Shared documentation provides only an overview; exact operations belong in project docs.
+- Do not copy only the main file of an active WAL database. Use a complete consistent native snapshot or a verified cold copy after affected writes stop; old partial/table-selected snapshots are not full protection. Confirm the recovery point and preserve current state before actual restoration. Do not handle a startup failure by creating an empty database.
+- NAS routine backups are manual, full, compressed external recovery sets. Staging/verification stay on the external volume; no internal fallback, schedule, or automatic rotation exists. [NAS migration](nas-migration.md#manual-full-backups) defines the workflow; [retention](retention.md) defines upgrade-only local protection and successful deletion.
+- Native media hard-link snapshots are same-filesystem tools, not a USB copy strategy. Historical unit sandbox diagnosis remains in [common-issues](common-issues.md#photo-hard-link-backups-fail-in-a-systemd-sandbox); NAS external full jobs cold-copy complete files without depending on cross-filesystem hard links.
+- Every application declaration records complete data/resource coverage and backup semantics; project docs own its native restore/verification details. Shared docs record active hosts, external-volume readiness, and gateway recovery scope.
 - Business applications use separate restricted deployment identities and dedicated local keys, not the administrator's private key or unrestricted sudo. ServerPortal continues to use administrator SSH because it manages a root collector; see [Local Deployment](release.md) for the exact boundaries. Keep SSH host identity verification on all connections.
 - Normal deployments do not include production data. Design schema updates for compatibility/rollback, and do not describe program rollback as database rollback.
 - Control build, backup, and deployment resource use on the shared machine. Build on the maintenance computer and deploy one application at a time; do not introduce unnecessary concurrency infrastructure for a single-user service.

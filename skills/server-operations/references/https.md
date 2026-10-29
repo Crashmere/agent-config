@@ -1,75 +1,64 @@
-<a id="共享-https-与-ip-证书"></a>
-# Shared HTTPS and IP Certificates
+<a id="https-与-ip-证书"></a>
+# HTTPS and IP Certificates
 
-Five applications share Nginx's public HTTPS port 443 and continue to use /ledger/, /feetable/, /fabricworld/, /recipebox/, and /yuyan/. Let's Encrypt issues the certificate for the server's public IPv4 address; no domain is required. HTTP port 80 serves only ACME challenge files and 308 redirects to the fixed public IP, preserving paths, query parameters, and request methods. API clients must use HTTPS directly; the initial plaintext request is not encrypted.
+The shared application entrances are NAS LAN HTTPS 443, ALI public HTTPS 443, and VPS public HTTPS 8443. Each gateway routes the existing application paths to the same NAS instances. VPS's existing sing-box REALITY/Vision service retains TCP 443; it is not an HTTPS website or a replacement for a public web certificate. [Current-state](current-state.md) records activation; [NAS migration](nas-migration.md) owns the cross-host contract.
 
-HTTPS provides transport encryption, and ServerPortal's shared device authentication now protects the five public business applications. Different paths remain same-origin; device cookies use Secure/HttpOnly/SameSite=Strict/Path=/ and share access after authorization, while writes retain origin validation. IP addresses cannot rely on browser HSTS; HSTS is currently not sent, and preload is not enabled.
+## Server and Certificate Sources
 
-<a id="配置与维护源"></a>
-## Configuration and maintenance sources
-
-| File/service | Responsibility and maintenance source |
+| Source | Installed resource / role |
 | --- | --- |
-| /etc/nginx/sites-available/apps | assets/nginx-apps.conf rendered with the public IPv4; shared 80/443 and local check entry points |
-| /opt/<app>/config/nginx-location.conf | Each project's deploy directory; preserves Host and overwrites X-Forwarded-Proto with $scheme |
-| /etc/letsencrypt/live/apps-ip/ | Certbot-managed certificate chain and private key; excluded from Git/documentation synchronization |
-| /var/lib/letsencrypt/.well-known/acme-challenge/ | HTTP-01 challenge-file directory, read-only for Nginx |
-| /etc/letsencrypt/renewal-hooks/deploy/reload-nginx | assets/certbot-reload-nginx; runs nginx -t, then reload after successful renewal |
-| snap.certbot.renew.timer | Automatic renewal schedule from the official Certbot snap |
+| `assets/nginx-gateway.conf` | Public-IP server rendered with `__PUBLIC_IPV4__` and `__HTTPS_PORT__`: ALI 443, VPS 8443; public HTTP-01/308 on 80 and separate loopback inspector |
+| `assets/gateway/nginx-main.conf`, `nginx-bootstrap.conf` | AlmaLinux main/include layout and temporary HTTP-01-only server; bootstrap's other paths return 503 until authenticated activation |
+| `assets/nginx-nas.conf` | NAS authenticated LAN 443 rendered with `__LAN_IPV4__`; loopback-only HTTP inspector |
+| Each application's `deploy/nginx-location.conf` | Active hosts' `/etc/nginx/app-locations`; preserve path/streaming contract and full forwarded Host/port |
+| `assets/nginx-portal-auth.conf` | Device-authentication include for every user-facing HTTPS server; no public inspection exception |
+| `/etc/letsencrypt/live/apps-ip` | Gateway-specific Certbot chain/private key; never Git or documentation sync |
+| `/var/lib/letsencrypt/.well-known/acme-challenge` | Gateway HTTP-01 files, readable by Nginx without Portal authentication |
+| `assets/certbot-reload-nginx` | Certbot deploy hook: syntax validation before Nginx reload |
+| `assets/gateway/certbot-renew.service`, `.timer` | VPS `certbot-renew.service/timer`, using isolated `/opt/certbot/.venv` |
+| `assets/nas/renew-lan-tls.sh`, `nas-lan-tls.service/timer` | NAS CA-signed leaf issuance/renewal at `/etc/nas-ca` |
+| ALI `snap.certbot.renew.timer` | Existing official snap renewal while the ALI public entrance remains active |
 
-TLS terminates at Nginx; Go services continue to listen only on 127.0.0.1:18080–18085. Ledger's service-to-service calls to FabricWorld remain local HTTP. Separate listen directives on 127.0.0.1:80 and [::1]:80 allow existing release scripts to check proxied pages. Selection uses the actual destination address and permits only loopback sources; bypassing public redirects must not depend solely on a spoofable Host header.
+Distribution-specific enabled Nginx paths differ: Ubuntu uses its sites configuration, while AlmaLinux uses its installed include layout. Do not copy directory/package/version assumptions between hosts. TLS terminates at the entrance; application ports 18080-18087 remain loopback HTTP. Gateway reverse SSH is encrypted; Ledger-to-FabricWorld traffic remains local.
 
-Origin validation in Ledger, FeeTable, FabricWorld, and RecipeBox recognizes direct TLS first. For HTTP connections, it accepts only a single X-Forwarded-Proto header with the value https from a loopback peer. Nginx must overwrite this header, and applications must not listen externally. Missing, duplicate, list-valued, or nonlocal proxy headers must not cause a connection to be treated as HTTPS. Yuyan and the portal already forward this header; any origin or protocol decision based on proxy headers must follow the same boundary.
+## Public IPv4 Certificates
 
-<a id="初次配置与重建"></a>
-## Initial configuration and rebuilding
+ALI and VPS each need a certificate for their own public IPv4; copying ALI's certificate cannot cover VPS's different address. Let's Encrypt short-lived IP certificates last approximately 160 hours, so automated renewal is required. Gateway port 80 serves HTTP-01 and returns 308 to the fixed HTTPS URL for other requests, preserving paths, queries, and methods. VPS redirects include `:8443`; clients should use HTTPS directly rather than send an initial plaintext API request.
 
-First follow SKILL.md to check authorization, all applications, server instructions, and configuration drift. Keep root-private copies of the original shared server and five locations. The following describes the sequence only; obtain the public IP from trusted SSH configuration and do not commit the actual address.
+Use `software-installation` for installation and `python-environment` when selecting or maintaining VPS's isolated Python environment. IP webroot support requires Certbot 5.4+. ALI keeps its official Certbot snap; VPS uses the verified Certbot package in `/opt/certbot/.venv` with AlmaLinux Python 3.12 rather than a global pip install or Ubuntu snap/APT recipe. Signed DNF security updates do not update an isolated Certbot package automatically.
 
-1. Use software-installation to install the official Certbot snap: snap install certbot --classic. IP webroot support requires Certbot 5.4+; Ubuntu's current 4.0 package is unsuitable. Do not mix apt, pip, and snap installations of Certbot. The snap updates itself.
-2. Create /var/lib/letsencrypt/.well-known/acme-challenge (root-owned, directory mode 0755), then first install assets/nginx-apps-bootstrap.conf. It adds only the challenge path and preserves existing HTTP applications. Reload only after nginx -t succeeds, then check the existing applications and external access to the challenge file.
-3. Rehearse with staging first; --dry-run does not install a test certificate, and staging certificates must not be served to browsers:
+Bootstrap only the HTTP challenge listener until a production certificate exists; do not make Nginx reference missing TLS files or send a staging certificate to user devices. Rehearse issuance through the staging/dry-run flow, then issue the production gateway certificate. Verify actual provider/firewall port 80 reachability and preserve the proxy's existing port 443 rule.
 
-   ```sh
-   /snap/bin/certbot certonly --dry-run --non-interactive --agree-tos \
-     --register-unsafely-without-email --preferred-profile shortlived \
-     --webroot -w /var/lib/letsencrypt --ip-address "$public_ipv4" --cert-name apps-ip
-   ```
-
-4. After a successful rehearsal, remove --dry-run to issue the production apps-ip certificate. If no contact email was provided, use the registration-without-email method above; the ACME account can later be updated with an email provided by the user.
-5. Test and deploy the origin-validation fixes for the four applications; install the committed locations one at a time. Local releases replace only programs and do not install Nginx configuration. Check local health and proxied pages for every application.
-6. Replace __PUBLIC_IPV4__ in assets/nginx-apps.conf with the trusted public IPv4. First add 443 using a temporary configuration that retains HTTP applications; verify public TLS reachability, certificate trust, and all applications before switching to the complete template and enabling 308. The cloud security group must allow TCP 443; UFW being inactive does not prove that cloud rules have been verified.
-7. Install assets/certbot-reload-nginx as the deploy hook above (root-owned, 0755). Verify the snap renewal timer is active/enabled; run certbot renew --cert-name apps-ip --dry-run --run-deploy-hooks --no-random-sleep-on-renew and confirm successful validation and reload. Then actually run snap.certbot.renew.service once and check Result=success; skipping issuance outside the renewal window is normal. Add --no-random-sleep-on-renew for manual rehearsals to avoid waiting for a random delay; automatic jobs retain their existing random delay.
-8. Complete all acceptance checks in the next section, update conventions/current-state/project docs, then synchronize documentation copies after pushing.
-
-When installing configuration, run nginx -t first and immediately restore that step's original configuration on failure. If syntax is valid but public acceptance checks fail, retain the original HTTP entry point and resolve certificate, network, or application issues before redirecting. Reloading Nginx does not require stopping Go services.
-
-<a id="验收与日常检查"></a>
-## Acceptance and routine checks
-
-Latest acceptance: 2026-09-27. All five applications passed external HTTP/2 health checks with a trusted production certificate. Chromium checks at desktop 1360×900 and mobile 375×667 both used TLS 1.3 and a secure context, with no mixed content, script errors, or failed resource requests. Public redirects, query parameters, Host spoofing, local checks, and post-cutover renewal/reload rehearsals passed.
-
-- Check externally without -k: unauthorized navigation redirects to authentication, while API/media/health requests return 401. On an authorized device, access the five health endpoints, home pages, deep links, and scripts/styles. Use a real browser to check secure context, HTTP/2, request failures, and mixed content, including desktop and 375×667.
-- Public HTTP home pages, bare paths, deep links, and APIs all return 308 to the fixed HTTPS address, preserving all query parameters. Public requests with Host: localhost/127.0.0.1 must also be unable to access the local HTTP entry point. ACME files remain accessible over HTTP; missing files return 404.
-- Same-origin HTTPS requests pass middleware in the four applications. When origin validation changes, use isolated examples to check spoofed nonlocal proxy headers, wrong Origin, wrong protocol, and similar cases. In production, use OPTIONS requests that do not write data to verify origin rejection and acceptance; do not submit test records. Existing service-to-service calls remain on loopback.
-- From the server, verify the five direct /healthz endpoints and proxied health/page resources through 127.0.0.1:80; check nginx -t, all units, and configuration hashes.
-- inspect.sh checks certificate issuer, validity, a 48-hour expiry threshold, and the renewal timer. IP certificates are valid for about 160 hours; fix automatic renewal failures promptly rather than waiting for expiry. There is currently no external certificate-expiry alert.
+A VPS issuance command uses `/opt/certbot/.venv/bin/certbot`; the ALI equivalent remains `/snap/bin/certbot`:
 
 ```sh
-ssh ali '/snap/bin/certbot certificates'
-ssh ali 'systemctl list-timers snap.certbot.renew.timer --all --no-pager'
-ssh ali 'journalctl -u snap.certbot.renew.service -n 60 --no-pager'
-ssh ali '/snap/bin/certbot renew --cert-name apps-ip --dry-run --run-deploy-hooks --no-random-sleep-on-renew'
-ssh ali 'bash /opt/server-context/scripts/inspect.sh'
+certbot certonly --dry-run --non-interactive --agree-tos \
+  --register-unsafely-without-email --preferred-profile shortlived \
+  --webroot -w /var/lib/letsencrypt --ip-address "$public_ipv4" --cert-name apps-ip
 ```
 
-Preserve the ACME path on port 80; subsequent authentication rules must not intercept it. Do not edit Certbot's archive/live links or manually copy private keys; Certbot manages public/private key permissions.
+Install the deploy hook, validate Nginx, and test renewal with `--dry-run --run-deploy-hooks --no-random-sleep-on-renew`. VPS checks renewal at 03:00 and 15:00 with up to one hour of randomized delay; ALI retains the snap schedule. Manual dry-runs do not install a production certificate or replace proof of a working timer.
 
-<a id="故障与回退"></a>
-## Failures and rollback
+## NAS Local CA
 
-If certificate renewal fails, first check public HTTP-01 reachability, system time, outbound ACME connectivity, timer/hook logs, and nginx -t. If reload fails, fix the configuration and run the deploy hook. Run renew only when the certificate actually needs updating; do not repeatedly force issuance and risk rate limits.
+The NAS private CA is `/etc/nas-ca/ca.crt` and `ca.key`; its leaf certificate/key are `server.crt` and `server.key`. The selected IPv4 is recorded in `/etc/nas-ca/lan-ip` and appears in the leaf SAN. Devices receive only `ca.crt` and use normal OS trust, including iOS full trust where required. Keep private keys server-side with restricted permissions and in manual recovery materials.
 
-Roll shared configuration back to the original server saved during this task, reload after nginx -t succeeds, and check the five applications. Origin validation is compatible with the previous HTTP setup, so no program rollback is required. Reverting to plaintext is only a failure-recovery measure; report the actual state and do not delete certificates, data, or backups. When the public IP changes, revalidate and issue a certificate covering the new IP, and update shared configuration and client addresses together.
+The source renews a 90-day RSA leaf when it has no more than 30 days remaining or does not match the configured IPv4. `nas-lan-tls.timer` checks daily with a randomized delay up to 30 minutes. Issuance verifies the CA chain; an active Nginx is syntax-tested before reload, with the previous leaf pair restored on syntax failure. Restoring the same CA preserves device trust; replacing/loss of the signing key requires a separate trust migration.
 
-Official references: [Short-lived and IP certificates with Certbot](https://letsencrypt.org/2026/03/11/shorter-certs-certbot), [160-hour certificates](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability/).
+The user currently retains DHCP and has deferred address reservation. A changed LAN address requires updating the trusted connection, `lan-ip`, Nginx/Origin settings, and shortcuts together, then renewing the matching leaf. The timer does not infer a new address from DHCP or update client bookmarks. Public certificates cannot cover private NAS IPs, and gateway certificates cannot replace this local-CA trust.
+
+## Authentication and Proxy Trust
+
+Portal protects every user-facing HTTPS entrance. Browser Origins include IP and explicit port; configure NAS, ALI, and VPS `:8443` precisely. Cookies remain Secure/HttpOnly/SameSite and host-bound, not isolated by port. Browser trust does not authenticate a device, and a trusted home network does not create an unauthenticated LAN entrance.
+
+Nginx must overwrite `X-Forwarded-Proto` with one correct value and use `$http_host` so VPS's explicit port survives. Applications accepting forwarded protocol trust only the intended loopback hop; duplicate/list-valued/nonlocal spoofed headers must not create HTTPS trust. Portal also checks that a supplied Origin equals the HTTPS request Host/port. Exact brand assets, login resources, ACME, and AICalendar's separate Bearer ingest keep their registered exceptions.
+
+Loopback HTTP on each active host is selected by actual destination address, not a client-controlled Host. Agent inspection uses trusted SSH to that listener; public requests with `Host: localhost` must not enter it. IP-literal entrances do not use HSTS/preload, so do not describe an HTTP redirect as protection of the initial plaintext request.
+
+## Acceptance and Failures
+
+Verify Nginx syntax and actual listener ownership first, then certificate chain/IP/expiry, public HTTP-01, fixed redirects, unauthenticated API/page rejection, and the affected path/header/streaming contracts. Public checks do not use `-k`; LAN checks use the CA root or an OS-trusted device. Browser/Aura trust and each IP's initial Portal login require actual-device acceptance, not a CLI claim. Keep checks focused on the entrances and behavior that changed.
+
+Renewal failures require checking HTTP-01 reachability, time, ACME outbound access, timer/hook logs, and Nginx syntax. Fix the actual cause before forcing issuance; repeated forced renewal risks CA rate limits. Gateway/tunnel failure returns unavailable or denies protected traffic, never enables old ALI databases or bypasses authentication. Preserve valid certificates/private keys and data while restoring the last reviewed shared configuration; changing a public IP requires a new matching certificate and client settings.
+
+Official references: [Certbot IP certificates](https://letsencrypt.org/2026/03/11/shorter-certs-certbot), [160-hour certificates](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability/).

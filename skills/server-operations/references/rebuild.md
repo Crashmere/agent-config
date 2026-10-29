@@ -1,57 +1,47 @@
 <a id="重建服务器与新增应用"></a>
-# Rebuilding Servers and Adding Applications
+# Rebuilding Hosts and Adding Applications
 
-The goal is to restore the service setup and data at the backup point from Git documentation/source code and verified backups. See ServerPortal docs/RESTORE.md for offline private keys required by older encrypted packages and cloud-side prerequisites. The following is an operational sequence, not an installation script to run on an existing host without inspection.
+Restore the selected application state from verified recovery materials and maintained source, using the platform of each role. NAS is the Ubuntu application host; ALI and VPS are public gateways, with VPS on AlmaLinux and its existing proxy unchanged. [Current-state](current-state.md) records activation and [NAS migration](nas-migration.md) owns topology/cutover/recovery. This sequence does not authorize overwriting a live host or selecting a recovery point without confirmation.
 
-<a id="1-准备来源和边界"></a>
-## 1. Prepare sources and boundaries
+## Sources and Recovery Point
 
-- Obtain `Crashmere/agent-config` and every source repository in the application inventory; read the shared conventions, current state, and each project's docs.
-- Establish whether this is a new empty server, a migration, or expansion of an existing host. The current baseline is Ubuntu LTS / amd64, 2 vCPU, about 2 GiB memory, and 40 GiB disk; there is no requirement to reproduce old kernel patches or all preinstalled software.
-- Obtain independent administrator SSH access, the new host fingerprint confirmed through a trusted channel, and cloud security group management access. These secrets are not stored in Git; administrator identity cannot be reconstructed from public documentation.
-- For rebuilding without data, explicitly create an empty database for each application. For migration with data, follow that application's final-backup/write-stop/restoration-validation plan; do not assume the user is willing to discard the old database.
+Obtain agent-config and every affected application's source/docs, private recovery packages, trusted SSH identities and verified host fingerprints. Determine whether this is an empty new service, a full host recovery, or migration of an existing authoritative database. Git supplies code/configuration templates, not data, secrets, cloud access, or the chosen recovery point.
 
-<a id="2-建立共享底座"></a>
-## 2. Establish the shared foundation
+For existing data, verify the complete package and inspect it in an isolated path first. Never use initialization to hide missing data or restore a selected-table AICalendar snapshot as a complete conversation recovery point. Older encrypted/incremental packages keep their original keys and parent-chain requirements; ServerPortal docs/RESTORE.md owns format/recovery checks.
 
-1. Verify OS/architecture, CPU/memory/disk, existing listeners and services, time synchronization, package sources, and update policy; record the actual choices in current-state.
-2. Use `software-installation` to install Nginx, libvips-tools, libheif-plugin-libde265, and required system tools from official signed Ubuntu packages. Confirm python3 is available for portal declaration validation (standard library only, no additional Python packages). Do not copy the old cloud provider's internal package mirror. Applications build locally; do not install Go/Node/Docker/database services on the server.
-3. Use Asia/Shanghai for displayed time and configure reliable NTP. Do not blindly change SSH/firewall settings on an existing host, especially in ways that lock out the administrator.
-4. First run `scripts/sync-docs.sh shared` to create `/opt/server-context`, `/opt/AGENTS.md`, and MOTD, then link `/root/AGENTS.md` to `/opt/AGENTS.md` so the next maintainer can discover conventions immediately. Follow [Automatic retention of release materials](retention.md) to install tmpfiles configuration and create the shared lock before enabling application backup timers. Enable the cleanup timer after all applications are healthy and the preview has been checked.
-5. Follow [Shared HTTPS](https.md): first create the HTTP challenge entry point with `assets/nginx-apps-bootstrap.conf`; install official Certbot and issue an IP certificate, then render `assets/nginx-apps.conf` to switch to HTTPS. Read all enabled sites first and save recoverable copies when resolving default-site conflicts; do not overwrite and break existing applications.
-6. Create `/etc/nginx/app-locations` and enable the shared server at `sites-enabled/apps`. Install ServerPortal and the device-authentication include before enabling the final shared template. Until the portal is ready, use the bootstrap configuration without referencing a nonexistent auth include. Run `nginx -t`, then start/reload only after it succeeds.
-7. Open only the SSH, HTTP (challenge and redirects), and HTTPS access required for this task in cloud security groups/host firewall; keep internal application ports on loopback. Decide whether to restrict SSH sources based on actual access needs; do not treat the old inactive UFW state as a security policy that must be copied.
+The migration's independent cold ALI archive on the maintenance Mac protects its frozen eight-application source point. New NAS CA/tunnel and VPS gateway/proxy private state need their own verified manual capture. Preserve old ALI and pre-LVM NAS archives throughout preparation.
 
-<a id="3-重建或新增每个应用"></a>
-## 3. Rebuild or add each application
+## Host Foundation
 
-- Read the initial installation process in project docs. Build from source or obtain trusted artifacts, then verify architecture and checksums. Exact build commands for each project (such as `make linux BASE_PATH=/ledger/`) belong in project documentation.
-- Choose nonconflicting slugs, paths, ports, runtime identities, and directories for new applications; inspect the live system before recording them. Do not assume the next port is always available or borrow Ledger's data directory/release key.
-- Create separate data/backups/config directories and run units as the application user. Clearly distinguish creating empty data from importing a verified backup.
-- Add the application-owned Nginx location link and preserve the shared server. Verify bare-path redirects, page deep links, static resources, APIs, and write-origin validation; separately confirm reverse-proxy parameters when WebSockets/uploads are required.
-- By default, equip new websites with a favicon, 180×180 PNG, shared head declarations, and exact anonymous GET/HEAD rules under the [Website icon conventions](conventions.md#website-icons-and-home-screen-shortcuts). Build and release icons with the application. Run the shared `scripts/check-site-icons.py` during deployment acceptance and verify authentication boundaries, without waiting for an additional user request.
-- Start the application, enable startup on boot and backup scheduling, obtain the first backup through its unit with `systemctl start <app>-backup.service`, confirm Result=success, and check restoration to an isolated target; do not write test data to production.
-- The project must have `AGENTS.md` and a docs entry point covering at least responsibilities/business conventions, architecture, runtime directories, configuration, startup and health, data model, backup/restoration, release/rollback, diagnostics, and known limitations.
-- Add a complete entry to the shared application inventory and update the host state and shared configuration templates if they actually changed. Check that all existing applications remain healthy and that the new location does not take over an existing path.
+- Read the target's remote `/opt/AGENTS.md` explicitly. Verify actual OS, resources/storage, listeners, enabled units, ownership, time, package sources, and network/access before installing anything.
+- Use signed Ubuntu runtime packages on NAS and DNF/AlmaLinux sources on VPS. Reuse installed NAS libvips/HEIF, ExifTool, and FFmpeg as needed; VPS requires gateway/certificate/proxy components, not app media/build runtimes. Use `software-installation` and isolated `python-environment` workflows where applicable.
+- Keep builds on the maintenance computer, producing committed static Linux amd64 programs with embedded frontend assets. Do not add server Go/Node/Docker/database services or resurrect CI deployment keys.
+- Sync pushed shared context with an explicit host to create `/opt/server-context`, `/opt/AGENTS.md`, and the correct Ubuntu/PAM login notice; link `/root/AGENTS.md` only without replacing an existing conflicting file. Documentation synchronization does not install runtime assets.
+- NAS uses the root-managed marker `/etc/server-maintenance-host=nas`, `/run/lock/server-maintenance.lock`, and private `/var/lib/server-upgrades` protection. Follow [retention](retention.md) and [local releases](release.md); do not enable old application backup/ALI retention timers.
+- Preserve existing administrator access, proxy TCP 443, Wi-Fi/private credentials, and security/time-maintenance settings. Reboots or unrelated access changes still follow the shared authorization table.
 
-New applications must integrate with the [portal declaration protocol](portal.md): local validation, pre-release checks, post-release synchronization, and a receipt for the loaded hash. The first declaration release automatically creates the registry.d link. Synchronize the shared validation script before starting a portal that uses the registry directory.
+## Application State on NAS
 
-<a id="4-恢复本机发布"></a>
-## 4. Restore local releases
+Each application retains its own runtime user, `/opt/<app>` data/config/bin/docs layout, loopback port, URL prefix, and controlled deployment identity. Portal Web and its root collector are restored together with local Unix socket and `registry.d`; seven business releases remain restricted. For a genuinely new empty service, initialize only after explicit selection of that mode. A migration restores the final consistent source, not a preliminary staging copy.
 
-Follow [Local releases](release.md) to prepare the maintenance computer's tools, trusted SSH access, and local private keys. Create a restricted identity and install fixed release scripts for each business application; retain administrator deployment for the portal. setup-deploy.sh configures public keys; GitHub stores no production Secrets. Do not directly enable old CI public keys restored from backups; replace them with the current maintenance computer's public key.
+After writes stop, cold-copy complete databases/files or use verified complete native snapshots; include WAL-aware state, conversations, original chunks, incomplete uploads, stored derivatives, annotations, and credentials/configuration needed for the role. Restore ownership/permissions before activation. Inspect old Yuyan history/media before cleanup runs, and reconcile Aura client upload receipts after recovery.
 
-Build locally, deploy, and verify health one application at a time. Normal program releases synchronize the application's validated portal.json; administrators still install units, Nginx configuration, and release scripts, while sync-docs.sh synchronizes documentation.
+Publish each application's own `deploy/portal.json` through the validated protocol, preserving separate program/declaration/documentation provenance. Install application-owned route includes from the same source to every active entrance; do not maintain independent copies of business routing in gateway code. Icons, authentication exceptions, upload/streaming, and Ledger-to-FabricWorld remain existing application contracts.
 
-<a id="5-验收与交接"></a>
-## 5. Acceptance and handover
+## HTTPS and Forwarding
 
-- All applications: direct and proxied health, page deep links and resources, expected login/public-access boundaries, runtime identities and write permissions, boot enablement, backup/restoration, and local release results.
-- Shared layer: no port conflicts, correct Nginx syntax and request handling, existing applications unaffected, and no unintentionally exposed internal ports. Spot-check both service logs and application logs.
-- Documentation: update the actual OS/resources/software/network/application inventory to the new server state and remove old host facts; update project IPs/paths/commands/configuration/installation scripts together. Explicitly mark items without sufficient evidence as unverified.
-- Run `scripts/sync-docs.sh` after pushing all repositories and confirm discovery entry points work. Do not mark applications as rebuilt if credentials or data are missing or acceptance is incomplete.
+[HTTPS](https.md) owns platform-specific certificate issuance/renewal and proxy trust. NAS uses the restored/local CA at `/etc/nas-ca` for LAN 443. ALI uses its own public IPv4 certificate on 443; VPS uses a new certificate on 8443 and HTTP-01 on 80, without taking proxy 443. Each user-facing entrance uses Portal and the exact NAS/ALI/VPS Origin set, preserving the explicit VPS port in `$http_host`.
 
-<a id="可以改进但尚未实施的方向"></a>
-## Possible improvements not yet implemented
+NAS initiates two dedicated restricted reverse-SSH connections. Gateway loopback 18080-18087 reaches the corresponding NAS apps, and 22022 supplies restricted maintenance SSH. Inspection uses each gateway's loopback HTTP 80 and the same locations; internal ports are not opened publicly. Read host/tunnel sources in [NAS migration](nas-migration.md#host-roles-and-traffic), and keep strict fingerprint verification and forwarding-bind failure checks.
 
-Cloud backup console retention-policy verification, availability alerts, capacity management for other data, more granular permissions, domains, and similar improvements may be evaluated according to user needs. This is not a mandatory task list. After implementing an item, reflect it in conventions/current-state/all affected projects and remove its "not implemented" description. If the current need does not require it, do not build additional systems just because documentation suggests them.
+The user deferred DHCP reservation and further freeze investigation. Retain the selected LAN address as an input with coordinated change instructions; do not treat it as guaranteed fixed or claim diagnostic mitigation solved hardware. Configure routing without redirecting heavy LAN work through a public gateway.
+
+## Backup Readiness and Acceptance
+
+Routine NAS backup requires a real independently mounted external filesystem and its verified UUID. A missing/unknown volume keeps Portal backup unavailable while ordinary Portal startup/authentication work. Do not format the drive by default or create an internal fallback. Agent and Portal use the same manual full cold-copy/compress/verify operation; agent supplements live gateway/proxy packages without adding a remote-root web interface.
+
+Validate the affected state and entrances: direct service health/data, three TLS/authenticated paths, correct Origin/Host/protocol, representative upload/download/integration/Bearer contracts, tunnel listeners/reconnect, and continuity of existing proxy 443. Actual device CA trust/logins and the first real external-volume recovery check remain distinct from synthetic/CLI validation. No full historical regression or permanent test accumulation is required.
+
+During cutover, pause writers, drain operations, and stop old ALI application/Portal/background jobs for final consistent capture. Verify independent recovery protection and the exact NAS transfer, then disable retired ALI application/backup/retention/HBR units and assign the freed application ports to reverse forwarding before validating the ALI entrance. Activate those exact NAS copies and the gateways, complete runtime/data acceptance, then allow new NAS writes. Both public gateways must refer to this same NAS state. Once NAS writes occur, a return to old ALI data is not a program rollback; confirm a new complete transfer or recovery point. Preserve material and report incomplete recovery/backup prerequisites rather than silently recreating empty state.
+
+Update owning source, application declarations/docs, shared active roles, and managed host copies after actual activation. Host/data recovery, program release, declaration publication, and documentation synchronization are separate operations.
