@@ -2,10 +2,10 @@
 # Run locally: map the server's loopback-only HTTP inspection endpoint through an SSH tunnel so agents can view real production pages.
 # Usage: view-tunnel.sh [start | stop | status]. The default is start; reuse an existing healthy tunnel.
 #   Open http://127.0.0.1:<port>/<application-name>/, for example /ledger/.
-# Environment: VIEW_HOST (default: ali), VIEW_PORT (default: 18180).
+# Environment: VIEW_HOST (default: vps), VIEW_PORT (default: 18180).
 set -euo pipefail
 
-host=${VIEW_HOST:-ali}
+host=${VIEW_HOST:-vps}
 port=${VIEW_PORT:-18180}
 forward="127.0.0.1:$port:127.0.0.1:80"
 

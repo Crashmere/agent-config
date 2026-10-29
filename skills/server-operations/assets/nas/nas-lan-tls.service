@@ -1,0 +1,7 @@
+[Unit]
+Description=Renew NAS LAN certificate using its existing local CA
+
+[Service]
+Type=oneshot
+ExecStart=/opt/server-context/assets/nas/renew-lan-tls.sh
+UMask=0077

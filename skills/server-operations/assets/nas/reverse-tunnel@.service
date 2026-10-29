@@ -1,0 +1,25 @@
+[Unit]
+Description=NAS reverse SSH application and maintenance tunnel to %i
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=nas-tunnel
+Group=nas-tunnel
+ExecStart=/usr/bin/ssh -NT -F /etc/nas-tunnels/%i.conf gateway
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+UMask=0077
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

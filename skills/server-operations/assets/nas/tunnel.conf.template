@@ -1,0 +1,25 @@
+Host gateway
+    HostName __GATEWAY_ADDRESS__
+    Port 22
+    User nas-tunnel
+    IdentityFile /etc/nas-tunnels/__GATEWAY__.key
+    IdentitiesOnly yes
+    UserKnownHostsFile /etc/nas-tunnels/known_hosts
+    HostKeyAlias __GATEWAY__
+    StrictHostKeyChecking yes
+    UpdateHostKeys no
+    BatchMode yes
+    ExitOnForwardFailure yes
+    ConnectTimeout 10
+    ServerAliveInterval 15
+    ServerAliveCountMax 3
+    Compression yes
+    RemoteForward 127.0.0.1:18080 127.0.0.1:18080
+    RemoteForward 127.0.0.1:18081 127.0.0.1:18081
+    RemoteForward 127.0.0.1:18082 127.0.0.1:18082
+    RemoteForward 127.0.0.1:18083 127.0.0.1:18083
+    RemoteForward 127.0.0.1:18084 127.0.0.1:18084
+    RemoteForward 127.0.0.1:18085 127.0.0.1:18085
+    RemoteForward 127.0.0.1:18086 127.0.0.1:18086
+    RemoteForward 127.0.0.1:18087 127.0.0.1:18087
+    RemoteForward 127.0.0.1:22022 127.0.0.1:22
