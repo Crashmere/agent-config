@@ -13,6 +13,7 @@ Use this skill as the entry point for shared operations context, without relying
 
 1. Always start with [Shared conventions](references/conventions.md) and [Current server and application inventory](references/current-state.md).
    For SSH host `nas`, also read [NAS laptop operations](references/nas-host.md); it is a separate host from `ali`.
+   For SSH host `vps`, also read [VPS operations](references/vps-host.md); it is an AlmaLinux VM, not an Ubuntu application host.
 2. Read the target project's `AGENTS.md`, `docs/README.md`, and `docs/OPERATIONS.md`, then read architecture/API/release documentation as the task requires. The inventory lists repository and server documentation locations.
 3. For release, build, or testing strategy, first read [Local releases and on-demand validation](references/release.md). For changes, deployments, or documentation updates, you must read [Completing changes and documentation](references/maintenance.md); for new applications, migrations, or server replacement, also read [Rebuilding and adding applications](references/rebuild.md).
 4. For release failures or troubleshooting, first consult [Common issues and shared solutions](references/common-issues.md) and directly follow any existing solution.
@@ -62,7 +63,7 @@ If the applicable column is unclear, use the left column when the action is reve
 - Shared source: `skills/server-operations/` in `Crashmere/agent-config`. The local checkout is usually `~/agent-config`; do not assume every computer uses `/Users/bytedance`.
 - Shared server copy: `/opt/server-context/`. Its `SOURCE` records the source repository, commit, and synchronization time; it is not a second source that can evolve independently.
 - Server entry point: `/opt/AGENTS.md`, linked from `/root/AGENTS.md` in root's login directory. Each application's `/opt/<app>/AGENTS.md` points to its project documentation.
-- `/etc/update-motd.d/30-server-context` provides the interactive SSH notice. Do not force notices through sshd, global shell startup output, or restricted deployment forced commands; this can break noninteractive transfers.
+- `/etc/update-motd.d/30-server-context` provides the interactive SSH notice on Ubuntu; `vps` uses `/etc/motd.d/30-server-context` through PAM instead. Do not force notices through sshd, global shell startup output, or restricted deployment forced commands; this can break noninteractive transfers.
 - The local global AGENTS routes to this skill. Add offline/remote paths to each project entry point so discovery does not depend on one client.
 
 The shared configuration template is [assets/nginx-apps.conf](assets/nginx-apps.conf), the server instruction entry point is [assets/AGENTS.md](assets/AGENTS.md), and the login notice is [assets/30-server-context](assets/30-server-context). `scripts/sync-docs.sh` synchronizes documentation copies. Changes to the Nginx template fall under "Confirm first" in the authorization table; reading the skill itself does not install or reload these files.

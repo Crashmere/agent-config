@@ -1,0 +1,3 @@
+Server maintenance instructions: read /opt/AGENTS.md and
+/opt/server-context/SKILL.md before making changes.
+Shared documentation provenance: /opt/server-context/SOURCE.

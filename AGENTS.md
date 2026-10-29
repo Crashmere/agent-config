@@ -65,7 +65,7 @@ Apply these rules to technical replies, design documents, code explanations, com
 
 ## Personal servers and hosted projects
 
-- In server-related replies and maintenance documents, explicitly identify the target as `ali`, `nas`, or both; do not leave the server unspecified.
+- In server-related replies and maintenance documents, explicitly identify the target as `ali`, `nas`, `vps`, or the applicable combination; do not leave the server unspecified.
 - Use `server-operations` before working on the user's personal Linux servers (including SSH host `ali`), their hosted projects, or adding another deployment. Explicitly read remote `/opt/AGENTS.md`; SSH does not automatically load remote agent instructions.
 - Keep shared server context in `agent-config/skills/server-operations` and project details in each project's `AGENTS.md` and `docs`. Update source configuration whenever its behavior changes. Update project operations docs or shared current-state docs only when a durable operational contract changes, such as runtime, data layout, backup or recovery, authentication or access, deployment, or shared architecture; routine visual fixes and release records do not trigger those documents. Remove obsolete descriptions and synchronize server copies only when managed documentation changed.
 - For shared architecture changes, inspect the entire application inventory and update all affected projects.

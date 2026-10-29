@@ -5,6 +5,12 @@ This file records issues that may affect multiple applications and their shared 
 
 For each issue, document the symptoms and decision criteria, affected applications, handling steps, cleanup and acceptance checks, and improvements that have not yet been implemented. Rewrite an entry when its solution is superseded; Git preserves the history.
 
+## Distribution-specific inspection and login notices
+
+The `vps` image is AlmaLinux, whereas `ali` and `nas` use Ubuntu. An absent UFW executable or Ubuntu Nginx directory does not establish a host failure. The shared `inspect.sh` selects the installed firewall tool and inspects Nginx directories only when present. Verify both active firewall rules and cloud-side access separately.
+
+Ubuntu runs `/etc/update-motd.d` scripts; AlmaLinux's SSH PAM configuration uses `pam_motd.so` and reads static `/etc/motd.d` snippets. `sync-docs.sh` maps the notice according to `SYNC_HOST=vps`; it must not introduce unconditional shell startup output, which can break command and file transfers. All applications on `ali` keep their existing notice and configuration; this difference concerns `vps` host bootstrap only.
+
 ## Whole-host freezes with no retained panic
 
 On `nas`, both the local console and network have stopped responding, including an overnight idle episode; the user also reports freezes under Windows. Retained logs contained no conclusive panic, OOM, or storage failure. Preserve journals and hardware state before further resets, check activity and SMART/self-test evidence, and investigate hardware/firmware alongside Linux drivers when the symptom crosses operating systems. An abruptly ending journal does not identify the exact freeze time or prove a thermal, memory, or driver cause.

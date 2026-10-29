@@ -13,6 +13,8 @@ inspect() {
 inspect time date -Is
 inspect os cat /etc/os-release
 inspect architecture uname -m
+inspect kernel uname -r
+inspect load uptime
 inspect timezone timedatectl
 inspect memory free -h
 inspect disk df -hT / /opt
@@ -27,9 +29,26 @@ if [[ -f /var/run/reboot-required ]]; then
   fi
 fi
 inspect applications ls -la /opt
-inspect nginx-sites ls -l /etc/nginx/sites-enabled /etc/nginx/app-locations
-inspect firewall ufw status verbose
-inspect nginx-version nginx -v
+if command -v firewall-cmd >/dev/null; then
+  inspect firewall firewall-cmd --state
+  inspect firewall-zones firewall-cmd --list-all-zones
+elif command -v ufw >/dev/null; then
+  inspect firewall ufw status verbose
+elif command -v nft >/dev/null; then
+  inspect firewall nft list ruleset
+elif command -v iptables-save >/dev/null; then
+  inspect firewall iptables-save
+else
+  printf '\n[firewall]\nNo supported firewall inspection tool is installed.\n'
+fi
+if command -v nginx >/dev/null; then
+  inspect nginx-version nginx -v
+  for dir in /etc/nginx/sites-enabled /etc/nginx/app-locations /etc/nginx/conf.d; do
+    [[ ! -d $dir ]] || inspect nginx-config ls -l "$dir"
+  done
+else
+  printf '\n[nginx]\nNot installed.\n'
+fi
 if [[ -f /etc/letsencrypt/live/apps-ip/cert.pem ]]; then
   inspect tls-certificate openssl x509 -in /etc/letsencrypt/live/apps-ip/cert.pem -noout -issuer -dates
   inspect tls-valid-for-48h openssl x509 -in /etc/letsencrypt/live/apps-ip/cert.pem -noout -checkend 172800

@@ -49,7 +49,13 @@ mapping() { # target repo commit
       echo "$f /opt/server-context/${f#$shared_prefix/}"
     done
     echo "$shared_prefix/assets/AGENTS.md /opt/AGENTS.md"
-    echo "$shared_prefix/assets/30-server-context /etc/update-motd.d/30-server-context"
+    if [ "$host" = vps ]; then
+      if git -C "$repo" cat-file -e "$commit:$shared_prefix/assets/server-context-motd.txt" 2>/dev/null; then
+        echo "$shared_prefix/assets/server-context-motd.txt /etc/motd.d/30-server-context"
+      fi
+    else
+      echo "$shared_prefix/assets/30-server-context /etc/update-motd.d/30-server-context"
+    fi
   else
     app=$(echo "$target" | tr '[:upper:]' '[:lower:]')
     git -C "$repo" ls-tree -r --name-only "$commit" -- AGENTS.md docs | grep -E '^(AGENTS\.md|docs/[^/]+\.md)$' | while read -r f; do

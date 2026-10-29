@@ -22,13 +22,49 @@ AICalendar's web redesign and backup scope changes were last checked on 2026-10-
 | Cloud security group | SSH/HTTP/HTTPS reachability verified externally; complete rules have not been audited through the cloud API. Verify separately before future rule changes |
 | Package sources | Signed Ubuntu repositories, currently using Alibaba Cloud's internal mirror; do not copy that mirror address when changing providers |
 
+## Host `vps`
+
+Prepared on 2026-10-29 as a separate AlmaLinux KVM VM; all applications remain on `ali`. The local administrator alias is `ssh vps`, with strict host-key verification and an explicitly selected local key. Obtain its public address from local SSH configuration, not this public repository. See [VPS operations](vps-host.md) for configuration sources, update/reboot checks, recovery, and documentation synchronization.
+
+| Item | Current state |
+| --- | --- |
+| Platform | AlmaLinux 9.8, x86_64, KVM; upgraded from the provider's 9.7 image |
+| Resources | 2 vCPU; Intel Xeon SierraForest guest model; approximately 1 GiB visible memory, 544 MiB swap |
+| Storage | 20 GiB QEMU virtual disk; separate approximately 1.4 GiB ext4 `/boot`, remainder ext4 `/`; no separate data mount |
+| Kernel | Updated to 5.14.0-687.61.1.el9_8; inspect the live version after subsequent automatic updates |
+| Time and network | Asia/Shanghai, chrony NTP; NetworkManager, DHCP on `eth0`, public IPv4, provider DNS; no configured global IPv6 |
+| SSH | Root public-key authentication; password and keyboard-interactive authentication disabled; X11 forwarding disabled |
+| Host firewall | Firewalld enabled, `eth0` in `public`, only SSH service allowed; cloud-side protection has not been audited |
+| Update policy | Signed AlmaLinux BaseOS/AppStream/Extras; `dnf-automatic.timer` applies security updates; automatic reboot disabled |
+| SELinux | Disabled by image boot parameter `selinux=0`; `audit=0` also retained |
+| Services and backups | No business applications, Nginx, VPN, or application backups; root-private pre-change configuration archive only |
+| Context | `/opt/server-context`, `/opt/AGENTS.md`, `/root/AGENTS.md` link, and PAM static MOTD; synchronized from agent-config |
+
 ## Host `nas`
 
 The ASUS G733 laptop was prepared as a separate Linux host on 2026-10-28. It runs Ubuntu 26.04.1 LTS, with a Ryzen 9 5900HX, 64 GB installed RAM, and two 1 TB NVMe SSDs. Both SSDs contribute to the linear LVM group `nasvg`; its `root` logical volume holds the single ext4 `/` filesystem, approximately 1.86 TiB before filesystem overhead. `/data` is an ordinary directory in the same filesystem, so applications share capacity without choosing a disk. The Intel SSD retains the EFI partition, and the Samsung SSD holds a separate 2 GiB ext4 `/boot` to preserve Secure Boot compatibility. This layout has no disk redundancy; failure of either SSD can make the entire root filesystem unavailable. The local SSH alias `nas` uses root public-key authentication and a dedicated maintenance-computer key. Obtain the address from local SSH configuration.
 
 Networking currently uses Wi-Fi and DHCP; a router reservation has not been configured. The Ethernet interface supports DHCP and is optional during startup. Charging stops at 80%, CPU energy preference is `balance_power`, and lid closure keeps the host running. Following repeated freezes, including a user-reported history under Windows, the diagnostic power policy uses firmware `balanced`, disables CPU boost, and restricts the `acpi_idle` driver to C1. The running host disables deeper states through sysfs; the GRUB setting applies the limit before userspace on subsequent boots. NVIDIA runtime power management remains automatic. After the diagnostic reboot, the user reported approximately 14 W while idle, compared with the earlier approximately 11 W under `quiet` and unrestricted CPU idle states; measurement durations were not provided, and these are not load measurements. Persistent journal synchronization is set to 15 seconds, and sysstat plus temperature/fan sampling runs every minute. The cause remains unresolved; a successful short test or boot does not establish overnight stability. Time is Asia/Shanghai with chrony synchronization; automatic Ubuntu security updates and weekly SSD TRIM are enabled. See [NAS laptop operations](nas-host.md) for configuration sources, diagnostics, and recovery.
 
-No business application, public HTTPS entry point, VPN, or application backup schedule has been installed on `nas`. All applications and the remaining host-specific sections below describe `ali`; preparation of `nas` has not switched production.
+No business application, public HTTPS entry point, VPN, or application backup schedule has been installed on `nas`. All applications and the remaining host-specific sections below describe `ali`; preparation of `nas` and `vps` has not switched production.
+
+## Resource Comparison: `vps` and `ali`
+
+Resources were rechecked read-only on 2026-10-29. VM topology describes the guest view, not guaranteed physical core allocation. Package/kernel versions and disk usage can change; use `inspect.sh` to recheck them.
+
+| Item | `vps` | `ali` |
+| --- | --- | --- |
+| OS | AlmaLinux 9.8, DNF | Ubuntu 26.04.1 LTS, APT |
+| Virtualization | KVM | Alibaba Cloud ECS / KVM |
+| CPU | 2 vCPU, Xeon SierraForest guest model; topology advertises 2 cores / 1 thread per core | 2 vCPU, Xeon Platinum guest model; topology advertises 1 core / 2 threads |
+| Guest CPU features | AVX, no advertised AVX2/AVX-512 | AVX2 and AVX-512 advertised |
+| Visible RAM / swap | Approximately 1 GiB / 544 MiB | Approximately 1.7 GiB / no swap |
+| Virtual disk | 20 GiB; separate ext4 `/boot` and `/` | 40 GiB; ext4 `/`, EFI partition |
+| SSH and host firewall | Key-only root login; active firewalld, SSH only | Key-only root login; UFW inactive; full cloud rule audit outstanding |
+| Automatic updates | DNF security updates, no automatic reboot | Ubuntu security updates, no automatic reboot |
+| Workload and backups | No applications or off-host backup configured | Eight applications; local native backups and Alibaba Cloud Backup |
+
+`ali` provides more memory and twice the disk capacity for the current applications. `vps` is suited to small additional services within its memory/storage limits. CPU model labels and idle load do not establish relative throughput; no CPU, storage, or bandwidth benchmark was run for this comparison.
 
 <a id="已部署应用共享变更必须逐行核对"></a>
 
