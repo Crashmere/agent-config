@@ -37,7 +37,7 @@ Prepared on 2026-10-29 as a separate AlmaLinux KVM VM; business applications rem
 | Host firewall | Firewalld enabled, `eth0` in `public`, SSH and TCP 443 allowed; proxy reachability verified externally, complete cloud-side protection not audited |
 | Update policy | Signed AlmaLinux BaseOS/AppStream/Extras; `dnf-automatic.timer` applies security updates; automatic reboot disabled |
 | SELinux | Disabled by image boot parameter `selinux=0`; `audit=0` also retained |
-| Services and backups | sing-box 1.14.4, `vps-proxy.service`, VLESS + REALITY + Vision on TCP 443, retained `xray` runtime user; private recovery archive and manual off-host copy; retired Xray service disabled; no business applications, Nginx, or scheduled application backups |
+| Services and backups | sing-box 1.14.4, `vps-proxy.service`, VLESS + REALITY + Vision on TCP 443, retained `xray` runtime user; server-side recovery archives only, no off-host copy; local `~/vps` removed at the user's request; retired Xray service disabled; no business applications, Nginx, or scheduled application backups |
 | Client configuration | Yuyan document 833 (`VPS配置`) on `ali` is the maintained connection/settings record; future changes directly revise it. User confirmed working iPhone Hiddify access on China Mobile 5G on 2026-10-29 |
 | Context | `/opt/server-context`, `/opt/AGENTS.md`, `/root/AGENTS.md` link, and PAM static MOTD; synchronized from agent-config |
 
@@ -63,7 +63,7 @@ Resources were rechecked read-only on 2026-10-29. VM topology describes the gues
 | Virtual disk | 20 GiB; separate ext4 `/boot` and `/` | 40 GiB; ext4 `/`, EFI partition |
 | SSH and host firewall | Key-only root login; active firewalld, SSH and TCP 443 | Key-only root login; UFW inactive; full cloud rule audit outstanding |
 | Automatic updates | DNF security updates, no automatic reboot | Ubuntu security updates, no automatic reboot |
-| Workload and backups | Personal sing-box proxy; manual off-host configuration archive, no scheduled backup | Eight applications; local native backups and Alibaba Cloud Backup |
+| Workload and backups | Personal sing-box proxy; server-side configuration recovery archives, no off-host copy or scheduled backup | Eight applications; local native backups and Alibaba Cloud Backup |
 
 `ali` provides more memory and twice the disk capacity for the current applications. `vps` is suited to small additional services within its memory/storage limits. CPU model labels and idle load do not establish relative throughput; no CPU, storage, or bandwidth benchmark was run for this comparison.
 
