@@ -31,6 +31,12 @@ Mark the unused Ethernet interface `optional: true` in Netplan and enable `dhcp4
 
 On a gateway, a correct NAS tunnel key can still be rejected if the dedicated user's root-owned `.ssh` directory is mode 0700: OpenSSH reads authorized keys as that user and cannot traverse the directory. Follow [the restricted identity ownership/modes](nas-migration.md#host-roles-and-traffic), preserving root write control and group read/traverse access. Inspect authentication logs and effective Match settings, then validate a fresh tunnel with only the permitted loopback listeners. Do not work around unreadable files by enabling a shell, widening forwarding, or changing administrator keys. This applies independently to ALI and VPS.
 
+## NAS asset script fails with 203/EXEC
+
+On `nas`, `nas-lan-tls.service` failed with `203/EXEC` and `Permission denied` for an existing root-owned `renew-lan-tls.sh`. Documentation synchronization installs assets as mode 0644, so a unit cannot execute the script directly. [The maintained TLS unit](../assets/nas/nas-lan-tls.service) invokes `/bin/bash` explicitly; the script requires Bash's `pipefail`. A one-off `chmod` would be reset by the next documentation sync. NAS power and health units already invoke `/bin/sh` and need no change.
+
+Install the corrected unit after source synchronization, verify it with `systemd-analyze verify`, reload systemd, and run the renewal service. Confirm `Result=success`, a valid leaf/CA chain, and the enabled timer. All eight NAS applications share this LAN certificate; ALI/VPS public renewal is unaffected.
+
 <a id="门户-api-列表与服务不一致"></a>
 ## Portal API List Does Not Match the Service
 
