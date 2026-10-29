@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <zone>
   <short>Public</short>
-  <description>VPS host access: SSH only; application ports remain closed.</description>
+  <description>VPS host access: SSH and the personal REALITY proxy on TCP 443.</description>
   <service name="ssh"/>
+  <port port="443" protocol="tcp"/>
 </zone>

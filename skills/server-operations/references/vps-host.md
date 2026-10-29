@@ -13,14 +13,15 @@ The VM advertises an Intel Xeon SierraForest CPU model. Its virtual topology and
 | Source in this skill | Installed location | Behavior |
 | --- | --- | --- |
 | `assets/vps/00-maintenance.conf` | `/etc/ssh/sshd_config.d/00-maintenance.conf`, 0600 | Public-key authentication; no password or keyboard-interactive authentication; root requires a public key; no X11 forwarding |
-| `assets/vps/public.xml` | `/etc/firewalld/zones/public.xml`, 0644 | Public zone allows SSH only; no public application ports |
+| `assets/vps/public.xml` | `/etc/firewalld/zones/public.xml`, 0644 | Public zone allows SSH and the personal proxy on TCP 443 |
+| `assets/vps/xray.service`, `assets/vps/xray-config.json.template` | `/etc/systemd/system/xray.service`, `/etc/xray/config.json` | Single low-privilege VLESS + REALITY + Vision service; configuration is privately rendered |
 | `assets/vps/automatic.conf` | `/etc/dnf/automatic.conf`, 0644 | Automatically downloads and applies security updates; never reboots automatically; journal output |
 | `assets/server-context-motd.txt` | `/etc/motd.d/30-server-context`, 0644 | Static PAM login notice linking to server instructions |
 | `assets/AGENTS.md` | `/opt/AGENTS.md`, linked from `/root/AGENTS.md` | Shared server maintenance entry point |
 
 The OpenSSH Include occurs before the image's explicit password and root-login settings. OpenSSH uses the first obtained value, so inspect `sshd -T` after changes rather than reading only the bottom of `sshd_config`. Keep an existing administrative session while validating a fresh key-only connection; do not lock root's account or change its authorized key as part of password-authentication disablement.
 
-Firewalld is enabled at boot, with `public` as the default and the NetworkManager connection on `eth0` assigned to it. Essential established traffic, loopback, and ICMP follow firewalld defaults. Inspect active zones, services, and the nftables ruleset before changing exposure. Opening HTTP/HTTPS or other public ports requires authorization; copying `ali`'s inactive UFW state is not a host requirement.
+Firewalld is enabled at boot, with `public` as the default and the NetworkManager connection on `eth0` assigned to it. The user-authorized personal proxy uses TCP 443; it is not a web HTTPS application. Essential established traffic, loopback, and ICMP follow firewalld defaults. Inspect active zones, services, and the nftables ruleset before changing exposure. Further public exposure requires authorization; copying `ali`'s inactive UFW state is not a host requirement. See [Personal proxy operations](vps-proxy.md) for runtime, Hiddify imports, updates, and recovery.
 
 The image boots with `selinux=0 audit=0`; SELinux remains disabled. Enabling it requires a separate policy, relabel, and reboot plan. Guest CPU vulnerability reporting includes MDS mitigation limitations; provider host microcode/isolation cannot be established from the guest alone.
 
@@ -44,6 +45,6 @@ Before a reboot, finish package transactions, verify `grubby --default-kernel`, 
 
 Run `SYNC_HOST=vps ~/agent-config/skills/server-operations/scripts/sync-docs.sh shared` after committing and pushing shared documentation. `--check shared` verifies synchronized file hashes and provenance. Synchronization installs documentation and login notices, not the SSH, firewall, or update configuration assets above. Root's instruction link is created only after confirming there is no existing conflicting `/root/AGENTS.md`.
 
-Private pre-change configuration is retained in root-only `/root/maintenance-backups/` with 0600 archives; these include SSH configuration and must never enter Git or shared context. They are local configuration recovery materials, not application or off-host backups. There are no business data, application runtimes, VPN, public HTTPS service, or scheduled application backups on `vps`. Production remains on `ali`.
+Private pre-change configuration is retained in root-only `/root/maintenance-backups/` with 0600 archives; these include SSH configuration and must never enter Git or shared context. The proxy's configuration recovery archive also has a manual off-host copy on the maintenance Mac, as documented in [Personal proxy operations](vps-proxy.md). There are no business data, web application runtimes, public web HTTPS service, or scheduled application backups on `vps`. Business production remains on `ali`.
 
 For SSH lockout, use the provider console and inspect or remove the maintenance drop-in, then run `sshd -t` before reloading. For a firewall lockout, inspect the NetworkManager zone and public-zone services through the console; restore only the required SSH access. A previous installed kernel remains available through GRUB after the initial update; kernel rollback does not roll back userspace packages. DNF history and private configuration archives provide separate evidence and recovery options, not a guaranteed whole-system restore.
