@@ -4,22 +4,41 @@ Authoritative service contracts: [API documentation](https://github.com/Crashmer
 
 ## Private configuration
 
-The default is `~/.config/aicalendar/client.json`; both configuration and token files must have permissions 0600:
+The default is `~/.config/aicalendar/client.json`, targeting the primary `vps` HTTPS entrance on port 8443. Both configuration and token files must have permissions 0600:
 
 ```json
 {
-  "base_url": "https://YOUR_SERVER/aicalendar",
+  "base_url": "https://YOUR_VPS_IPV4:8443/aicalendar",
   "token_file": "/private/path/import-token"
 }
 ```
 
 Do not write addresses or secrets into the repository. Read the token from a file; do not put it on the command line, in URLs, conversations, or environment logs. The client enforces HTTPS (except local loopback demonstrations) and prohibits redirects to prevent forwarding credentials to other addresses.
 
+The maintained private configurations all reference the same existing `token_file`; changing an entrance does not require copying or rotating the import token.
+
+| Configuration | Entrance | Use |
+| --- | --- | --- |
+| `client.json` | `vps` HTTPS 8443 | Default for new plans and ordinary external access |
+| `client-ali.json` | Compatibility `ali` HTTPS 443 | Replay existing plans bound to the ALI address |
+| `client-nas.json` | LAN `nas` HTTPS 443 | Large local transfers without using a public gateway |
+
+The client uses Python's default TLS trust and has no custom CA configuration field. For the NAS entrance, supply its public local CA certificate through command-scoped `SSL_CERT_FILE`; keep certificate verification enabled. Apply this environment variable to each NAS request, including preview and submission:
+
+```sh
+SSL_CERT_FILE="$HOME/ali/nas-local-ca.crt" \
+  python3 scripts/import_records.py --config "$HOME/.config/aicalendar/client-nas.json" status
+```
+
+The public VPS and compatibility ALI entrances use normal public certificate trust. All three entrances reach the same live AICalendar state on NAS. The frozen original ALI installation is a separate migration-point fallback, not the target of compatibility client requests. See [server operations](../../server-operations/references/nas-migration.md) for host roles and recovery limits.
+
 Import credentials are limited to `/ingest/v1/`: Schema, batch preview/submission, batch lists/receipts, normalized record queries, and chunked imports, queries, and downloads of full conversation archives. They cannot edit website annotations, use calendar summary export, delete data, manage portal devices, or read other applications. Downloading a full archive is distinct from calendar summary export; see [archives.md](archives.md).
 
 ## Fixed plans
 
 `prepare` generates fixed requests for this task, with at most 200 records per batch by default and room left below the payload size limit. `--upsert` first reads existing record versions. The plan includes the destination address, content digest, stable idempotency keys, and all batches; coverage declarations go last and are submitted only after preceding records succeed.
+
+Both activity and archive plans record the exact `base_url`, including the port and application prefix; the client rejects a plan whose destination differs from its current configuration. Use the matching configuration for every preview, submission, or retry. For an existing ALI plan, put `--config "$HOME/.config/aicalendar/client-ali.json"` before the subcommand. Preserve the original plan and its digest; changing the default entrance does not authorize rewriting the destination. A genuinely new destination requires a new plan from the reviewed source materials.
 
 `preview` does not write business data; conflicts produce full JSON output and exit code 2, while ordinary errors use 1. `submit` previews each batch again, submits it, and reads back the receipt; preserve the plan on failure and submit the same plan again to resume. The service deduplicates by `source + external_id` and uses idempotency keys to prevent duplicate submissions on network retries.
 
