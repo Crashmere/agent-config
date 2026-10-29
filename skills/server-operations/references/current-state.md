@@ -24,7 +24,7 @@ AICalendar's web redesign and backup scope changes were last checked on 2026-10-
 
 ## Host `vps`
 
-Prepared on 2026-10-29 as a separate AlmaLinux KVM VM; business applications remain on `ali`. `vps` runs a personal Xray proxy, documented in [Personal proxy operations](vps-proxy.md). The local administrator alias is `ssh vps`, with strict host-key verification and an explicitly selected local key. Obtain its public address from local SSH configuration, not this public repository. See [VPS operations](vps-host.md) for configuration sources, update/reboot checks, recovery, and documentation synchronization.
+Prepared on 2026-10-29 as a separate AlmaLinux KVM VM; business applications remain on `ali`. `vps` runs a personal sing-box proxy, documented in [Personal proxy operations](vps-proxy.md). The local administrator alias is `ssh vps`, with strict host-key verification and an explicitly selected local key. Obtain its public address from local SSH configuration, not this public repository. See [VPS operations](vps-host.md) for configuration sources, update/reboot checks, recovery, and documentation synchronization.
 
 | Item | Current state |
 | --- | --- |
@@ -37,7 +37,7 @@ Prepared on 2026-10-29 as a separate AlmaLinux KVM VM; business applications rem
 | Host firewall | Firewalld enabled, `eth0` in `public`, SSH and TCP 443 allowed; proxy reachability verified externally, complete cloud-side protection not audited |
 | Update policy | Signed AlmaLinux BaseOS/AppStream/Extras; `dnf-automatic.timer` applies security updates; automatic reboot disabled |
 | SELinux | Disabled by image boot parameter `selinux=0`; `audit=0` also retained |
-| Services and backups | Xray 26.10.21, VLESS + REALITY + Vision on TCP 443, dedicated `xray` user; private recovery archive and manual off-host configuration copy; no business applications, Nginx, or scheduled application backups |
+| Services and backups | sing-box 1.14.4, `vps-proxy.service`, VLESS + REALITY + Vision on TCP 443, retained `xray` runtime user; private recovery archive and manual off-host copy; retired Xray service disabled; no business applications, Nginx, or scheduled application backups |
 | Context | `/opt/server-context`, `/opt/AGENTS.md`, `/root/AGENTS.md` link, and PAM static MOTD; synchronized from agent-config |
 
 ## Host `nas`
@@ -62,7 +62,7 @@ Resources were rechecked read-only on 2026-10-29. VM topology describes the gues
 | Virtual disk | 20 GiB; separate ext4 `/boot` and `/` | 40 GiB; ext4 `/`, EFI partition |
 | SSH and host firewall | Key-only root login; active firewalld, SSH and TCP 443 | Key-only root login; UFW inactive; full cloud rule audit outstanding |
 | Automatic updates | DNF security updates, no automatic reboot | Ubuntu security updates, no automatic reboot |
-| Workload and backups | Personal Xray proxy; manual off-host configuration archive, no scheduled backup | Eight applications; local native backups and Alibaba Cloud Backup |
+| Workload and backups | Personal sing-box proxy; manual off-host configuration archive, no scheduled backup | Eight applications; local native backups and Alibaba Cloud Backup |
 
 `ali` provides more memory and twice the disk capacity for the current applications. `vps` is suited to small additional services within its memory/storage limits. CPU model labels and idle load do not establish relative throughput; no CPU, storage, or bandwidth benchmark was run for this comparison.
 

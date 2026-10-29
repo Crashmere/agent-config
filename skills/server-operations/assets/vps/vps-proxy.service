@@ -1,13 +1,13 @@
 [Unit]
 Description=Personal VLESS REALITY proxy on vps
-Documentation=https://xtls.github.io/
+Documentation=https://sing-box.sagernet.org/
 Wants=network-online.target
 After=network-online.target
 
 [Service]
 User=xray
 Group=xray
-ExecStart=/usr/local/bin/xray run -config /etc/xray/config.json
+ExecStart=/usr/local/bin/sing-box run -c /etc/vps-proxy/config.json
 Restart=on-failure
 RestartSec=5s
 UMask=0077
@@ -22,7 +22,7 @@ ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true
-RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
 LimitNOFILE=65536
 
 [Install]

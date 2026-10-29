@@ -14,7 +14,7 @@ The VM advertises an Intel Xeon SierraForest CPU model. Its virtual topology and
 | --- | --- | --- |
 | `assets/vps/00-maintenance.conf` | `/etc/ssh/sshd_config.d/00-maintenance.conf`, 0600 | Public-key authentication; no password or keyboard-interactive authentication; root requires a public key; no X11 forwarding |
 | `assets/vps/public.xml` | `/etc/firewalld/zones/public.xml`, 0644 | Public zone allows SSH and the personal proxy on TCP 443 |
-| `assets/vps/xray.service`, `assets/vps/xray-config.json.template` | `/etc/systemd/system/xray.service`, `/etc/xray/config.json` | Single low-privilege VLESS + REALITY + Vision service; configuration is privately rendered |
+| `assets/vps/vps-proxy.service`, `assets/vps/sing-box-config.json.template` | `/etc/systemd/system/vps-proxy.service`, `/etc/vps-proxy/config.json` | Single low-privilege sing-box VLESS + REALITY + Vision service; configuration is privately rendered |
 | `assets/vps/automatic.conf` | `/etc/dnf/automatic.conf`, 0644 | Automatically downloads and applies security updates; never reboots automatically; journal output |
 | `assets/server-context-motd.txt` | `/etc/motd.d/30-server-context`, 0644 | Static PAM login notice linking to server instructions |
 | `assets/AGENTS.md` | `/opt/AGENTS.md`, linked from `/root/AGENTS.md` | Shared server maintenance entry point |

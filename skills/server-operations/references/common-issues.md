@@ -11,6 +11,10 @@ The `vps` image is AlmaLinux, whereas `ali` and `nas` use Ubuntu. An absent UFW 
 
 Ubuntu runs `/etc/update-motd.d` scripts; AlmaLinux's SSH PAM configuration uses `pam_motd.so` and reads static `/etc/motd.d` snippets. `sync-docs.sh` maps the notice according to `SYNC_HOST=vps`; it must not introduce unconditional shell startup output, which can break command and file transfers. All applications on `ali` keep their existing notice and configuration; this difference concerns `vps` host bootstrap only.
 
+## Interface discovery blocked by a service sandbox
+
+On `vps`, sing-box configuration validation passed but startup failed with `initialize network: create netlink socket: address family not supported by protocol`. The unit inherited an Xray-oriented `RestrictAddressFamilies` allowlist containing only `AF_INET AF_INET6 AF_UNIX`; sing-box also uses `AF_NETLINK` to discover network interfaces. Add only that family to the affected unit, validate the unit, reload systemd, and confirm startup and a real proxy request. Do not remove the whole allowlist or grant `CAP_NET_ADMIN` for read-only interface discovery. The source is [the vps proxy unit](../assets/vps/vps-proxy.service); all applications on `ali` and `nas` remain unchanged. Apply the same diagnosis to another daemon only when its logs show this failure.
+
 ## Whole-host freezes with no retained panic
 
 On `nas`, both the local console and network have stopped responding, including an overnight idle episode; the user also reports freezes under Windows. Retained logs contained no conclusive panic, OOM, or storage failure. Preserve journals and hardware state before further resets, check activity and SMART/self-test evidence, and investigate hardware/firmware alongside Linux drivers when the symptom crosses operating systems. An abruptly ending journal does not identify the exact freeze time or prove a thermal, memory, or driver cause.
