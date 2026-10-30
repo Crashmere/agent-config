@@ -209,6 +209,12 @@ If the log already says `Deployed` and a later public HTTPS check times out, the
 
 If new SSH connections from the maintenance workstation occasionally time out, first use a short `ConnectTimeout` for a read-only connectivity check. Documentation synchronization may temporarily use OpenSSH ControlMaster to reuse an established connection, while retaining the original SSH alias, identity, and host-key verification; close the temporary connection afterward. A connection timeout alone does not prove an application or server failure and does not justify restarting a service or changing authentication.
 
+## Retired Portal Backup Integrations
+
+Removing Portal backup APIs can leave application-owned status widgets, links, polling or maintenance instructions behind. Aura had a web summary polling `/portal/api/recovery` and linking to `/portal/#/backups`; removing that component and its styles eliminates both requests and the broken navigation. Audit all inventory applications' frontend/server sources, entry build assets and `deploy/portal.json`, then compare the NAS declaration hashes with their maintained sources. Portal login assets are public; inspect business pages only through the trusted [view tunnel](conventions.md#agents-viewing-live-pages), without extracting user cookies.
+
+Also check current READMEs, operations and limitation documents for daily native scheduling, Portal-driven backup, internal routine destinations and cache exclusions. NAS agent full packages include stored derivatives, while native historical formats may omit them. Dated verification records and archived design baselines describe their historical scope; do not erase valid evidence or present it as current readiness. Keep native compatibility commands and inactive unit files, but verify that backup services are inactive and timers are neither active nor enabled. FabricWorld and RecipeBox cleanup timers remain separate application writers, not backup jobs. Documentation synchronization targets active `nas`/`vps`, leaving frozen `ali` unchanged. See [Agent backup and recovery](backup-recovery.md) for the maintained capture/restore workflow.
+
 <a id="备份与发布历史持续占用磁盘"></a>
 ## Backup and Release History Keeps Consuming Disk
 
