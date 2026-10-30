@@ -1,4 +1,4 @@
 interface:
   display_name: "AI Calendar Import"
   short_description: "Import AI usage, full chats, and originals with source labels"
-  default_prompt: "Use $ai-calendar-import to organize the past week's AI usage records, label their sources, and import full conversations and calendar summaries into the service."
+  default_prompt: "Use $ai-calendar-import to organize the past week's AI usage records, label their sources, and import full conversations and calendar summaries through direct NAS LAN HTTPS. Stop if LAN access fails; use VPS only when the user explicitly requests it."

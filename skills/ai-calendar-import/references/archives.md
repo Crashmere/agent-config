@@ -17,6 +17,8 @@ python3 scripts/archive_conversations.py prepare --archive /private/task/archive
 python3 scripts/archive_conversations.py submit --plan /private/task/archive-plan.json
 ```
 
+These commands default to direct `nas` LAN HTTPS. Check `import_records.py status` before starting and stop on connection failure. Only after the user explicitly requests `vps` uploading, add `--via-vps` before the subcommand for archive preparation, submission, and downloads as well as summary commands. Keep each fixed plan bound to its original authorized entrance; see [API and client](api.md).
+
 Oversized Trae conversations are automatically split into ordered volumes, and
 `archives/index.json` includes every volume. The first volume keeps the original
 conversation ID; subsequent volumes use `-volume-NNN`. Each volume preserves a
@@ -27,7 +29,7 @@ verify its original SHA-256. Upload and verify every indexed volume before the
 calendar summaries. Do not rerun extraction to recover an interrupted upload;
 reuse the existing archives and fixed upload plans.
 
-Complete archives before importing calendar summaries; each step is independently retryable, so do not claim an atomic batch commit across the two APIs. Trae extraction accepts `--source-label "Trae · 工作电脑"`; generic pack accepts the same parameter to override the displayed source label. The stable source does not change when the label is renamed. If archiving succeeds but summary import fails, retain the archive and keep retrying the original summary plan.
+Complete archives before importing calendar summaries; each step is independently resumable, so do not claim an atomic batch commit across the two APIs. Trae extraction accepts `--source-label "Trae · 工作电脑"`; generic pack accepts the same parameter to override the displayed source label. The stable source does not change when the label is renamed. If archiving succeeds but summary import fails, retain the archive and original summary plan; stop on a LAN connection failure and resume that plan once its authorized entrance is reachable again.
 
 Labels are stored in the service manifest. With the same gzip content, changing only source_label in the manifest, generating a new plan, and running prepare/submit again updates the displayed label without creating another snapshot. Do not edit an existing fixed plan or rewrite an original export merely to change a label. An omitted or empty label preserves the service's existing value. Synchronize calendar record labels separately through summary upsert; the two APIs do not modify each other. The website archive list supports filtering by label keywords.
 
@@ -47,7 +49,7 @@ The normalized input file is also saved as original material. Repeat --source-fi
 
 `prepare` fixes the destination address, file path, overall SHA-256, and chunk list; `submit` uploads missing 384 KiB chunks, then asks the service to verify gzip, normalized message order, original-material chunks, and each source's SHA-256. Browsing is available only after complete verification. Finally, download the actual stored bytes and compare the overall hash and length. Retrying the original plan for a completed archive returns replay without adding a copy.
 
-Preserve files and plans on network failure, then execute the same submit again. For 400/409 responses, inspect the specific error; do not alter hashes, drop chunks, or reduce counts to bypass validation. A 503 means the service has not enabled the archive extension; complete maintenance before retrying.
+Preserve files and plans on network failure and stop the import rather than selecting a public route. Once the same authorized entrance is reachable again, execute the same submit to resume. For 400/409 responses, inspect the specific error; do not alter hashes, drop chunks, or reduce counts to bypass validation. A 503 means the service has not enabled the archive extension; complete maintenance before retrying.
 
 Read back manifests in batches with `GET /ingest/v1/archives?source=...&offset=0&limit=100`, with at most 100 entries per page. The current API always returns next_offset equal to offset plus the number of entries on the current page; it does not use null to mark the last page. Stop when the current page is empty or shorter than the requested limit; otherwise, use the returned next_offset. Check all snapshot IDs, committed states, manifest hashes, and conversation associations; do not count revised snapshots as new conversations.
 

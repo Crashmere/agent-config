@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """AICalendar v1 client. Standard library only; explicit, resumable imports."""
 import argparse
+from contextlib import contextmanager
 import datetime as dt
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
 import re
+import ssl
 import sys
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.request import Request, build_opener, HTTPRedirectHandler, HTTPSHandler, ProxyHandler
+
+
+DEFAULT_CONFIG = '~/.config/aicalendar/client.json'
+VPS_CONFIG = '~/.config/aicalendar/client-vps.json'
+LAN_NETWORKS = tuple(ipaddress.IPv4Network(value) for value in ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'))
 
 
 def digest(value):
@@ -45,42 +53,80 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class Client:
-    def __init__(self, config):
-        settings = load(check_private(config))
+    def __init__(self, config=None, via_vps=False):
+        settings = load(check_private(config or (VPS_CONFIG if via_vps else DEFAULT_CONFIG)))
         self.base = settings['base_url'].rstrip('/')
+        self.via_vps = via_vps
+        self._upload_ready = False
         parsed = urlparse(self.base)
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError('base_url cannot contain credentials, query, or fragment')
         if parsed.scheme != 'https' and not (parsed.scheme == 'http' and parsed.hostname in ('127.0.0.1', '::1', 'localhost')):
             raise ValueError('HTTPS is required except for a local loopback demo')
+        try:
+            address = ipaddress.IPv4Address(parsed.hostname)
+        except (ipaddress.AddressValueError, TypeError):
+            address = None
+        if via_vps:
+            if parsed.scheme != 'https' or address is None or not address.is_global or parsed.port != 8443:
+                raise ValueError('--via-vps requires the primary VPS public IPv4 HTTPS entrance on port 8443')
+            if config is not None and self.base != load(check_private(VPS_CONFIG))['base_url'].rstrip('/'):
+                raise ValueError('Custom VPS base_url must match ~/.config/aicalendar/client-vps.json')
+        elif parsed.hostname not in ('127.0.0.1', '::1', 'localhost') and not (address is not None and any(address in network for network in LAN_NETWORKS)):
+            raise ValueError('Default requests require direct NAS LAN HTTPS to an RFC1918 IPv4 address. --config does not authorize public access; use --via-vps only when the user explicitly requests VPS uploading.')
         self.token = check_private(settings['token_file']).read_text().strip()
         if not self.token:
             raise ValueError('Token is empty')
-        self.opener = build_opener(NoRedirect())
+        ca_file = settings.get('ca_file')
+        context = ssl.create_default_context(cafile=str(Path(ca_file).expanduser()) if ca_file else None)
+        handlers = [NoRedirect(), HTTPSHandler(context=context)]
+        if not via_vps:
+            # A LAN destination must not be routed through environment/system proxies.
+            handlers.append(ProxyHandler({}))
+        self.opener = build_opener(*handlers)
 
-    def request(self, path, body=None, retry=False):
+    def network_error(self, error):
+        self._upload_ready = False
+        route = 'VPS' if self.via_vps else 'NAS LAN'
+        return ValueError(f'{route} request failed: {error}. Import stopped without switching routes. Preserve the original plan and files; resume when the same authorized entrance is reachable.')
+
+    def request(self, path, body=None, retry=False, timeout=None):
         data = None if body is None else json.dumps(body, ensure_ascii=False).encode()
         if data is not None and len(data) > 1048576:
             raise ValueError('Batch exceeds 1 MiB')
-        for attempt in range(3 if retry else 1):
+        if data is not None and not self._upload_ready:
+            self.request('imports', timeout=8)
+            self._upload_ready = True
+        attempts = 3 if retry and self.via_vps else 1
+        request_timeout = timeout if timeout is not None else (35 if data is not None or self.via_vps else 8)
+        for attempt in range(attempts):
             request = Request(self.base + '/ingest/v1/' + path, data=data, headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
             try:
-                with self.opener.open(request, timeout=35) as response:
+                with self.opener.open(request, timeout=request_timeout) as response:
                     return json.load(response)
             except HTTPError as error:
                 try:
                     payload = json.loads(error.read())
                 except ValueError:
                     payload = {'error': 'non-JSON response'}
-                if error.code in (429, 502, 503, 504) and retry and attempt < 2:
+                if error.code in (429, 502, 503, 504) and attempt + 1 < attempts:
                     time.sleep(attempt + 1)
                     continue
                 raise ValueError(json.dumps({'http_status': error.code, 'response': payload}, ensure_ascii=False)) from None
-            except (URLError, TimeoutError):
-                if retry and attempt < 2:
+            except (URLError, TimeoutError, OSError) as error:
+                if attempt + 1 < attempts:
                     time.sleep(attempt + 1)
                     continue
-                raise ValueError('Network request failed. Reuse the same plan to retry; do not generate new record IDs.') from None
+                raise self.network_error(error) from None
+
+    @contextmanager
+    def download(self, path):
+        request = Request(self.base + '/ingest/v1/' + path, headers={'Authorization': 'Bearer ' + self.token})
+        try:
+            with self.opener.open(request, timeout=120) as response:
+                yield response
+        except (URLError, TimeoutError, OSError) as error:
+            raise self.network_error(error) from None
 
     def activities(self, source=None):
         items = []
@@ -172,7 +218,7 @@ def run(args):
         value = load(args.file)
         records = validate(value)
         return {'valid': True, 'records': len(records), 'note': 'Core offline validation passed; server preview performs authoritative validation.'}
-    client = Client(args.config)
+    client = Client(args.config, via_vps=args.via_vps)
     if args.command == 'status':
         return client.request('imports', retry=True)
     if args.command == 'lookup':
@@ -227,7 +273,8 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default='~/.config/aicalendar/client.json')
+    parser.add_argument('--config', help='Private LAN configuration; with --via-vps, base_url must match the primary client-vps.json')
+    parser.add_argument('--via-vps', action='store_true', help='Use client-vps.json instead of direct NAS LAN access, only when the user explicitly requests VPS uploading')
     commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('validate');p.add_argument('--file', required=True)
     p = commands.add_parser('prepare');p.add_argument('--file', required=True);p.add_argument('--out', required=True);p.add_argument('--upsert', action='store_true')

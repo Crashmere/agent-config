@@ -15,6 +15,12 @@ Treat the service as the storage and presentation layer for normalized records. 
 - The current agent summarizes titles, summaries, and tags; deterministic scripts extract times, counts, and stable identifiers. Do not infer counts, time spent, or dates from topics.
 - Keep original conversations, temporary JSON, import plans, and credentials in private directories outside Git. The user has requested full conversation preservation: by default, each import also saves normalized messages and original export materials to the authenticated service. Do not treat summaries or a few review snippets as complete archives. Reading local files may still bring selected snippets into the current model; do not describe this as local model inference.
 
+## Connection policy
+
+Use direct `nas` LAN HTTPS for all service requests by default, including coverage queries, full archives, summary previews/submissions, and verification downloads. Before starting an import, run `status` with the same configuration and route that will be used for uploading. If the LAN connection, TLS verification, or authentication fails, report the failure and stop; preserve any existing local materials and fixed plans. Do not automatically retry network failures, select a public configuration, use an SSH tunnel or environment proxy, or switch to `vps` or `ali`.
+
+Only when the user explicitly requests uploading through `vps`, add `--via-vps` before the subcommand in both upload scripts. This selects the separate private `client-vps.json`; an optional `--config` must target that same primary VPS entrance. A custom configuration or an old public-bound plan is not permission to use a public route. A VPS failure also stops the import rather than falling back to another entrance. Read [API and client](references/api.md) for configuration, local CA trust, and fixed-plan destination rules.
+
 ## Complete workflow
 
 1. Determine the source, the source label supplied by the user, and the dates. When the user says materials come from ChatGPT or a Trae work computer, preserve that meaning as source_label (up to 80 characters), which may contain Chinese characters and spaces; source remains a stable account/source namespace, and changing a display label must not recreate source or external_id. The label is displayed and used for filtering in the calendar and full archives; do not mix it into topic summaries. If the user supplies no label, use the known source name without inventing an account or device. The user's specified range takes precedence; for the first request for recent history, default to 7 days. Subsequently, use `status` to check successful coverage first, then overlap the preceding 7 days to include late records. Do not treat an unknown range as already fully covered.
@@ -24,7 +30,7 @@ Treat the service as the storage and presentation layer for normalized records. 
 5. Follow archives.md to generate a fixed upload plan for each complete archive in `archives/index.json`, submit chunks, verify the service receipt, and download to compare hashes. Reuse the original plan after an interruption; do not repack. Commit full archives before importing summaries. Preserve original text unchanged, including unknown fields, tool arguments/results, original multimodal structures, and attachment files supplied in the export; do not read unrelated local files or download external links to fill attachment gaps on your own.
 6. Run local `validate`, then `prepare` to generate a fixed plan that cannot be overwritten. For existing records the user wants completed, use `--upsert` to read the current version; use insert_only for ordinary first imports.
 7. Run `preview` and check the counts of `final` / `partial` records and the specific reasons for retaining pending organization states. Continue directly with already authorized new imports. If there are actual overwrite conflicts, reductions in confirmed counts, deletions, or rollbacks, show the specific differences and act within existing authorization; do not change IDs to bypass deduplication.
-8. Run `submit`. It previews each batch again, submits idempotently, verifies receipts, and finally reads back records. Retry network failures with the **original plan**. Do not change idempotency keys or skip failed batches to submit a complete-coverage declaration first.
+8. Run `submit`. It previews each batch again, submits idempotently, verifies receipts, and finally reads back records. On a LAN network failure, stop the import; once the same authorized entrance is reachable again, resume with the **original plan**. Do not change idempotency keys or skip failed batches to submit a complete-coverage declaration first.
 9. Report the number of full archives, hash verification of original materials, missing attachments/sources, actual sources/date ranges, insertions and updates, retries skipped, unresolved conflicts, and data limitations, and provide the calendar link. On replay, inserted in the receipt is the original batch result; do not describe it as new insertions in this attempt. `superseded_records` means newer versions exist after the original plan succeeded; explain that current data has been updated instead of repeatedly submitting the old plan as though it failed.
 
 ## Commands
@@ -32,6 +38,7 @@ Treat the service as the storage and presentation layer for normalized records. 
 Resolve the paths below against the actual skill root. The scripts depend only on the Python standard library.
 
 ```sh
+python3 scripts/import_records.py status
 python3 scripts/extract_trae.py --from 2026-10-01 --to 2026-10-07 \
   --source-label "Trae · 工作电脑" \
   --out /private/task/draft.json --context-out /private/task/context.json
@@ -41,7 +48,7 @@ python3 scripts/import_records.py preview --plan /private/task/plan.json
 python3 scripts/import_records.py submit --plan /private/task/plan.json
 ```
 
-Place `--config /private/client.json` before the subcommand; the default is `~/.config/aicalendar/client.json`. `status` queries import coverage, and `lookup --source trae-personal` queries existing records (including hidden entries and versions).
+Place `--config /private/client.json` before the subcommand; the default is `~/.config/aicalendar/client.json`, configured for direct NAS LAN HTTPS with its public local CA. `--config` alone cannot enable public access. If the user explicitly authorizes VPS uploading, put `--via-vps` before every online subcommand, starting with `python3 scripts/import_records.py --via-vps status`. Use the same route for archive plans, summary plans, and verification. `status` queries import coverage, and `lookup --source trae-personal` queries existing records (including hidden entries and versions).
 
 ## Record semantics
 

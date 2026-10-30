@@ -130,10 +130,8 @@ def submit(plan_path, client):
     if stored['state'] != 'committed' or stored['manifest']['sha256'] != manifest['sha256'] or stored['manifest']['expanded_sha256'] != manifest['expanded_sha256']:
         raise ValueError('Committed archive receipt verification failed')
     # Read the actual stored bytes, not only a metadata receipt.
-    from urllib.request import Request
     h = hashlib.sha256(); size = 0
-    req = Request(client.base + '/ingest/v1/archives/' + archive['id'] + '/download', headers={'Authorization': 'Bearer ' + client.token})
-    with client.opener.open(req, timeout=120) as response:
+    with client.download('archives/' + archive['id'] + '/download') as response:
         while data := response.read(PART):
             h.update(data); size += len(data)
     if h.hexdigest() != manifest['sha256'] or size != manifest['bytes']:
@@ -185,7 +183,8 @@ def unpack(path, out):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default='~/.config/aicalendar/client.json')
+    parser.add_argument('--config', help='Private LAN configuration; with --via-vps, base_url must match the primary client-vps.json')
+    parser.add_argument('--via-vps', action='store_true', help='Use client-vps.json instead of direct NAS LAN access, only when the user explicitly requests VPS uploading')
     commands = parser.add_subparsers(dest='command', required=True)
     p = commands.add_parser('pack'); p.add_argument('--file', required=True); p.add_argument('--source-file', action='append', default=[]); p.add_argument('--out', required=True);p.add_argument('--source-label')
     p = commands.add_parser('prepare');p.add_argument('--archive', required=True);p.add_argument('--manifest');p.add_argument('--out', required=True)
@@ -204,7 +203,7 @@ def main():
                 result = pack(value, value['messages'], sources, args.out, source_names=[Path(p).name for p in [args.file]+args.source_file])
         elif args.command == 'unpack': result = unpack(args.archive, args.out)
         else:
-            client = Client(args.config)
+            client = Client(args.config, via_vps=args.via_vps)
             if args.command == 'prepare': result = prepare(args.archive,args.manifest,client,args.out)
             elif args.command == 'submit': result = submit(args.plan,client)
             else:
