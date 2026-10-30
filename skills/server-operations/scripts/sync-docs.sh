@@ -86,7 +86,9 @@ sync_target() {
     if $check_only; then echo "warn  ${target}: $problem"; else echo "SKIP  ${target}: $problem"; failed="$failed $target"; return; fi
   fi
 
-  old=$(ssh "$host" "sed -n 's/^commit=//p' $source_file 2>/dev/null" || true)
+  # A missing SOURCE is normal on first sync; transport and read failures are not.
+  old=$(ssh "$host" "if [ -e $source_file ]; then sed -n 's/^commit=//p' $source_file; fi") \
+    || die "$target: failed to read $source_file on $host; sync stopped"
   if [ -n "$old" ]; then
     git -C "$repo" cat-file -e "$old^{commit}" 2>/dev/null || die "$target has no local copy of server-recorded commit $old"
     dests=$(mapping "$target" "$repo" "$old" | cut -d' ' -f2)

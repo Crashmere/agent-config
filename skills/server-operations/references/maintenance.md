@@ -39,10 +39,11 @@ Run from a local checkout whose commits have been pushed (the bash 3.2 bundled w
 The script:
 - Exports only managed files from pushed commits: for shared, all files under `skills/server-operations/`, plus `/opt/AGENTS.md` and the login notice; for projects, `AGENTS.md` and `docs/*.md`. `SYNC_HOST=vps` maps the notice to the PAM static snippet `/etc/motd.d/30-server-context`; Ubuntu hosts use `/etc/update-motd.d/30-server-context`. Skips a target with uncommitted or unpushed documentation changes.
 - First compares the server copy with the commit recorded in its `SOURCE`; stops and shows differences if they disagree. Bring live edits back into the repository first, confirm them, then use `--force` to overwrite.
+- A missing `SOURCE` is allowed on first synchronization. SSH failures and errors reading an existing `SOURCE` abort immediately, including in `--check` mode, before any upload or further target connection.
 - Installs files owned by root, with mode 0644 for docs and 0755 for scripts and the login notice. Deletes managed files present in the old commit but absent from the new one, and removes `._*` from copy directories. Finally writes `SOURCE`, verifies hashes file by file, and cleans staging directories.
 - Does not change programs, units, Nginx, databases, or `current-commit`.
 
-`PROJECTS_DIR` specifies the project checkout directory (default `~/ali`); `SYNC_HOST` specifies the SSH alias (default `ali`). With no arguments, the project list comes from the server's existing `/opt/*/docs/SOURCE` files. Pass the project name explicitly for a new application's first sync; the script creates missing directories. For hosts without applications, use `SYNC_HOST=nas .../sync-docs.sh shared` or `SYNC_HOST=vps .../sync-docs.sh shared`. Synchronizing context does not install host configuration assets or move applications.
+`PROJECTS_DIR` specifies the project checkout directory (default `~/ali`); `SYNC_HOST` specifies the SSH alias (default `ali`). With no arguments, the project list comes from the server's existing `/opt/*/docs/SOURCE` files. Pass the project name explicitly for a new application's first sync; the script creates missing directories. For shared context only, select `SYNC_HOST=nas` for NAS LAN access, `SYNC_HOST=nas-via-vps` for the explicitly selected VPS management route to NAS, or `SYNC_HOST=vps` for the VPS itself, followed by `.../sync-docs.sh shared`. Synchronizing context does not install host configuration assets or move applications.
 
 <a id="发现机制与验证"></a>
 ## Discovery and verification

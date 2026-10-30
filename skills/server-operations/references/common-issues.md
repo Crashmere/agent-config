@@ -177,6 +177,13 @@ Current scope: Yuyan uses a global prompt and reloads after saving; browser chec
 
 The shared script now prescans only directories that exist, and the later `install -D` creates the destination during the first synchronization. `--check` also permits a missing new destination and reports BEHIND. Read failures in existing directories remain errors and are not hidden with `|| true`. This was verified during AICalendar's real first documentation synchronization on 2026-10-07, while existing projects used the same flow. After the fix, retry only the incomplete target; there is no need to release the program again.
 
+<a id="sync-provenance-ssh-failure"></a>
+## SSH Failure Is Treated as Missing Sync Provenance
+
+The initial `SOURCE` read in `sync-docs.sh` used `|| true` to allow first synchronization. This also hid an SSH timeout, leaving an empty recorded commit and starting another connection instead of stopping. An empty result after a transport failure cannot establish that provenance is absent or that the managed drift check can be skipped.
+
+The remote command now checks whether `SOURCE` exists and reads it only when present. SSH failures and errors reading an existing file abort the local script immediately, including in `--check` mode. A genuinely missing file still permits first synchronization. This applies to shared context and every project's documentation on NAS, VPS, and other explicitly selected targets. Select the trusted `nas-via-vps` alias for authorized NAS maintenance from outside the LAN; do not change host-key verification, authentication, or public exposure to work around a connection timeout.
+
 <a id="本机发布失败"></a>
 ## Local Release Fails
 
