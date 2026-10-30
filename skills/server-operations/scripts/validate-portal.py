@@ -47,7 +47,7 @@ def validate(data, app):
     require(0 < len(data) <= LIMIT, "declaration must be 1 byte to 1 MiB")
     a = json.loads(data, object_pairs_hook=unique_object)
     fields(a, ("id", "name", "description", "icon", "url", "repo", "root", "port", "user",
-               "units", "database", "backupKind", "resources", "apis"))
+               "units", "database", "resources", "apis"), ("backupKind",))
     root = "/opt/" + app
     require(a["id"] == app and a["root"] == root and a["user"] == app,
             "declaration cannot change application identity, root or runtime user")
@@ -63,7 +63,8 @@ def validate(data, app):
     require(type(a["port"]) is int and 1024 <= a["port"] <= 65535, "invalid application port")
     inside(a["database"], root + "/data")
     require(a["database"].endswith((".sqlite", ".db")), "expected a SQLite database path")
-    require(a["backupKind"] in ("sqlite", "media"), "unsupported native backup contract")
+    # Historical declarations remain readable; Portal ignores retired backup metadata.
+    require("backupKind" not in a or a["backupKind"] in ("sqlite", "media"), "invalid legacy metadata")
     require(isinstance(a["units"], list) and 0 < len(a["units"]) <= 32, "invalid units")
     require(len(set(a["units"])) == len(a["units"]), "duplicate units")
     for unit in a["units"]:
@@ -90,7 +91,7 @@ def validate(data, app):
         require(not r["browse"] or (top in ("data", "backups", "releases", "docs") and
                 r["kind"] not in ("secret", "config", "binaries")), "sensitive material cannot be browsed")
         require(r["kind"] != "documents" or top == "docs", "documents must stay under the application docs directory")
-        # Portal packages leave caches out, so a cache can never cover the data root or the database.
+        # A display-only cache label cannot cover the primary database.
         require(r["kind"] != "cache" or (top == "data" and r["path"] != root + "/data" and
                 not (a["database"] + "/").startswith(r["path"] + "/")),
                 "a cache must be a data subdirectory without the database")

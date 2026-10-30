@@ -14,7 +14,7 @@ NAS application units, Portal collector, Nginx, both reverse tunnels, and certif
 | Host | Current role | State and recovery boundary |
 | --- | --- | --- |
 | `ali` | Compatibility public HTTPS 443 gateway to NAS | Original application programs/configuration/data/history remain frozen; retired application, backup, retention, and HBR units are inactive and disabled at boot |
-| `nas` | Only active application host, authoritative data, LAN local-CA HTTPS 443, Portal Web/collector | Both gateways reach this state; manual external backup is unavailable until a real volume/UUID is configured |
+| `nas` | Only active application host, authoritative data, LAN local-CA HTTPS 443, Portal Web/collector | Both gateways reach this state; agent-owned external backup; verified T7 is attached but unmounted |
 | `vps` | Primary public web HTTPS 8443 gateway and independent sing-box REALITY/Vision TCP 443 proxy | Application/management forwarding stays loopback-only; current private gateway/proxy recovery has not been independently captured |
 
 Use the trusted SSH aliases `ali`, `nas`, and `vps`; retrieve real addresses and selected identities from local SSH configuration. Strict host-key verification remains enabled. NAS initiates reverse SSH connections to both gateways because this deployment does not use IPv6 ingress or NAT hole punching.
@@ -66,6 +66,8 @@ Ledger creates FabricWorld items through local port 18082 with explicit user con
 <a id="门户与统一认证"></a>
 ## Portal and Shared Authentication
 
+Portal backup/recovery functionality is retired. Aura's current protection widget still calls the removed recovery endpoint and links to the former backup view; the user deferred Aura changes while its separate update is in progress. Its business data and runtime are unchanged by Portal cleanup.
+
 NAS hosts both Portal processes and its controlled `registry.d` links. The collector remains local, not a cross-host monitoring/root-execution API. Business access through NAS/ALI/VPS preserves device authentication, indefinite server grants, revocation, and secure browser-cookie renewal. Configure precise Origins for NAS HTTPS, ALI HTTPS, and VPS HTTPS with `:8443`; preserve full forwarded Host/port. ACME, exact brand assets, and independently authenticated ingest retain their limited exceptions.
 
 Portal's public `/portal/connect` setup page and its four fixed GET/HEAD children distribute the current public NAS root, root-only Apple profile, metadata, and canonical VPS setup QR. NAS configuration owns `onboarding.caCertificate`, `lanOrigin`, and `publicOrigin`; both Origins are members of the existing allowed set. Windows, Android, macOS, and iPhone/iPad guidance retains user-operated installation/trust and the separate NAS login. No business endpoint, private material, automatic CA-trust detection, or cross-Origin login is added. [Portal maintenance](portal.md#public-nas-device-setup) owns the contract. On 2026-10-30, the user confirmed completing NAS local-CA onboarding through Portal in the maintenance Mac's browser. That confirms the reported browser flow only; Aura native-client trust, other NAS browser/app/platform flows, and VPS Portal device logins remain unverified.
@@ -92,7 +94,7 @@ Loopback inspection is available only through authorized SSH. It can access real
 <a id="手工数据归档"></a>
 ## Manual Data Archives
 
-Routine NAS backups require a real external mount/UUID. No volume is identified, so the Portal job is intentionally unavailable without an internal fallback. The user waived an additional retained migration recovery point: task-created Mac seeds/private packages and temporary gateway recovery material were removed after acceptance. Accepted NAS candidates, migration staging, and obsolete historical data copies were also removed; small acceptance receipts remain. The frozen ALI installation remains the migration-point fallback; it cannot recover later NAS writes. [NAS migration](nas-migration.md#manual-full-backups) owns the pause/copy/resume/compress/verify workflow and separately agent-collected gateway package.
+Routine NAS backups are agent-only, using `/opt/server-recovery` and private `/etc/server-recovery.json`. The attached Samsung T7 data partition is exFAT, label `T7`, UUID `BCDD-941E`, with approximately 652 GB free when inspected; it contains existing user files and remains unmounted. Backup creation therefore reports disconnected, with no internal fallback. No real recovery set has yet been created. Portal backup/recovery UI, APIs, commands, receipts and volume settings have been retired; historical receipt files and real archives are preserved. The user waived an additional retained migration recovery point: task-created Mac seeds/private packages and temporary gateway recovery material were removed after acceptance. Accepted NAS candidates, migration staging, and obsolete historical data copies were also removed; small acceptance receipts remain. The frozen ALI installation remains the migration-point fallback; it cannot recover later NAS writes. [NAS migration](nas-migration.md#manual-full-backups) owns the pause/copy/resume/compress/verify workflow and separately agent-collected gateway package.
 
 Protected pre-existing materials include maintenance-computer `~/ali/backups/`, frozen ALI native/manual/Portal exports and `/opt/backup-exports`, the older five-application `ali-data-*` archive, and the verified approximately 2.3 GiB pre-LVM NAS root archive and diagnostics on the maintenance Mac. Private manifests record their historical recovery points and coverage. They are preserved, outside Git, and do not provide a current eight-application NAS/CA/tunnel or VPS private gateway/proxy recovery set. Redundant NAS pre-LVM/storage/diagnostic copies were removed only after byte verification against the protected Mac material; the Mac originals remain intact.
 
@@ -119,7 +121,7 @@ AICalendar import clients default to direct NAS LAN HTTPS. A LAN connection fail
 <a id="重新核对"></a>
 ## Rechecking
 
-Read each target's `/opt/AGENTS.md`, then inspect enabled units/listeners, Nginx syntax and role-specific certificate/Origin settings, tunnel endpoints, source markers, and backup receipts. `scripts/inspect.sh` provides non-business host status; full output can contain addresses and must not be committed raw. Documentation-only checks use `scripts/sync-docs.sh --check`, with explicit host selection.
+Read each target's `/opt/AGENTS.md`, then inspect enabled units/listeners, Nginx syntax and role-specific certificate/Origin settings, tunnel endpoints, source markers, and agent-owned external package evidence. `scripts/inspect.sh` provides non-business host status; full output can contain addresses and must not be committed raw. Documentation-only checks use `scripts/sync-docs.sh --check`, with explicit host selection.
 
 <a id="本机发布与验证"></a>
 ## Local Deployment and Validation

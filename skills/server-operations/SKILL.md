@@ -16,12 +16,12 @@ Use this skill as the entry point for shared operations context, without relying
    For SSH host `vps`, also read [VPS operations](references/vps-host.md); it is an AlmaLinux VM, not an Ubuntu application host.
 2. Read the target project's `AGENTS.md`, `docs/README.md`, and `docs/OPERATIONS.md`, then read architecture/API/release documentation as the task requires. The inventory lists repository and server documentation locations.
 3. For release, build, or testing strategy, first read [Local releases and on-demand validation](references/release.md). For changes, deployments, or documentation updates, you must read [Completing changes and documentation](references/maintenance.md); for new applications, migrations, or server replacement, also read [Rebuilding and adding applications](references/rebuild.md).
-   For the NAS application host, ALI/VPS public gateways, manual external backups, or their cutover/recovery, read [NAS migration and recovery](references/nas-migration.md).
+   For the NAS application host, ALI/VPS public gateways, manual external backups, or their cutover/recovery, read [NAS migration and recovery](references/nas-migration.md). For any backup, package verification or restoration request, also read [Agent backup and recovery](references/backup-recovery.md) and use its standalone tools, not Portal.
 4. For release failures or troubleshooting, first consult [Common issues and shared solutions](references/common-issues.md) and directly follow any existing solution.
 5. Use `personal-skill-management` for the skill itself or the personal instruction repository structure; `software-installation` for software installation/updates; and `python-environment` for Python environment operations. Do not duplicate their full workflows.
 6. For public HTTPS, IP certificates, automatic renewal, or origin validation, read [Shared HTTPS](references/https.md) and handle all applications consistently.
 
-7. For the portal, shared device authentication, resource declarations, backups of whole-server materials, or new data directories, read [Portal maintenance](references/portal.md) and update the affected applications' deploy/portal.json files as well.
+7. For the portal, shared device authentication, resource declarations, resource ownership, or new data directories, read [Portal maintenance](references/portal.md) and update the affected applications' deploy/portal.json files as well.
 8. For temporary upgrade protection, retained failed batches, historical ALI cleanup, or maintenance locks, read [Upgrade protection and retained materials](references/retention.md).
 9. When adding a website or changing icons, build paths, or shared authentication, apply the [Website icon conventions](references/conventions.md#website-icons-and-home-screen-shortcuts) by default and run the shared icon check; do not wait for a separate request for mobile icons.
 

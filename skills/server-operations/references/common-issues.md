@@ -120,7 +120,7 @@ For mobile acceptance, first authenticate in the browser and return to the corre
 
 The ServerPortal root collector uses `serverportal` as its non-root primary group so that only the web user can access its Unix socket. On ALI, combining this setup with NoNewPrivileges and RestrictAddressFamilies/LockPersonality left the process CapEff/CapPrm without CAP_SETUID; runuser reported `cannot set user id: Operation not permitted`, and native backups could not start. A successful direct run as root in a terminal does not prove that the operation works inside the unit.
 
-Explicitly configure `AmbientCapabilities=CAP_SETUID` in the collector unit while retaining the other sandbox settings. The source is ServerPortal's `deploy/serverportal-agent.service`. The ALI system was checked for primary group, seccomp properties, and capabilities, and native snapshots were verified under an equivalent sandbox. Native backup units already running as fixed application users require no change. Verification of the NAS full-job operation must use the real collector sandbox and controlled backup entry point rather than checking only `id` or `true`; it does not enable a backup scheduler.
+For that historical ALI collector, explicitly configure `AmbientCapabilities=CAP_SETUID` while retaining the other sandbox settings. The current NAS Portal no longer runs backups or switches users; its unit has removed this capability. The historical source remains in ServerPortal Git history. The ALI system was checked for primary group, seccomp properties, and capabilities, and native snapshots were verified under an equivalent sandbox. Native backup units already running as fixed application users require no change. Current NAS backups use independent administrator SSH tooling; see [Agent backup and recovery](backup-recovery.md).
 
 <a id="https-页面能打开但保存返回-403"></a>
 ## HTTPS Page Loads but Saving Returns 403
@@ -224,7 +224,7 @@ First identify the host and actual activation phase. NAS has manual full externa
 | Application data/history/trash/media | Application-owned behavior, not backup rotation; full NAS backups include stored state even if the application can later rebuild or expire it |
 | System logs/temporary files | Ordinary host maintenance may continue, but must not target real backup directories or root-private upgrade protection |
 
-An unavailable external volume must leave Portal backup unavailable. If `exports` or staging appears under NAS internal storage, inspect the manual-volume configuration, actual mount/UUID, and NAS role marker rather than treating the fallback as a successful backup. A directory existing at the configured mountpoint is not proof that a drive is mounted.
+An unavailable external volume must leave agent backup unavailable. If `exports` or staging appears under NAS internal storage, inspect `/etc/server-recovery.json`, the actual mount/UUID, and NAS role marker rather than treating the fallback as a successful backup. A directory existing at the configured mountpoint is not proof that a drive is mounted.
 
 Unexpected local data protection usually means failed/interrupted acceptance or cleanup. Read the release/upgrade receipts and journals before deleting anything; health alone does not prove no lost data. [Retention](retention.md) owns temporary-success deletion and historical ALI preservation, while [NAS migration](nas-migration.md#manual-full-backups) owns external recovery sets.
 

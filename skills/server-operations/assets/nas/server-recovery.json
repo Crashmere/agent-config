@@ -1,0 +1,31 @@
+{
+  "host": "nas",
+  "mount": "/mnt/nas-backup",
+  "uuid": "",
+  "exports": "/mnt/nas-backup/agent",
+  "registryDir": "/opt/serverportal/registry.d",
+  "expectedApps": ["ledger", "feetable", "fabricworld", "recipebox", "yuyan", "aicalendar", "aura"],
+  "hostUnits": ["nas-lan-tls.timer", "nas-lan-tls.service"],
+  "shared": [
+    "/opt/server-context",
+    "/opt/server-recovery",
+    "/opt/AGENTS.md",
+    "/etc/server-recovery.json",
+    "/etc/server-maintenance-host",
+    "/etc/nginx",
+    "/etc/systemd/system",
+    "/etc/sudoers",
+    "/etc/sudoers.d",
+    "/etc/ssh",
+    "/root/.ssh",
+    "/etc/nas-ca",
+    "/etc/nas-tunnels",
+    "/etc/netplan",
+    "/etc/systemd/logind.conf.d",
+    "/etc/default/grub.d",
+    "/etc/tmpfiles.d",
+    "/etc/passwd",
+    "/etc/group",
+    "/var/lib/server-upgrades"
+  ]
+}
