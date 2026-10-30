@@ -16,7 +16,7 @@ The VM advertises an Intel Xeon SierraForest CPU model. Its virtual topology and
 | `assets/vps/public.xml` | `/etc/firewalld/zones/public.xml`, 0644 | Public zone allows SSH, proxy TCP 443, ACME HTTP 80, and NAS web HTTPS 8443 |
 | `assets/gateway/nginx-main.conf` | `/etc/nginx/nginx.conf` | AlmaLinux include layout for the active gateway; HTTP-01-only bootstrap is no longer the production site |
 | `assets/nginx-gateway.conf` and application-owned locations | Distribution's enabled Nginx configuration and `/etc/nginx/app-locations` | Active authenticated web HTTPS 8443, HTTP-01/redirects 80, loopback inspector; no proxy 443 takeover |
-| `assets/gateway/30-nas-tunnel.conf` | `/etc/ssh/sshd_config.d/30-nas-tunnel.conf` | Dedicated `nas-tunnel` identity permits only listed loopback reverse forwards, including NAS management 22022 |
+| `assets/gateway/30-nas-tunnel.conf` | `/etc/ssh/sshd_config.d/30-nas-tunnel.conf` | Dedicated `nas-tunnel` identity permits only listed loopback reverse forwards, including NAS management 22022; 15-second server heartbeats with three unanswered probes release stale sessions |
 | `assets/gateway/certbot-renew.service/timer` | `/etc/systemd/system/certbot-renew.service/timer` | Public IP renewal through isolated `/opt/certbot/.venv` |
 | `assets/vps/vps-proxy.service`, `assets/vps/sing-box-config.json.template` | `/etc/systemd/system/vps-proxy.service`, `/etc/vps-proxy/config.json` | Single low-privilege sing-box VLESS + REALITY + Vision service; configuration is privately rendered |
 | `assets/vps/automatic.conf` | `/etc/dnf/automatic.conf`, 0644 | Automatically downloads and applies security updates; never reboots automatically; journal output |
