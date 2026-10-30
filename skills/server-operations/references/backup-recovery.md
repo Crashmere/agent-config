@@ -76,7 +76,7 @@ ssh nas 'systemctl show agent-system-backup-gateway-<id> -p ActiveState -p SubSt
 
 Use `nas-via-vps` for the VPS-selected transport. Compression reports **uncompressed input** against total input, input MiB/s, current compressed size and phase ETA. External copying/read-back reports compressed bytes, MiB/s and phase ETA. Example: `nas 压缩：已处理 28/80 GiB，约 110 MiB/s，压缩包当前 12 GiB，本阶段预计剩余约 8 分钟。`
 
-ETA uses recent throughput and describes the current phase, not an unsupported whole-job promise. If total/rate is unknown or stalled, say ETA is unavailable and report elapsed time/last progress; investigate persistent stalls. At 100% bytes, flush, verification or publication may still be pending. Announce success only after complete acceptance. After SSH loss reconnect to the same unit; preserve journal/exit evidence before the transient unit is collected.
+ETA uses recent throughput and describes the current phase, not an unsupported whole-job promise. If total/rate is unknown or stalled, say ETA is unavailable and report elapsed time/last progress; investigate persistent stalls. At 100% bytes, flush, verification or publication may still be pending. Announce success only after complete acceptance. After SSH loss reconnect to the same unit/journal. A collected transient unit may no longer have queryable systemctl state; use its persistent journal exit records, completed phase/final path and external package evidence. An absent unit alone is not success.
 
 ## Verification and Isolated Restore
 

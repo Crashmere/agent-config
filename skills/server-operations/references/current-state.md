@@ -85,6 +85,7 @@ Loopback inspection is available only through authorized SSH. It can access real
 | `/etc/server-maintenance-host` | Root-managed NAS role marker; content `nas` |
 | `/run/lock/server-maintenance.lock` | Shared upgrade/registry operations; exclusive full backup maintenance |
 | `/var/lib/server-upgrades` | Root-private temporary upgrade protection; unresolved failures are preserved |
+| `/var/lib/server-backups` | Root-private task staging for a combined NAS/VPS package; remove successful staging only after external verification |
 | `/opt/server-context`, `/opt/AGENTS.md` | Pushed agent-config source and synchronization provenance |
 | `/root/AGENTS.md` | Link to `/opt/AGENTS.md`; remote instructions still require explicit reading |
 | Application `current-commit`, `config/portal-source.json`, `docs/SOURCE` | Program, declaration, and documentation provenance respectively; do not substitute one for another |
