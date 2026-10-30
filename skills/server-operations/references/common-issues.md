@@ -222,7 +222,7 @@ First identify the host and actual activation phase. NAS has manual full externa
 
 | Material | Contract |
 | --- | --- |
-| NAS routine recovery sets | External full compressed archives; staging/verification stay external, no internal fallback or automatic rotation |
+| NAS routine recovery sets | One dual-host package staged/compressed/verified on NAS, then copied/read-back verified externally; successful task staging removed, no internal fallback or rotation |
 | NAS `/var/lib/server-upgrades` and disposable candidate-check data | Complete upgrade protection; delete that job only after runtime and affected-data acceptance, retain failed/unverified protection |
 | ALI `daily-*`, old `before-deploy-*` and release history | Legacy schedules stop during cutover; preserve existing copies rather than applying NAS rules retroactively |
 | Manual/migration/recovery archives, `/opt/backup-exports`, maintenance Mac `backups/` | No automatic deletion or overwriting; inspect private manifests before selecting a recovery point |
@@ -230,7 +230,7 @@ First identify the host and actual activation phase. NAS has manual full externa
 | Application data/history/trash/media | Application-owned behavior, not backup rotation; full NAS backups include stored state even if the application can later rebuild or expire it |
 | System logs/temporary files | Ordinary host maintenance may continue, but must not target real backup directories or root-private upgrade protection |
 
-An unavailable external volume must leave agent backup unavailable. If `exports` or staging appears under NAS internal storage, inspect `/etc/server-recovery.json`, the actual mount/UUID, and NAS role marker rather than treating the fallback as a successful backup. A directory existing at the configured mountpoint is not proof that a drive is mounted.
+An unavailable external volume must leave agent backup unavailable. If the final export appears on NAS internal storage, inspect `/etc/server-recovery.json`, mount/UUID and the NAS role marker rather than accepting a fallback. Deliberate task staging under root-private `/var/lib/server-backups` is allowed only for the single-package external workflow; it is not a completed backup. A directory existing at the configured mountpoint is not proof that a drive is mounted.
 
 Unexpected local data protection usually means failed/interrupted acceptance or cleanup. Read the release/upgrade receipts and journals before deleting anything; health alone does not prove no lost data. [Retention](retention.md) owns temporary-success deletion and historical ALI preservation, while [NAS migration](nas-migration.md#manual-full-backups) owns external recovery sets.
 

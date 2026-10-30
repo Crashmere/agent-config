@@ -194,8 +194,9 @@ func ScanContext(ctx context.Context, sources []Source, scope string) (Manifest,
 				cached, ok := digests[en.Hardlink]
 				if en.Hardlink != "" && ok && os.SameFile(cached.info, i) && cached.info.Size() == i.Size() && cached.info.ModTime().Equal(i.ModTime()) {
 					en.Hash = cached.hash
+					inputProgress(ctx, int(en.Size))
 				} else {
-					en.Hash, e = Digest(p)
+					en.Hash, e = DigestContext(ctx, p)
 				}
 				if e != nil {
 					return e
@@ -288,6 +289,15 @@ func WriteContext(ctx context.Context, out string, m Manifest, blobs map[string]
 }
 
 func WriteStream(ctx context.Context, out io.Writer, m Manifest, blobs map[string]string, parent *Manifest) error {
+	gz := gzip.NewWriter(progressWriter{ctx, out})
+	if e := writeTarStream(ctx, gz, m, blobs, parent); e != nil {
+		gz.Close()
+		return e
+	}
+	return gz.Close()
+}
+
+func writeTarStream(ctx context.Context, out io.Writer, m Manifest, blobs map[string]string, parent *Manifest) error {
 	if e := Validate(m); e != nil {
 		return e
 	}
@@ -298,8 +308,7 @@ func WriteStream(ctx context.Context, out io.Writer, m Manifest, blobs map[strin
 	if len(b) > maxManifestBytes {
 		return errors.New("manifest exceeds 128 MiB; reduce retained history or backup scope")
 	}
-	gz := gzip.NewWriter(out)
-	tw := tar.NewWriter(gz)
+	tw := tar.NewWriter(out)
 	if e = tw.WriteHeader(&tar.Header{Name: "manifest.json", Mode: 0600, Size: int64(len(b))}); e != nil {
 		return e
 	}
@@ -351,9 +360,6 @@ func WriteStream(ctx context.Context, out io.Writer, m Manifest, blobs map[strin
 	if e = tw.Close(); e != nil {
 		return e
 	}
-	if e = gz.Close(); e != nil {
-		return e
-	}
 	return nil
 }
 
@@ -366,7 +372,9 @@ func (r contextReader) Read(b []byte) (int, error) {
 	if e := r.ctx.Err(); e != nil {
 		return 0, e
 	}
-	return r.r.Read(b)
+	n, e := r.r.Read(b)
+	inputProgress(r.ctx, n)
+	return n, e
 }
 
 // Read accepts plain gzip archives and legacy age archives, checking all payloads.
@@ -375,6 +383,10 @@ func Read(file, blobDir string, identity age.Identity) (Manifest, error) {
 }
 
 func ReadContext(ctx context.Context, file, blobDir string, identity age.Identity) (Manifest, error) {
+	return readCompressed(ctx, file, blobDir, identity, true)
+}
+
+func readCompressed(ctx context.Context, file, blobDir string, identity age.Identity, store bool) (Manifest, error) {
 	var m Manifest
 	f, e := os.Open(file)
 	if e != nil {
@@ -402,6 +414,22 @@ func ReadContext(ctx context.Context, file, blobDir string, identity age.Identit
 	}
 	defer gz.Close()
 	tr := tar.NewReader(gz)
+	m, e = readTarPayload(ctx, tr, blobDir, store)
+	if e != nil {
+		return m, e
+	}
+	// Drain the gzip checksum and, for legacy archives, the age authentication tag.
+	if _, e = io.Copy(io.Discard, contextReader{ctx, gz}); e != nil {
+		return m, e
+	}
+	if _, e = io.Copy(io.Discard, contextReader{ctx, payload}); e != nil {
+		return m, e
+	}
+	return m, nil
+}
+
+func readTarPayload(ctx context.Context, tr *tar.Reader, blobDir string, store bool) (Manifest, error) {
+	var m Manifest
 	h, e := tr.Next()
 	if e != nil || h.Name != "manifest.json" || h.Size > maxManifestBytes || h.Typeflag != tar.TypeReg {
 		return m, errors.New("missing or oversized manifest")
@@ -416,6 +444,7 @@ func ReadContext(ctx context.Context, file, blobDir string, identity age.Identit
 	if e = Validate(m); e != nil {
 		return m, e
 	}
+	totalProgress(ctx, manifestBytes(m))
 	expected := map[string]int64{}
 	for _, en := range m.Entries {
 		if en.Kind == "file" {
@@ -426,7 +455,10 @@ func ReadContext(ctx context.Context, file, blobDir string, identity age.Identit
 		}
 	}
 	seen := map[string]bool{}
-	if e = os.MkdirAll(blobDir, 0700); e != nil {
+	if store {
+		e = os.MkdirAll(blobDir, 0700)
+	}
+	if e != nil {
 		return m, e
 	}
 	for {
@@ -443,37 +475,47 @@ func ReadContext(ctx context.Context, file, blobDir string, identity age.Identit
 			return m, errors.New("unexpected archive member")
 		}
 		seen[hash] = true
-		tmp, e := os.CreateTemp(blobDir, ".blob-")
-		if e != nil {
-			return m, e
-		}
 		hasher := sha256.New()
-		n, err := io.Copy(io.MultiWriter(tmp, hasher), contextReader{ctx, tr})
-		if err == nil {
-			err = tmp.Sync()
+		var tmp *os.File
+		var writer io.Writer = hasher
+		if store {
+			tmp, e = os.CreateTemp(blobDir, ".blob-")
+			if e != nil {
+				return m, e
+			}
+			writer = io.MultiWriter(tmp, hasher)
 		}
-		ce := tmp.Close()
-		if err == nil {
-			err = ce
+		n, err := io.Copy(writer, contextReader{ctx, tr})
+		if tmp != nil {
+			if err == nil {
+				err = tmp.Sync()
+			}
+			if ce := tmp.Close(); err == nil {
+				err = ce
+			}
 		}
 		if err == nil && (n != size || hex.EncodeToString(hasher.Sum(nil)) != hash) {
 			err = errors.New("blob checksum mismatch")
 		}
 		if err != nil {
-			os.Remove(tmp.Name())
+			if tmp != nil {
+				os.Remove(tmp.Name())
+			}
 			return m, err
 		}
-		if e = os.Rename(tmp.Name(), filepath.Join(blobDir, hash)); e != nil {
-			os.Remove(tmp.Name())
-			return m, e
+		if tmp != nil {
+			if e = os.Rename(tmp.Name(), filepath.Join(blobDir, hash)); e != nil {
+				os.Remove(tmp.Name())
+				return m, e
+			}
 		}
 	}
-	// Drain the gzip checksum and, for legacy archives, the age authentication tag.
-	if _, e = io.Copy(io.Discard, contextReader{ctx, gz}); e != nil {
-		return m, e
-	}
-	if _, e = io.Copy(io.Discard, contextReader{ctx, payload}); e != nil {
-		return m, e
+	if m.Parent == "" {
+		for hash := range expected {
+			if !seen[hash] {
+				return m, errors.New("full archive is missing a blob")
+			}
+		}
 	}
 	return m, nil
 }

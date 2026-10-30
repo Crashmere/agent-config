@@ -25,15 +25,17 @@ func main() {
 }
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: server-recovery status|backup|resume|verify|restore|merge|pack")
+		return errors.New("usage: server-recovery status|backup|resume|verify|restore|merge|pack|gateway-stream|receive-gateway|accept-gateway")
 	}
 	f := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	config := f.String("config", "/etc/server-recovery.json", "agent-owned NAS volume and coverage configuration")
-	work := f.String("work-dir", "", "explicit existing scratch parent; external storage on NAS")
+	work := f.String("work-dir", "", "explicit scratch parent; verified external storage or private backup staging on NAS")
 	out := f.String("out", "", "new isolated output path; must not exist")
 	identity := f.String("identity", "", "legacy age identity file; no new encryption workflow")
 	scope := f.String("scope", "fixture", "pack scope (offline fixtures or gateway)")
 	ownership := f.Bool("ownership", false, "restore owners by local user/group names; root and compatible POSIX target required")
+	gatewayID := f.String("gateway-stage", "", "acknowledged VPS stage for the combined NAS/VPS backup")
+	selectedHost := f.String("host", "", "restore only nas or vps from a combined package")
 	if e := f.Parse(args[1:]); e != nil {
 		return e
 	}
@@ -78,12 +80,18 @@ func run(args []string) error {
 		if _, e = os.Lstat(pausedReceipt); !os.IsNotExist(e) {
 			return errors.New("interrupted job receipt exists; inspect and run resume first")
 		}
-		_, path, e := GenerateManual(ctx, c, func(phase string) { fmt.Fprintln(os.Stderr, phase) })
+		if *gatewayID == "" {
+			return errors.New("combined backup requires --gateway-stage; use backup-system.sh nas|vps")
+		}
+		_, path, e := GenerateManual(ctx, c, *gatewayID, func(phase string) { fmt.Fprintln(os.Stderr, phase) })
 		if e != nil {
 			return e
 		}
 		fmt.Println(path)
 		return nil
+	}
+	if args[0] == "pack" && ReadSmall("/etc/server-maintenance-host", 100) == "nas" {
+		return errors.New("pack is offline fixture tooling; NAS uses backup-system.sh")
 	}
 	if *work == "" || !filepath.IsAbs(*work) {
 		return errors.New("--work-dir must name an existing absolute scratch parent")
@@ -92,8 +100,14 @@ func run(args []string) error {
 	if e != nil || !info.IsDir() {
 		return errors.New("scratch parent is unavailable")
 	}
-	// NAS verification never silently stages on its root filesystem.
-	if ReadSmall("/etc/server-maintenance-host", 100) == "nas" {
+	// Internal scratch is an explicit root-private backup workflow, not a fallback.
+	privateWork := *work == backupStaging || strings.HasPrefix(*work, backupStaging+"/")
+	if privateWork {
+		if filepath.Clean(*work) != *work || info.Mode().Perm() != 0700 || info.Sys().(*syscall.Stat_t).Uid != 0 || os.Geteuid() != 0 {
+			return errors.New("private backup scratch requires a root-owned 0700 path and administrator SSH")
+		}
+	}
+	if ReadSmall("/etc/server-maintenance-host", 100) == "nas" && !privateWork {
 		var c Config
 		b, e := os.ReadFile(*config)
 		if e != nil {
@@ -135,9 +149,6 @@ func run(args []string) error {
 				return errors.New("NAS merged archive must stay on its verified external volume")
 			}
 			*out = fmt.Sprintf("/proc/self/fd/%d/%s", outputParent.Fd(), filepath.Base(*out))
-		}
-		if args[0] == "pack" {
-			return errors.New("pack is offline fixture tooling; NAS uses backup")
 		}
 	}
 	tmp, e := os.MkdirTemp(*work, ".agent-check-")
@@ -196,6 +207,10 @@ func run(args []string) error {
 		return e
 	}
 	if args[0] == "restore" {
+		m, e = selectHost(m, *selectedHost)
+		if e != nil {
+			return e
+		}
 		if *out == "" || !filepath.IsAbs(*out) || filepath.Clean(*out) != *out {
 			return errors.New("absolute new --out required")
 		}

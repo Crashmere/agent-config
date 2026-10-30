@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -124,6 +125,9 @@ func LoadConfig(path string) (Config, error) {
 		paths = append(paths, a.Root)
 	}
 	for _, p := range c.Shared {
+		if p == backupStaging || strings.HasPrefix(p, backupStaging+"/") || strings.HasPrefix(backupStaging, p+"/") {
+			return c, errors.New("backup staging cannot be a recovery source")
+		}
 		if !filepath.IsAbs(p) || filepath.Clean(p) != p || p == "/" || strings.HasPrefix(p, c.Mount+"/") || p == c.Mount {
 			return c, errors.New("invalid shared recovery source")
 		}
@@ -188,13 +192,16 @@ func ReadSmall(path string, n int64) string {
 	return strings.TrimSpace(string(b))
 }
 func Digest(path string) (string, error) {
+	return DigestContext(context.Background(), path)
+}
+func DigestContext(ctx context.Context, path string) (string, error) {
 	f, e := os.Open(path)
 	if e != nil {
 		return "", e
 	}
 	defer f.Close()
 	h := sha256.New()
-	if _, e = io.Copy(h, f); e != nil {
+	if _, e = io.Copy(h, contextReader{ctx, f}); e != nil {
 		return "", e
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil

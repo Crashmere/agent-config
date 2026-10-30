@@ -15,6 +15,10 @@ After both affected-data and runtime validation succeed, delete only that upgrad
 
 Application declarations must not expose unresolved upgrade snapshots to ordinary Portal cleanup. `/var/lib/server-upgrades` is a private recovery resource, not a directory for routine full backups. A native program rollback restores the program, not the database.
 
+## Manual Backup Staging
+
+Manual dual-host backups temporarily gather cold NAS state, VPS blobs and one compressed package under root-private `/var/lib/server-backups/gateway-<id>/`. Only a successfully verified/flushed external package permits removal of that job's internal stage and external `.copy-<id>` directory. Interrupted/failed stages remain identified for agent review; no age-based pruning or Portal cleanup applies. This does not make internal staging an independent recovery point. See [Agent backup and recovery](backup-recovery.md) for the owning workflow.
+
 ## Historical ALI Materials
 
 Before cutover, legacy `ali` still has application backup timers and `ali-release-retention.timer`. Cutover stops and disables those tasks while preserving their existing data. The old implementation sources remain `scripts/prune-releases.py`, `assets/ali-release-retention.service`, `.timer`, and `.tmpfiles.conf`; they are not the NAS policy and must not be installed or enabled on `nas`.
@@ -25,6 +29,6 @@ Manual/pre-migration/pre-recovery archives, `/opt/backup-exports`, historical Po
 
 ## Operational Checks
 
-Inspect the marker, actual enabled timers, active backup/release jobs, and private upgrade directories before cleanup. Complete or failed job receipts determine what happened; an inactive oneshot service is not a failure, and a health endpoint does not prove data preservation. Log and system temporary-file maintenance may continue, but must not target application backups or `/var/lib/server-upgrades`.
+Inspect the marker, actual enabled timers, active backup/release jobs, and private upgrade directories before cleanup. Complete or failed job receipts determine what happened; an inactive oneshot service is not a failure, and a health endpoint does not prove data preservation. Log and system temporary-file maintenance may continue, but must not target application backups, `/var/lib/server-upgrades` or `/var/lib/server-backups`.
 
 Stop the legacy ALI scheduler with `systemctl disable --now ali-release-retention.timer` during the authorized cutover, then separately check whether its service is still running. Turning off the timer does not undo earlier deletion or authorize deleting retained archives. Any real restoration still requires a confirmed recovery point and isolated validation.

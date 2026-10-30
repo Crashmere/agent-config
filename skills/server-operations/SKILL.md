@@ -34,6 +34,7 @@ This is the sole authorization rule; project documentation should only link here
 | Proceed and report when finished | Confirm first |
 | --- | --- |
 | Read-only checks: status, logs, configuration, hashes, network connectivity, and speed tests | Deleting, overwriting, or restoring real data and backups; choosing a recovery point; database migrations |
+| An explicit manual external-backup request: mount the verified known disk without formatting, capture NAS and VPS, pause/resume required registered writers/timers, write one new external package, remove only successful task staging, and safely unmount only a task-mounted disk, following [backup defaults](references/backup-recovery.md#request-defaults) | A different disk/destination, extra downtime, or deletion/overwrite of existing files, historic backups or retained failed recovery stages |
 | Documentation for all projects and agent-config: editing, committing, pushing, and synchronizing server copies | Changes to public exposure, authentication, keys, deployment identities, or sudo permissions |
 | Cleaning known junk: failed release leftovers, staging directories, and non-data files such as `._*` | Changes to root-managed release scripts, the shared Nginx server, or other applications' configuration |
 | When the user requests implementation or deployment: validating the current feature, committing, pushing main, and releasing from the local machine | Downtime for other applications, host reboots, or additional costs |

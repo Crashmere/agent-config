@@ -1,18 +1,21 @@
 package main
 
 import (
+	"archive/tar"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 )
 
-// Streaming gateway capture writes no recovery archive to VPS or the maintenance Mac.
+const backupStaging = "/var/lib/server-backups"
+
+// VPS sends an uncompressed transport stream; the only gzip package is built on NAS.
 func gatewayStream(ctx context.Context, paths []string) (err error) {
 	if os.Geteuid() != 0 || len(paths) == 0 {
 		return errors.New("gateway-stream requires administrator SSH and explicit source roots")
@@ -22,7 +25,7 @@ func gatewayStream(ctx context.Context, paths []string) (err error) {
 		return e
 	}
 	defer unlock()
-	if Unit("certbot-renew.service")["ActiveState"] == "active" || Unit("certbot-renew.service")["ActiveState"] == "activating" {
+	if state := Unit("certbot-renew.service")["ActiveState"]; state == "active" || state == "activating" {
 		return errors.New("VPS certificate renewal is active; wait before capture")
 	}
 	timer := Unit("certbot-renew.timer")
@@ -36,7 +39,7 @@ func gatewayStream(ctx context.Context, paths []string) (err error) {
 		}
 	}
 	if state := Unit("certbot-renew.service")["ActiveState"]; state == "active" || state == "activating" {
-		return errors.New("VPS certificate renewal started before timer pause; wait before capture")
+		return errors.New("VPS renewal started before timer pause; wait before capture")
 	}
 	var sources []Source
 	for _, p := range paths {
@@ -49,98 +52,117 @@ func gatewayStream(ctx context.Context, paths []string) (err error) {
 	if e != nil {
 		return e
 	}
-	m.Notes = []string{"VPS gateway/proxy configuration and programs captured through trusted agent SSH. NAS application data is separate. Source configuration writers must be paused or excluded through maintenance coordination before capture."}
-	return WriteStream(ctx, os.Stdout, m, blobs, nil)
+	m.Notes = []string{"VPS configuration captured under its maintenance lock with certificate renewal paused; live gateway/proxy services remain running."}
+	observed, finish := startProgress(ctx, "vps-transfer", manifestBytes(m))
+	e = writeTarStream(observed, progressWriter{observed, os.Stdout}, m, blobs, nil)
+	finish(e == nil)
+	return e
+}
+
+func stagingRoot() error {
+	if e := os.MkdirAll(backupStaging, 0700); e != nil {
+		return e
+	}
+	info, e := os.Lstat(backupStaging)
+	if e != nil || !info.IsDir() || info.Mode().Perm() != 0700 || info.Sys().(*syscall.Stat_t).Uid != 0 {
+		return errors.New("NAS staging must be a root-owned private directory, not a symlink")
+	}
+	return nil
+}
+
+func gatewayStage(id string) (string, error) {
+	if !regexp.MustCompile(`^gateway-[A-Za-z0-9-]{1,100}$`).MatchString(id) {
+		return "", errors.New("invalid gateway staging ID")
+	}
+	if e := stagingRoot(); e != nil {
+		return "", e
+	}
+	stage := filepath.Join(backupStaging, id)
+	i, e := os.Lstat(stage)
+	if e != nil || !i.IsDir() || i.Mode().Perm() != 0700 || i.Sys().(*syscall.Stat_t).Uid != 0 {
+		return "", errors.New("gateway stage is not a root-owned private directory")
+	}
+	return stage, nil
 }
 
 func receiveGateway(ctx context.Context, c Config) error {
-	exports, close, e := OpenExports(c, true)
+	// Missing external media stops the job before any internal recovery data is staged.
+	_, closeVolume, e := OpenExports(c, true)
 	if e != nil {
 		return e
 	}
-	defer close()
+	defer closeVolume()
 	unlock, e := Lock("/run/lock/server-maintenance.lock")
 	if e != nil {
 		return e
 	}
 	defer unlock()
+	if e = stagingRoot(); e != nil {
+		return e
+	}
 	id := "gateway-" + NewID()
-	stage := filepath.Join(exports, id)
+	stage := filepath.Join(backupStaging, id)
 	if e = os.Mkdir(stage, 0700); e != nil {
 		return e
 	}
-	archive := filepath.Join(stage, "archive.tar.gz")
-	f, e := os.OpenFile(archive, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	observed, finish := startProgress(ctx, "nas-receive-vps", 0)
+	m, e := readTarPayload(observed, tar.NewReader(os.Stdin), filepath.Join(stage, "gateway-blobs"), true)
+	finish(e == nil)
 	if e != nil {
-		return e
+		return fmt.Errorf("incomplete internal gateway stage %s: %w", stage, e)
 	}
-	_, e = io.Copy(f, contextReader{ctx, os.Stdin})
-	if e == nil {
-		e = f.Sync()
-	}
-	ce := f.Close()
-	if e != nil {
-		return fmt.Errorf("incomplete gateway stage %s: %w", id, e)
-	}
-	if ce != nil {
-		return ce
-	}
-	m, e := ChainContext(ctx, []string{archive}, filepath.Join(stage, "verify"), nil)
-	if e != nil {
-		return fmt.Errorf("gateway stage %s failed verification: %w", id, e)
-	}
-	if m.Scope != "vps/gateway" {
-		return errors.New("not a VPS gateway package")
+	if m.Scope != "vps/gateway" || m.Parent != "" {
+		return errors.New("not a full VPS gateway capture; staging retained")
 	}
 	b, _ := json.MarshalIndent(m, "", "  ")
-	if e = Atomic(filepath.Join(stage, "manifest.json"), b, 0600); e != nil {
+	if e = Atomic(filepath.Join(stage, "gateway.json"), b, 0600); e != nil {
 		return e
 	}
 	fmt.Println(id)
 	return nil
 }
 
-// Publish only after both SSH processes exited successfully in the calling script.
-func acceptGateway(ctx context.Context, c Config, id string) error {
-	if !regexp.MustCompile(`^gateway-[A-Za-z0-9-]{1,100}$`).MatchString(id) {
-		return errors.New("invalid gateway staging ID")
+func loadGateway(stage string) (Manifest, map[string]string, error) {
+	var m Manifest
+	b, e := os.ReadFile(filepath.Join(stage, "gateway.json"))
+	if e != nil {
+		return m, nil, e
 	}
-	exports, close, e := OpenExports(c, false)
+	if e = json.Unmarshal(b, &m); e != nil {
+		return m, nil, e
+	}
+	if e = Validate(m); e != nil {
+		return m, nil, e
+	}
+	if m.Scope != "vps/gateway" || m.Parent != "" {
+		return m, nil, errors.New("full VPS gateway capture required")
+	}
+	blobs := map[string]string{}
+	for _, en := range m.Entries {
+		if !strings.HasPrefix(en.Path, "rootfs/") {
+			return m, nil, errors.New("gateway entry outside rootfs")
+		}
+		if en.Kind == "file" {
+			blobs[en.Hash] = filepath.Join(stage, "gateway-blobs", en.Hash)
+		}
+	}
+	return m, blobs, nil
+}
+
+// The maintenance script acknowledges only after both SSH transports exit successfully.
+func acceptGateway(ctx context.Context, c Config, id string) error {
+	stage, e := gatewayStage(id)
 	if e != nil {
 		return e
 	}
-	defer close()
 	unlock, e := Lock("/run/lock/server-maintenance.lock")
 	if e != nil {
 		return e
 	}
 	defer unlock()
-	stage := filepath.Join(exports, id)
-	m, e := ChainContext(ctx, []string{filepath.Join(stage, "archive.tar.gz")}, filepath.Join(stage, "recheck"), nil)
+	m, _, e := loadGateway(stage)
 	if e != nil {
 		return e
 	}
-	if m.Scope != "vps/gateway" {
-		return errors.New("not a VPS gateway package")
-	}
-	if e = publishNoReplace(filepath.Join(stage, "archive.tar.gz"), filepath.Join(exports, id+".tar.gz")); e != nil {
-		return e
-	}
-	if e = publishNoReplace(filepath.Join(stage, "manifest.json"), filepath.Join(exports, id+".json")); e != nil {
-		return e
-	}
-	d, e := os.Open(exports)
-	if e != nil {
-		return e
-	}
-	e = d.Sync()
-	d.Close()
-	if e != nil {
-		return e
-	}
-	if e = os.RemoveAll(stage); e != nil {
-		return e
-	}
-	fmt.Println(filepath.Join(c.Exports, id+".tar.gz"))
-	return nil
+	return Atomic(filepath.Join(stage, "gateway-accepted"), []byte(Hash(m)), 0600)
 }

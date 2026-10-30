@@ -91,7 +91,7 @@ func OpenExports(c Config, create bool) (string, func(), error) {
 
 func ManualPolicy(c Config) map[string]any {
 
-	p := map[string]any{"mode": "manual-external", "state": "unconfigured", "scope": "full", "host": c.Host, "mount": c.Mount, "available": false}
+	p := map[string]any{"mode": "nas-stage-single-package", "state": "unconfigured", "scope": "nas-vps/full", "host": c.Host, "mount": c.Mount, "staging": backupStaging, "available": false}
 	if c.UUID == "" {
 		p["error"] = "External volume UUID is not configured; identify the device through SSH first"
 		return p
@@ -280,10 +280,21 @@ func sourceBytes(sources []Source) (int64, error) {
 	return total, nil
 }
 
-// GenerateManual cold-copies all writers before compressing immutable external blobs.
-func GenerateManual(ctx context.Context, c Config, phase func(string)) (m Manifest, out string, err error) {
+// GenerateManual combines an acknowledged VPS capture with cold NAS state locally.
+func GenerateManual(ctx context.Context, c Config, gatewayID string, phase func(string)) (m Manifest, out string, err error) {
 	if e := ctx.Err(); e != nil {
 		return m, "", e
+	}
+	stage, e := gatewayStage(gatewayID)
+	if e != nil {
+		return m, "", e
+	}
+	gateway, gatewayBlobs, e := loadGateway(stage)
+	if e != nil {
+		return m, "", e
+	}
+	if ReadSmall(filepath.Join(stage, "gateway-accepted"), 100) != Hash(gateway) {
+		return m, "", errors.New("VPS transport has not been acknowledged; use the unified backup script")
 	}
 	exports, close, e := OpenExports(c, true)
 	if e != nil {
@@ -322,15 +333,20 @@ func GenerateManual(ctx context.Context, c Config, phase func(string)) (m Manife
 	if e != nil {
 		return m, "", e
 	}
-	available, e := Available(exports)
-	if e != nil || available < bytes*3+(64<<20) {
-		return m, "", errors.New("external storage needs headroom for cold copy, archive and full read-back verification")
+	available, e := Available(stage)
+	if e != nil || available < 2*bytes+manifestBytes(gateway)+(1<<30) {
+		return m, "", errors.New("NAS needs headroom for cold state, combined archive and 1 GiB operating reserve")
 	}
-	stage, e := os.MkdirTemp(exports, ".stage-")
+	available, e = Available(exports)
+	if e != nil || available < bytes+manifestBytes(gateway)+(512<<20) {
+		return m, "", errors.New("external storage needs headroom for the full combined package")
+	}
+	claim, e := os.OpenFile(filepath.Join(stage, "job-started"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if e != nil {
-		return m, "", e
+		return m, "", errors.New("this staging job has already started; inspect it instead of duplicating backup")
 	}
-	blobStage := filepath.Join(stage, "blobs")
+	claim.Close()
+	blobStage := filepath.Join(stage, "nas-blobs")
 	if e = os.Mkdir(blobStage, 0700); e != nil {
 		return m, "", e
 	}
@@ -343,7 +359,7 @@ func GenerateManual(ctx context.Context, c Config, phase func(string)) (m Manife
 			}
 		}
 		if err != nil {
-			err = fmt.Errorf("%w; incomplete external staging retained as %s", err, filepath.Join(c.Exports, filepath.Base(stage)))
+			err = fmt.Errorf("%w; internal staging retained as %s", err, stage)
 		}
 	}()
 	phase("pausing")
@@ -372,18 +388,30 @@ func GenerateManual(ctx context.Context, c Config, phase func(string)) (m Manife
 			return m, "", fmt.Errorf("%s did not stop gracefully", unit)
 		}
 	}
-	phase("copying")
-	m, blobs, e := ScanContext(ctx, sources, "full")
+	phase("scanning-nas")
+	observed, finish := startProgress(ctx, "scanning-nas", bytes)
+	m, blobs, e := ScanContext(observed, sources, "full")
+	finish(e == nil)
 	if e != nil {
 		return m, "", e
 	}
-	copied, e := stageBlobs(ctx, blobStage, blobs)
+	observed, finish = startProgress(ctx, "staging-nas", manifestBytes(m))
+	copied, e := stageBlobs(observed, blobStage, blobs)
+	finish(e == nil)
 	if e != nil {
 		return m, "", e
 	}
-	m.Notes = []string{"NAS-only standalone full cold backup captured by agent SSH; all application writers including Portal were stopped. Full application state and registered private host materials are included.", "VPS gateway/proxy materials require their own package. Frozen ALI materials are not maintained.", "Restore into a new isolated POSIX directory; review identities, ownership, units, TLS and Origins before authorized production replacement."}
 	for _, app := range c.Apps {
 		m.Repositories[app.ID] = app.Repo + "@" + ReadSmall(filepath.Join(app.Root, "current-commit"), 100)
+	}
+	m, e = combineHosts(m, gateway)
+	if e != nil {
+		return m, "", e
+	}
+	for hash, path := range gatewayBlobs {
+		if _, ok := copied[hash]; !ok {
+			copied[hash] = path
+		}
 	}
 	if e = Validate(m); e != nil {
 		return m, "", e
@@ -395,39 +423,38 @@ func GenerateManual(ctx context.Context, c Config, phase func(string)) (m Manife
 	resumed = true
 	phase("compressing")
 	archive := filepath.Join(stage, m.ID+".tar.gz")
-	if e = WriteContext(ctx, archive, m, copied, nil); e != nil {
+	observed, finish = startProgress(ctx, "compressing", manifestBytes(m))
+	e = compressPackage(observed, archive, m, copied)
+	finish(e == nil)
+	if e != nil {
 		return m, "", e
 	}
-	phase("verifying")
-	verified, e := ChainContext(ctx, []string{archive}, filepath.Join(stage, "verify"), nil)
+	phase("verifying-nas-package")
+	observed, finish = startProgress(ctx, "verifying-nas-package", manifestBytes(m))
+	verified, e := readCompressed(observed, archive, "", nil, false)
+	finish(e == nil)
 	if e != nil {
-		return m, "", fmt.Errorf("external archive read-back verification failed: %w", e)
+		return m, "", fmt.Errorf("NAS archive verification failed: %w", e)
 	}
 	if Hash(verified) != Hash(m) {
-		return m, "", errors.New("external archive manifest changed during read-back")
+		return m, "", errors.New("NAS archive manifest changed during read-back")
 	}
 	if e = ctx.Err(); e != nil {
 		return m, "", e
 	}
-	manifest, _ := json.MarshalIndent(m, "", "  ")
-	if e = Atomic(filepath.Join(stage, m.ID+".json"), manifest, 0600); e != nil {
+	phase("copying-package-to-external")
+	if e = copyPackage(ctx, archive, m.ID, exports); e != nil {
 		return m, "", e
 	}
-	out = filepath.Join(exports, m.ID+".tar.gz")
-	if e = publishNoReplace(archive, out); e != nil {
-		return m, "", e
-	}
-	if e = publishNoReplace(filepath.Join(stage, m.ID+".json"), filepath.Join(exports, m.ID+".json")); e != nil {
-		return m, "", e
-	}
-	directory, e := os.Open(exports)
+	currentVolume, e := openExternalMount(c.Mount, c.UUID)
 	if e != nil {
 		return m, "", e
 	}
-	e = directory.Sync()
-	directory.Close()
-	if e != nil {
-		return m, "", e
+	current, currentError := currentVolume.Stat()
+	pinned, pinnedError := os.Stat(exports)
+	currentVolume.Close()
+	if currentError != nil || pinnedError != nil || current.Sys().(*syscall.Stat_t).Dev != pinned.Sys().(*syscall.Stat_t).Dev {
+		return m, "", errors.New("external mount changed before internal cleanup; verified package and staging retained")
 	}
 	// Staging belongs solely to this successful job, never to another archive.
 	if e = os.RemoveAll(stage); e != nil {
