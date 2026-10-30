@@ -66,7 +66,9 @@ Ledger creates FabricWorld items through local port 18082 with explicit user con
 <a id="门户与统一认证"></a>
 ## Portal and Shared Authentication
 
-NAS hosts both Portal processes and its controlled `registry.d` links. The collector remains local, not a cross-host monitoring/root-execution API. User-facing NAS/ALI/VPS entrances preserve device authentication, indefinite server grants, revocation, and secure browser-cookie renewal. Configure precise Origins for NAS HTTPS, ALI HTTPS, and VPS HTTPS with `:8443`; preserve full forwarded Host/port. ACME, exact brand assets, and independently authenticated ingest retain their limited exceptions.
+NAS hosts both Portal processes and its controlled `registry.d` links. The collector remains local, not a cross-host monitoring/root-execution API. Business access through NAS/ALI/VPS preserves device authentication, indefinite server grants, revocation, and secure browser-cookie renewal. Configure precise Origins for NAS HTTPS, ALI HTTPS, and VPS HTTPS with `:8443`; preserve full forwarded Host/port. ACME, exact brand assets, and independently authenticated ingest retain their limited exceptions.
+
+Portal's public `/portal/connect` setup page and its four fixed GET/HEAD children distribute the current public NAS root, root-only Apple profile, metadata, and canonical VPS setup QR. NAS configuration owns `onboarding.caCertificate`, `lanOrigin`, and `publicOrigin`; both Origins are members of the existing allowed set. Windows, Android, macOS, and iPhone/iPad guidance retains user-operated installation/trust and the separate NAS login. No business endpoint, private material, automatic CA-trust detection, or cross-Origin login is added. [Portal maintenance](portal.md#public-nas-device-setup) owns the contract; physical-device acceptance remains outstanding.
 
 Loopback inspection is available only through authorized SSH. It can access real data and is not inherently read-only. The default Tab/focus policy and Ledger/Yuyan explicit editing exceptions remain defined by [conventions](conventions.md).
 
