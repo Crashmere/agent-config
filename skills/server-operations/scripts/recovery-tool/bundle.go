@@ -357,7 +357,7 @@ func writeTarStream(ctx context.Context, out io.Writer, m Manifest, blobs map[st
 			return e
 		}
 		if n != en.Size || hex.EncodeToString(h.Sum(nil)) != en.Hash {
-			return errors.New("source changed during archive")
+			return fmt.Errorf("source changed during archive for %q (blob=%q bytes=%d expectedBytes=%d sha256=%s expectedSHA256=%s)", en.Path, p, n, en.Size, hex.EncodeToString(h.Sum(nil)), en.Hash)
 		}
 		written[en.Hash] = true
 	}

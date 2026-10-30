@@ -215,6 +215,18 @@ On VPS, a full gateway capture failed with `invalid entry` before emitting its m
 
 The maintained validator accepts literal backslashes on POSIX hosts while still rejecting NUL, absolute paths, parent traversal, non-canonical paths, duplicate entries and non-directory ancestors. Hosts with backslash path separators continue to reject them. Entry errors report the path and relevant metadata. A focused package/read-back/materialization regression preserves an escaped systemd directory and its symlink and checks traversal rejection. Build the maintained tool locally and hash-verify its installation on both hosts before retrying; do not rename production units or omit configuration roots. A pre-manifest failure leaves unaccepted NAS staging and no recovery package; inspect it and verify renewal/runtime state before a fresh capture, preserving failed material under the backup runbook.
 
+## Cold Backup Misses A Dependent Writer During Resumption
+
+On NAS, stopping `serverportal-agent.service` also stopped `serverportal.service` through its `Requires` dependency. Inspecting each unit immediately before stopping it therefore recorded Portal as already inactive and omitted it from resumption. The cold capture remained consistent, but Portal stayed stopped until the agent's independent health check detected and restarted it.
+
+The recovery tool records and persists the complete initial active set before stopping any unit, stops timers before services, resumes that saved set and verifies every saved unit is active before clearing the paused receipt. This applies to all registered NAS writers and avoids order-dependent omissions. After a backup, compare every previously active unit and application/Portal health independently; a successful compression phase does not prove service resumption. Do not restart originally inactive units or recapture an already completed cold stage to repair a runtime omission.
+
+## Cold Staging Fails Later Content Verification
+
+The first real NAS/VPS external-backup attempt failed during compression because a staged AICalendar database no longer matched its content-addressed filename. The streaming cold-copy checksum had passed, but a later independent read-back confirmed a different SHA-256. No external package was published. The failure does not establish production database corruption or a hardware root cause; NAS's earlier freeze history remains relevant to investigation, not proof.
+
+Archive mismatch errors include the logical path, staged blob, actual/expected byte count and hashes. Independently verify staged blob hashes and preserve failed staging/partial archives. Check application resumption and storage/kernel evidence, then resolve the integrity issue before an agreed fresh capture. Do not bypass hashes, modify the recorded manifest to accept changed bytes, reuse a claimed stage or overwrite production data. The external backup remains outstanding until a complete package passes publication/read-back acceptance.
+
 ## Retired Portal Backup Integrations
 
 Removing Portal backup APIs can leave application-owned status widgets, links, polling or maintenance instructions behind. Aura had a web summary polling `/portal/api/recovery` and linking to `/portal/#/backups`; removing that component and its styles eliminates both requests and the broken navigation. Audit all inventory applications' frontend/server sources, entry build assets and `deploy/portal.json`, then compare the NAS declaration hashes with their maintained sources. Portal login assets are public; inspect business pages only through the trusted [view tunnel](conventions.md#agents-viewing-live-pages), without extracting user cookies.

@@ -160,6 +160,11 @@ func resumeUnits(units []string) error {
 			failures = append(failures, e)
 		}
 	}
+	for _, unit := range units {
+		if Unit(unit)["ActiveState"] != "active" {
+			failures = append(failures, fmt.Errorf("%s did not resume to its prior active state", unit))
+		}
+	}
 	if len(failures) != 0 {
 		return errors.Join(failures...)
 	}
@@ -363,6 +368,8 @@ func GenerateManual(ctx context.Context, c Config, gatewayID string, phase func(
 		}
 	}()
 	phase("pausing")
+	// Stopping a dependency can stop another writer before its turn in this list.
+	// Record the complete initial active set before issuing any stop command.
 	for _, unit := range backupUnits(c) {
 		info := Unit(unit)
 		if info["LoadState"] != "loaded" || info["ActiveState"] == "" {
@@ -376,10 +383,14 @@ func GenerateManual(ctx context.Context, c Config, gatewayID string, phase func(
 			continue
 		}
 		stopped = append(stopped, unit)
+	}
+	if len(stopped) != 0 {
 		b, _ := json.Marshal(stopped)
 		if e = Atomic(pausedReceipt, b, 0600); e != nil {
 			return m, "", e
 		}
+	}
+	for _, unit := range stopped {
 		if e = unitAction(ctx, "stop", unit); e != nil {
 			return m, "", e
 		}
