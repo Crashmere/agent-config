@@ -209,6 +209,12 @@ If the log already says `Deployed` and a later public HTTPS check times out, the
 
 If new SSH connections from the maintenance workstation occasionally time out, first use a short `ConnectTimeout` for a read-only connectivity check. Documentation synchronization may temporarily use OpenSSH ControlMaster to reuse an established connection, while retaining the original SSH alias, identity, and host-key verification; close the temporary connection afterward. A connection timeout alone does not prove an application or server failure and does not justify restarting a service or changing authentication.
 
+## Recovery Capture Rejects Escaped Systemd Names
+
+On VPS, a full gateway capture failed with `invalid entry` before emitting its manifest because a systemd directory name contained the literal escape `\x2d`. POSIX filenames may contain backslashes; treating every backslash as a path separator rejects valid systemd configuration. This affects the shared recovery tool on NAS and VPS, including all applications captured by the combined workflow.
+
+The maintained validator accepts literal backslashes on POSIX hosts while still rejecting NUL, absolute paths, parent traversal, non-canonical paths, duplicate entries and non-directory ancestors. Hosts with backslash path separators continue to reject them. Entry errors report the path and relevant metadata. A focused package/read-back/materialization regression preserves an escaped systemd directory and its symlink and checks traversal rejection. Build the maintained tool locally and hash-verify its installation on both hosts before retrying; do not rename production units or omit configuration roots. A pre-manifest failure leaves unaccepted NAS staging and no recovery package; inspect it and verify renewal/runtime state before a fresh capture, preserving failed material under the backup runbook.
+
 ## Retired Portal Backup Integrations
 
 Removing Portal backup APIs can leave application-owned status widgets, links, polling or maintenance instructions behind. Aura had a web summary polling `/portal/api/recovery` and linking to `/portal/#/backups`; removing that component and its styles eliminates both requests and the broken navigation. Audit all inventory applications' frontend/server sources, entry build assets and `deploy/portal.json`, then compare the NAS declaration hashes with their maintained sources. Portal login assets are public; inspect business pages only through the trusted [view tunnel](conventions.md#agents-viewing-live-pages), without extracting user cookies.

@@ -83,7 +83,11 @@ func validHash(s string) bool {
 	return e == nil && s == strings.ToLower(s)
 }
 func validPath(s string) bool {
-	return s != "" && path.Clean(s) == s && s != "." && !strings.HasPrefix(s, "/") && s != ".." && !strings.HasPrefix(s, "../") && !strings.ContainsAny(s, "\\\x00")
+	// systemd escaped unit names contain literal backslashes on POSIX hosts.
+	if strings.ContainsRune(s, '\x00') || filepath.Separator == '\\' && strings.ContainsRune(s, '\\') {
+		return false
+	}
+	return s != "" && path.Clean(s) == s && s != "." && !strings.HasPrefix(s, "/") && s != ".." && !strings.HasPrefix(s, "../")
 }
 func Validate(m Manifest) error {
 	if m.Version != 1 || m.ID == "" || len(m.Entries) > 200000 {
@@ -96,7 +100,7 @@ func Validate(m Manifest) error {
 	groups := map[string]Entry{}
 	for _, e := range m.Entries {
 		if !validPath(e.Path) || seen[e.Path] != "" || e.Size < 0 || e.Mode > 0777 {
-			return errors.New("invalid entry")
+			return fmt.Errorf("invalid entry %q (size=%d mode=%o duplicate=%t)", e.Path, e.Size, e.Mode, seen[e.Path] != "")
 		}
 		if e.Kind != "file" && e.Kind != "directory" && e.Kind != "symlink" {
 			return errors.New("invalid file kind")
