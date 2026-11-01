@@ -33,12 +33,13 @@ Source: `scripts/recovery-tool/`, a standalone Go module without a Portal depend
 
 NAS root-private 0600 `/etc/server-recovery.json`, based on `assets/nas/server-recovery.json`, owns mount/UUID, exports, expected apps and shared roots. Apps/writer units come from root-managed registry links; Portal Web/collector are explicit additions. Deployment declarations describe resources, not backup kinds or public backup roots. The NAS role marker must be `nas`.
 
-Before automatic capture, verify source selection against [tool alignment](retention.md#tool-alignment). The current scanner still includes application program trees; documentation exclusions alone do not change its output.
+Before automatic capture, inspect `server-recovery capture-plan` against [capture implementation](retention.md#tool-alignment). Its read-only size scan applies the same exclusions as the archive scan: application `bin`, `staging`, `backups` and `releases`, plus retained upgrade snapshots' `bin` trees. It reads file metadata only, starts no backup and pauses no services. Rebuild application programs/model runtimes from the recorded source and pinned installation manifests before restoring selected business data.
 
 Inspect live coverage, prior active units, health, space, mount identity, `/run/lock/agent-backup-paused.json`, task staging and any active `agent-system-backup-*`/maintenance job. Resolve active jobs without duplicating them. An old stage is not a completed recovery point. A receipt after SIGKILL requires unit-state inspection and supervised `/opt/server-recovery resume` before another capture.
 
 ```sh
 ssh nas '/opt/server-recovery status'
+ssh nas '/opt/server-recovery capture-plan'
 # Use nas-via-vps for the VPS-selected transport.
 ```
 

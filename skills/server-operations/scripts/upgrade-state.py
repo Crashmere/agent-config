@@ -149,7 +149,9 @@ def begin(app, root, release, snapshot):
     stopped(app)
     snapshot.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     snapshot.mkdir(mode=0o700)
-    for name in ("data", "config", "bin"):
+    # Runtime/model trees are reconstructed from source and pinned dependencies.
+    # Program rollback already has a separately verified release artifact.
+    for name in ("data", "config"):
         source = root / name
         if source.is_symlink() or not source.is_dir():
             raise ValueError("Expected an actual application directory: " + str(source))
@@ -167,6 +169,7 @@ def begin(app, root, release, snapshot):
     entries = inventory(snapshot / "data")
     save(snapshot / "snapshot.json", {"app": app, "release": release.name,
          "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+         "scope": "application-data", "excluded": ["bin"],
          "data": entries, "databases": dbs})
     run("sync", "-f", str(snapshot))
     work = release / "upgrade-check-data"

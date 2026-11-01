@@ -210,13 +210,50 @@ func coldSources(c Config) []Source {
 		app := app
 		sources = append(sources, Source{Path: app.Root, Target: "rootfs/" + strings.TrimPrefix(app.Root, "/"), Service: app.ID, Skip: func(rel string, d fs.DirEntry) bool {
 			first := strings.Split(filepath.ToSlash(rel), "/")[0]
-			return first == "backups" || first == "releases" || transient(rel, d)
+			// Preserve every data/config file regardless of its extension. Programs,
+			// model installations and deployment staging have separate source provenance.
+			return first == "bin" || first == "staging" || first == "backups" || first == "releases" || transient(rel, d)
 		}})
 	}
 	for _, path := range c.Shared {
-		sources = append(sources, Source{Path: path, Target: "rootfs/" + strings.TrimPrefix(path, "/"), Service: "shared", Skip: transient})
+		path := path
+		sources = append(sources, Source{Path: path, Target: "rootfs/" + strings.TrimPrefix(path, "/"), Service: "shared", Skip: func(rel string, d fs.DirEntry) bool {
+			return retainedRuntime(filepath.Join(path, rel)) || transient(rel, d)
+		}})
 	}
 	return sources
+}
+
+// Older failed upgrade snapshots may include bin. Exclude it only from the new
+// capture; their retained databases, private configuration and manifests remain.
+func retainedRuntime(path string) bool {
+	parts := strings.Split(filepath.ToSlash(filepath.Clean(path)), "/")
+	return len(parts) >= 7 && parts[1] == "var" && parts[2] == "lib" &&
+		parts[3] == "server-upgrades" && parts[6] == "bin"
+}
+
+// Read-only size preflight: no file contents, mount, archive or service changes.
+func capturePlan(c Config) error {
+	type plannedSource struct {
+		Path    string `json:"path"`
+		Service string `json:"service"`
+		Bytes   int64  `json:"bytes"`
+	}
+	items := []plannedSource{}
+	var total int64
+	for _, source := range coldSources(c) {
+		size, err := sourceBytes([]Source{source})
+		if err != nil {
+			return err
+		}
+		items = append(items, plannedSource{source.Path, source.Service, size})
+		total += size
+	}
+	return json.NewEncoder(os.Stdout).Encode(map[string]any{
+		"host": c.Host, "sources": items, "totalBytes": total,
+		"applicationExclusions":    []string{"bin", "staging", "backups", "releases"},
+		"retainedUpgradeExclusion": "<app>/<release>/bin",
+	})
 }
 
 func stageBlobs(ctx context.Context, stage string, blobs map[string]string) (map[string]string, error) {
@@ -415,6 +452,7 @@ func GenerateManual(ctx context.Context, c Config, gatewayID string, phase func(
 	for _, app := range c.Apps {
 		m.Repositories[app.ID] = app.Repo + "@" + ReadSmall(filepath.Join(app.Root, "current-commit"), 100)
 	}
+	m.Notes = append(m.Notes, "Application bin/staging and retained upgrade bin trees excluded; business data, private configuration and source-version records preserved.")
 	m, e = combineHosts(m, gateway)
 	if e != nil {
 		return m, "", e

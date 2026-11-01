@@ -9,15 +9,18 @@ Protection copies, pre-change snapshots, temporary backup stages and disposable 
 
 Exclude downloadable model weights and model source, Python/CUDA environments, dependency/download caches and benchmark fixtures. Record source commits, model checksums, dependency locks and installation commands needed to rebuild those components. Program rollback uses separately retained verified release artifacts. Do not copy an entire `bin` or runtime tree merely because it is under an application's root. These exclusions govern new copies and do not authorize deleting live models, working runtimes, existing backups or unresolved protection.
 
-## Tool alignment
+<a id="tool-alignment"></a>
+## Capture implementation
 
-The current `upgrade-state.py` copies application `data`, `config` and `bin`; the current `server-recovery` scanner includes the application program tree. Their automatic source selections still include model material. Align and validate those selections with the data-protection scope above before creating new upgrade protection or backup jobs. Keep historical packages and failed stages intact; their recorded coverage remains the basis for recovery.
+`upgrade-state.py` copies only application `data`, `config`, Portal `registry.d` and the available `current-commit` marker. It does not copy `bin`. Its database and file-preservation checks retain their complete scope. `server-recovery` excludes top-level application `bin`, `staging`, `backups` and `releases` before estimating sizes or scanning/hashing source files. It also excludes `<app>/<release>/bin` when capturing retained upgrade protection through the shared `/var/lib/server-upgrades` source. Existing snapshots and archives are not edited.
+
+Keep downloadable models, runtime environments, dependency caches and benchmark fixtures under the application's `bin` tree. The exclusions are based on directory responsibility, not extensions: a user original or upload in `data` remains included even if its name ends in `.pth` or `.bin`. Current source commits, managed project docs and private configuration remain available for reconstruction. Use the read-only `server-recovery capture-plan` command on nas to inspect selected source sizes and exclusions without mounting storage, stopping services or creating a backup.
 
 ## NAS Upgrade Protection
 
 The root-managed marker `/etc/server-maintenance-host` contains `nas`. The shared helper `scripts/upgrade-state.py` accepts only that marked host and known application names. Callers hold the shared `/run/lock/server-maintenance.lock` and the application's deployment lock. A manual full backup takes the global lock exclusively so it cannot overlap an upgrade.
 
-After affected services stop gracefully, protection must cold-copy the selected application's complete business data into root-private `/var/lib/server-upgrades/<app>/<release>/`, with recovery-critical private configuration, Portal registry and small source markers when applicable. Archive BLOBs, stored derivatives and unfinished uploads belong to that data; model installations do not. The candidate is checked against a disposable data copy; it must not initialize missing production data or rely on an old summary-only backup. Apply the tool-alignment requirement above before invoking automatic capture.
+After affected services stop gracefully, the helper cold-copies the selected application's complete business data into root-private `/var/lib/server-upgrades/<app>/<release>/`, with recovery-critical private configuration, Portal registry and small source markers when applicable. Archive BLOBs, stored derivatives and unfinished uploads belong to that data; model installations do not. The candidate is checked against a disposable data copy; it must not initialize missing production data or rely on an old summary-only backup.
 
 An unchanged-data upgrade validates previous SQLite tables, columns, row multiplicities and BLOB content, remaining data files, and Portal grants before final runtime acceptance. An intentional data transformation requires targeted independent validation and recorded agent evidence; generic health or row counts alone do not authorize deleting protection.
 

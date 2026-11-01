@@ -25,7 +25,7 @@ func main() {
 }
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: server-recovery status|backup|resume|verify|restore|merge|pack|gateway-stream|receive-gateway|accept-gateway")
+		return errors.New("usage: server-recovery status|capture-plan|backup|resume|verify|restore|merge|pack|gateway-stream|receive-gateway|accept-gateway")
 	}
 	f := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	config := f.String("config", "/etc/server-recovery.json", "agent-owned NAS volume and coverage configuration")
@@ -60,7 +60,7 @@ func run(args []string) error {
 		}
 		return errors.New("invalid gateway receiver arguments")
 	}
-	if args[0] == "status" || args[0] == "backup" || args[0] == "resume" {
+	if args[0] == "status" || args[0] == "capture-plan" || args[0] == "backup" || args[0] == "resume" {
 		if f.NArg() != 0 {
 			return errors.New("unexpected arguments")
 		}
@@ -70,6 +70,9 @@ func run(args []string) error {
 		}
 		if args[0] == "status" {
 			return json.NewEncoder(os.Stdout).Encode(ManualPolicy(c))
+		}
+		if args[0] == "capture-plan" {
+			return capturePlan(c)
 		}
 		if os.Geteuid() != 0 || ReadSmall("/etc/server-maintenance-host", 100) != "nas" {
 			return errors.New("backup/resume require administrator SSH on a marked NAS host")
