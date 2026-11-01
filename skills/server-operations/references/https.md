@@ -59,6 +59,8 @@ Loopback HTTP on each active host is selected by actual destination address, not
 
 ## Acceptance and Failures
 
+For slow uploads through TLS, follow [Upload throughput and request limits](conventions.md#upload-throughput-and-request-limits). It defines the shared HTTP/2 receive window, each application's transfer boundary, and the comparison needed to distinguish protocol flow control from network or server work.
+
 Verify Nginx syntax and actual listener ownership first, then certificate chain/IP/expiry, public HTTP-01, fixed redirects, unauthenticated API/page rejection, and the affected path/header/streaming contracts. Public checks do not use `-k`; LAN checks use the CA root or an OS-trusted device. Browser/Aura trust and each IP's initial Portal login require actual-device acceptance, not a CLI claim. Keep checks focused on the entrances and behavior that changed.
 
 Renewal failures require checking HTTP-01 reachability, time, ACME outbound access, timer/hook logs, and Nginx syntax. Fix the actual cause before forcing issuance; repeated forced renewal risks CA rate limits. Gateway/tunnel failure returns unavailable or denies protected traffic, never enables old ALI databases or bypasses authentication. Preserve valid certificates/private keys and data while restoring the last reviewed shared configuration; changing a public IP requires a new matching certificate and client settings.
