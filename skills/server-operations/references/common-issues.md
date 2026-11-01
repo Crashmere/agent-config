@@ -258,6 +258,14 @@ Measure actual disk blocks and file counts by directory, not only logical file s
 
 Cloud backup retention is independent of application/source-directory cleanup. [ALI HBR](current-state.md#cloud-backup) is stopped during migration without deleting historical cloud recovery points; stopping a client does not prove a provider-side billing/schedule item was canceled. Real backup deletion or restoration still follows the shared authorization table.
 
+## Native media processing exhausts a service task limit
+
+On `nas`, Aura bulk imports exhausted its former `TasksMax=128` budget. The limit counts threads in the entire service cgroup, including Go, codecs, FFmpeg and private Python workers. Symptoms included `Resource temporarily unavailable`, failed `fork`/`pthread_create`, stuck decoder children and Go `fatal error: newosproc`, followed by systemd restarts. An `active` unit or a successful health request between restarts does not establish processing health.
+
+Compare `systemctl show aura -p TasksCurrent -p TasksMax -p LimitNPROC -p NRestarts` with `/sys/fs/cgroup/system.slice/aura.service/pids.{current,max,events}` and `ps -e -o pid,ppid,nlwp,comm --sort=-nlwp`. A rising cgroup `max` event counter identifies task-budget rejections independently of free RAM. `VIPS_CONCURRENCY=2` does not cap all codec-owned threads; individual HEIC subprocesses reached 15–28 threads. Do not raise user-wide limits when the service cgroup is the actual constraint.
+
+Aura's source unit now uses a 1024-task budget, with eight jobs, at most four libvips/CPU video operations and four GPU operations. Native helper pools have explicit thread settings, and command/request deadlines cancel stalled children and release slots. Install the maintained project unit under the shared maintenance and application deployment locks, reload systemd, and restart only Aura. Validate HEIC/RAW and mixed-media queues under the real runtime identity/cgroup, including interruption recovery and cgroup task events, then retry failed resources through the application's bounded API. Preserve accepted originals. Other NAS applications did not require unit changes; future applications using native codec pools should measure their complete process trees rather than copying Aura's task count.
+
 ## NVIDIA modules cycle after replacing Nouveau live
 
 On NAS, a live switch from Nouveau to Ubuntu's NVIDIA server driver can leave queued udev `remove` events interleaved with new `add` events. The packaged `71-nvidia.rules` runs `modprobe -r` for dependent modules on driver removal; stale events can unload the newly loaded base driver, causing another add/remove cycle. Symptoms include repeated `nvidia-drm` loading/unloading, persistence daemon restarts, intermittent `nvidia-smi` failures, and CUDA initialization errors. Inspect the kernel journal and udev worker commands before treating this as a GPU hardware failure.
