@@ -243,7 +243,7 @@ First identify the host and actual activation phase. NAS has manual full externa
 | Material | Contract |
 | --- | --- |
 | NAS routine recovery sets | One dual-host package staged/compressed/verified on NAS, then copied/read-back verified externally; successful task staging removed, no internal fallback or rotation |
-| NAS `/var/lib/server-upgrades` and disposable candidate-check data | Complete upgrade protection; delete that job only after runtime and affected-data acceptance, retain failed/unverified protection |
+| NAS `/var/lib/server-upgrades` and disposable candidate-check data | Identified upgrade protection; delete that job only after runtime and affected-data acceptance, retain failed/unverified protection; new capture follows the database-only policy in [Retention](retention.md#temporary-upgrade-backups) |
 | ALI `daily-*`, old `before-deploy-*` and release history | Legacy schedules stop during cutover; preserve existing copies rather than applying NAS rules retroactively |
 | Manual/migration/recovery archives, `/opt/backup-exports`, maintenance Mac `backups/` | No automatic deletion or overwriting; inspect private manifests before selecting a recovery point |
 | Historical Portal encrypted/incremental sets | Retain required keys and complete parent chains; folder age alone does not establish safe deletion |
