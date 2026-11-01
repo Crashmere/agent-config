@@ -31,7 +31,7 @@ Ubuntu 26.04.1 LTS / amd64 on an ASUS G733 laptop, Ryzen 9 5900HX, 64 GB install
 
 NAS currently uses Wi-Fi DHCP; Ethernet supports optional DHCP. The user deferred router address reservation and additional stability investigation, retaining the present address as the migration input. A DHCP address change requires coordinated SSH/Origin/leaf-certificate/shortcut updates. Fully unattended startup after complete power loss is unverified.
 
-The RTX 3070 Laptop GPU uses Ubuntu's signed NVIDIA 595 server open driver and headless compute/decode/encode runtime for Aura video derivatives. AMD continues to drive the internal display. [NAS operations](nas-host.md#nvidia-driver-maintenance) owns driver/kernel alignment and application-user verification.
+The RTX 3070 Laptop GPU uses Ubuntu's signed NVIDIA 595 server open driver and headless compute/decode/encode runtime for Aura image and video derivatives. All NAS media maintenance follows the [GPU policy](nas-host.md#media-processing-policy); other applications retain their documented current pipelines. AMD continues to drive the internal display. [NAS operations](nas-host.md#nvidia-driver-maintenance) owns driver/kernel alignment and application-user verification.
 
 The power policy keeps lid closure awake, caps charging at 80%, uses `balance_power`/`balanced`, disables boost, and restricts `acpi_idle` to C1. Persistent journal and minute health sampling remain active. Pre-cutover idle sampling and migration runtime checks passed, but the earlier cross-OS freeze cause and long-term loaded-service stability remain unresolved. [NAS operations](nas-host.md) owns diagnostics, power sources, storage, and recovery.
 
@@ -57,7 +57,7 @@ Paths, users, and ports below belong to the active NAS instances and are unchang
 | [Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` / 18084 | `/opt/yuyan`; `yuyan`, `yuyan-deploy` | `yuyan.service`; 384 MiB limit, GOMEMLIMIT 320 MiB; gzip deployment |
 | [ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` / 18085 | `/opt/serverportal`; Web user `serverportal`, administrator deployment | `serverportal.service`, root `serverportal-agent.service`; local Unix socket |
 | [AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` / 18086 | `/opt/aicalendar`; `aicalendar`, `aicalendar-deploy` | `aicalendar.service`; 192 MiB limit, GOMEMLIMIT 144 MiB; independent Bearer ingest |
-| [Aura](https://github.com/Crashmere/Aura) | `/aura/` / 18087 | `/opt/aura`; `aura`, `aura-deploy` | `aura.service`; libvips, ExifTool, FFmpeg; PhotoKit clients |
+| [Aura](https://github.com/Crashmere/Aura) | `/aura/` / 18087 | `/opt/aura`; `aura`, `aura-deploy` | `aura.service`; libvips, ExifTool, FFmpeg, isolated NVIDIA image runtime; PhotoKit clients |
 
 Every project owns `AGENTS.md`, `docs/README.md`, operational/API/restore details, `deploy/nginx-location.conf`, and `deploy/portal.json`. The latter records complete data roots, units, ports, APIs, and resource purposes. Inspect direct `/healthz`, prefixed health/routes, actual media/API paths, and declaration receipts rather than inferring activation from integration files.
 
