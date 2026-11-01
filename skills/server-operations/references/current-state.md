@@ -31,6 +31,8 @@ Ubuntu 26.04.1 LTS / amd64 on an ASUS G733 laptop, Ryzen 9 5900HX, 64 GB install
 
 NAS currently uses Wi-Fi DHCP; Ethernet supports optional DHCP. The user deferred router address reservation and additional stability investigation, retaining the present address as the migration input. A DHCP address change requires coordinated SSH/Origin/leaf-certificate/shortcut updates. Fully unattended startup after complete power loss is unverified.
 
+The RTX 3070 Laptop GPU uses Ubuntu's signed NVIDIA 595 server open driver and headless compute/decode/encode runtime for Aura video derivatives. AMD continues to drive the internal display. [NAS operations](nas-host.md#nvidia-driver-maintenance) owns driver/kernel alignment and application-user verification.
+
 The power policy keeps lid closure awake, caps charging at 80%, uses `balance_power`/`balanced`, disables boost, and restricts `acpi_idle` to C1. Persistent journal and minute health sampling remain active. Pre-cutover idle sampling and migration runtime checks passed, but the earlier cross-OS freeze cause and long-term loaded-service stability remain unresolved. [NAS operations](nas-host.md) owns diagnostics, power sources, storage, and recovery.
 
 ### VPS Platform
