@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Local release helper. Python standard library only; never runs a regression suite."""
 import argparse
+import base64
 import datetime
 import gzip
 import hashlib
@@ -104,6 +105,7 @@ def build(root, cfg, commit):
         save(output / "manifest.json", {"app": cfg["app"], "commit": commit,
              "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
              "files": files, "build": cfg["build"], "toolchain": versions,
+             "database_backups": cfg.get("database_backups", []),
              "verification": "Build and declaration validation only; feature checks are performed before release."})
         output.rename(bundle)
     print("Built release: " + str(bundle), flush=True)
@@ -156,9 +158,40 @@ def public_check(cfg):
         raise ValueError("Public authentication check expected 401, got " + status)
 
 
+def database_plan(manifest):
+    configured = manifest.get("database_backups", [])
+    if not isinstance(configured, list):
+        raise ValueError("database_backups must be a list of database paths and reasons.")
+    declarations = list(configured)
+    explicit = os.environ.get("RELEASE_BACKUP_DATABASES", "")
+    if explicit:
+        reason = os.environ.get("RELEASE_BACKUP_REASON", "").strip()
+        if not reason:
+            raise ValueError("RELEASE_BACKUP_DATABASES requires RELEASE_BACKUP_REASON.")
+        declarations.extend({"path": path.strip(), "reason": reason} for path in explicit.split(","))
+    if len(declarations) > 16:
+        raise ValueError("Too many database backup declarations.")
+    for item in declarations:
+        if (not isinstance(item, dict) or set(item) != {"path", "reason"}
+                or not isinstance(item["path"], str)
+                or not re.fullmatch(r"[A-Za-z0-9_./-]{1,200}", item["path"])
+                or any(part in ("", ".", "..") for part in item["path"].split("/"))
+                or not isinstance(item["reason"], str) or not item["reason"].strip()
+                or len(item["reason"]) > 500):
+            raise ValueError("Database declarations require a relative path and a concrete deletion/overwrite reason.")
+    token = base64.urlsafe_b64encode(json.dumps(declarations, ensure_ascii=False,
+        separators=(",", ":")).encode()).decode().rstrip("=") if declarations else ""
+    if len(token) > 4096:
+        raise ValueError("Database plan exceeds the restricted protocol limit.")
+    return declarations, token
+
+
 def publish(root, cfg, bundle, rollback=False):
     m = verify(bundle, cfg)
     commit = m["commit"]
+    declarations, plan_token = database_plan(m)
+    if plan_token and os.environ.get("RELEASE_HOST", "nas") == "ali":
+        raise ValueError("Database-only upgrade plans apply to NAS, not the frozen ALI installation.")
     if not rollback:
         if clean_commit(root) != commit:
             raise ValueError("Release does not match HEAD.")
@@ -170,6 +203,8 @@ def publish(root, cfg, bundle, rollback=False):
     command = f"deploy {commit} {m['files']['program']}"
     if not cfg.get("restricted", True):
         command = f"/opt/{cfg['app']}/bin/deploy-release.sh {commit} {m['files']['program']}"
+    if plan_token:
+        command += " " + plan_token
     if cfg.get("gzip"):
         with tempfile.TemporaryFile() as compressed:
             with gzip.GzipFile(fileobj=compressed, mode="wb", mtime=0) as target:
@@ -182,7 +217,8 @@ def publish(root, cfg, bundle, rollback=False):
             ssh(cfg, command, source)
     # Record the program switch even when the independent declaration update fails.
     receipt = {"commit": commit, "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-               "rollback": rollback, "program": "success", "portal": "not-applicable"}
+               "rollback": rollback, "program": "success", "portal": "not-applicable",
+               "database_backup_requests": declarations}
     save(bundle / "last-deployment.json", receipt)
     if cfg.get("portal"):
         receipt["portal"] = "pending"

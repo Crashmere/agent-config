@@ -13,7 +13,7 @@ For a concrete database deletion or overwrite risk, capture only the affected da
 
 Never create temporary upgrade backups of non-database files: originals, photos, videos, attachments, conversation files, upload chunks, derivatives, work directories, configuration, credentials, device-grant JSON, registry links, models, runtime environments, caches, or existing backups. Keep these files in place; their exclusion from temporary backup is not permission to delete or overwrite them. Destructive file operations still require the applicable authorization.
 
-Reuse one consistent database snapshot for protection and checks wherever possible. Create a second writable database copy only when an authorized migration rehearsal needs it; read-only checks should use the existing copy. Do not add whole-directory copying, media hashing, archive compression, or external transfers to an ordinary upgrade. Keep required locks, atomic program replacement, targeted checks and health acceptance; limit the stopped-writer interval to the necessary database capture or migration.
+Keep one consistent database snapshot for protection. Create a second writable database copy only when an authorized migration rehearsal needs it; read-only candidate checks use existing data while the snapshot remains unchanged. Do not add whole-directory copying, media hashing, archive compression, or external transfers to an ordinary upgrade. Keep required locks, atomic program replacement, targeted checks and health acceptance; limit the stopped-writer interval to the necessary database capture or migration.
 
 ### Manual external backups and recovery
 
@@ -24,7 +24,13 @@ For those recovery copies, exclude downloadable model weights and model source, 
 <a id="tool-alignment"></a>
 ## Capture implementation
 
-The current `upgrade-state.py` implementation has not adopted the database-only upgrade rule. Its `begin` action still copies application `data`, `config`, Portal `registry.d` and the available `current-commit` marker, then creates a second complete candidate data copy. It excludes `bin`, but has no database-selection or no-backup mode; its verification still compares all previous database content and non-database files. Existing fixed release scripts call this helper for every NAS release. Updating this maintenance policy does not change that automatic behavior. Adoption requires a separately authorized change to the root-managed release flow; do not add another backup around the existing helper or bypass its checks by hand.
+`upgrade-state.py begin` creates only a small `upgrade-state.json` release record when no database is selected and returns the live data directory for candidate checks. It creates no snapshot or candidate data copy in that case. Fixed NAS release scripts skip the second stop/verification/restart when no backup exists.
+
+When a database is selected, the helper verifies an actual SQLite file under that application's `data`, rejects symbolic links and paths outside that root, and uses SQLite's backup API to capture its complete committed content, including WAL data. The root-private snapshot contains only selected database files and a manifest with paths, reasons and database hashes. Verification examines only those databases; it never scans or copies the remaining file tree. The helper still verifies and accepts existing legacy full-state snapshots with their original scope.
+
+Yuyan's candidate `migrate --dry-run` automatically selects `yuyan.db` when pending layout steps rebuild or drop tables. Current ordinary candidates report no steps. Other deletion/overwrite operations declare `database_backups` in committed `deploy/release.json`, or use the explicit local release overrides documented in [Local releases](release.md#database-backup-selection). Each declaration requires a database path relative to `data` and a concrete reason. Empty selection is the default; a program rollback uses the same selection rules.
+
+A writable database-only rehearsal copy is created only for pending Yuyan migrations or selected FabricWorld migrations. Yuyan's check locates original assets through a link to the existing asset directory, without copying their payloads. Candidate checks run as the application identity. Success removes only the accepted database snapshot and disposable rehearsal copy; failures retain them.
 
 The external-backup tool `server-recovery` excludes top-level application `bin`, `staging`, `backups` and `releases` before estimating sizes or scanning/hashing source files. It also excludes `<app>/<release>/bin` when capturing retained upgrade protection through the shared `/var/lib/server-upgrades` source. Existing snapshots and archives are not edited.
 
@@ -34,7 +40,7 @@ Keep downloadable models, runtime environments, dependency caches and benchmark 
 
 The root-managed marker `/etc/server-maintenance-host` contains `nas`. The shared helper `scripts/upgrade-state.py` accepts only that marked host and known application names. Callers hold the shared `/run/lock/server-maintenance.lock` and the application's deployment lock. A manual full backup takes the global lock exclusively so it cannot overlap an upgrade.
 
-New temporary upgrade protection follows the database selection above and uses root-private `/var/lib/server-upgrades/<app>/<release>/` only when an affected database needs it. A candidate must not initialize missing production data or use a summary-only snapshot that omits committed database content. The current helper's broader capture remains the implementation limitation described above.
+New temporary upgrade protection follows the database selection above and uses root-private `/var/lib/server-upgrades/<app>/<release>/` only when an affected database needs it. A candidate must not initialize missing production data or use a summary-only snapshot that omits committed database content. Database selection and capture follow the implementation described above.
 
 Validate the database behavior affected by the change and runtime health before final acceptance. An intentional data transformation requires targeted independent validation and recorded agent evidence; generic health or row counts alone do not authorize deleting its protection. File checks must follow the affected interaction or concrete failure risk, without expanding the temporary backup scope.
 
