@@ -79,7 +79,7 @@ Loopback inspection is available only through authorized SSH. It can access real
 
 | Resource | Maintenance source and scope |
 | --- | --- |
-| Active gateway/LAN Nginx server | Shared role-specific templates; public IP certificate or NAS local-CA TLS; application location sources remain in each application |
+| Active gateway/LAN Nginx server | Shared role-specific templates; public IP certificate or NAS local-CA TLS; `http2_body_preread_size 4m` for streaming uploads; application location sources remain in each application |
 | Application route includes | `/etc/nginx/app-locations`, deployed from each project's `deploy/nginx-location.conf`; copied to each active gateway |
 | Portal authentication include | `assets/nginx-portal-auth.conf`; enabled for every user-facing entrance, never for public unauthenticated inspection |
 | `/opt/serverportal/registry.d/<app>.json` | Root-managed link to application `config/portal.json`; validated publication receipt |
