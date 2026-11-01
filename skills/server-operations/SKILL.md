@@ -24,6 +24,7 @@ Use this skill as the entry point for shared operations context, without relying
 
 7. For the portal, shared device authentication, resource declarations, resource ownership, or new data directories, read [Portal maintenance](references/portal.md) and update the affected applications' deploy/portal.json files as well.
 8. For temporary upgrade protection, retained failed batches, historical ALI cleanup, or maintenance locks, read [Upgrade protection and retained materials](references/retention.md).
+   Apply its data-protection scope to protection copies and temporary backup stages: preserve the selected business data and recovery-critical private configuration; exclude model installations and rebuildable dependency/runtime material.
 9. When adding a website or changing icons, build paths, or shared authentication, apply the [Website icon conventions](references/conventions.md#website-icons-and-home-screen-shortcuts) by default and run the shared icon check; do not wait for a separate request for mobile icons.
 
 <a id="authorization"></a>
