@@ -102,7 +102,7 @@ Generic API writes return the service response. Then read the necessary tree, li
 
 ## Drawings and client compatibility
 
-drawing-v1 in `api/meta` features indicates drawing support. The new CLI automatically sends `X-Yuyan-Features: drawing-v1,calendar-v1`. Saving or canceling editing of a current document containing drawings or calendar components rejects clients missing the corresponding feature token; revision checks still apply.
+`drawing-v1`, `calendar-v1`, and `calendar-display-range-v1` in `api/meta` features indicate drawing, calendar, and saved calendar display-range support. The CLI sends these tokens in `X-Yuyan-Features`. Saving or canceling editing of a current document containing drawings, calendars, or a calendar with `displayRange` rejects clients missing the corresponding token; revision checks still apply. Refresh old tabs and update the local Yuyan checkout before editing a calendar with a saved range.
 
 Publish packages with `upload --kind drawing`, not generic API writes. It calls POST /api/drawings and returns a complete drawing node. Packages are limited to 12 MiB; dependent images must already exist with matching types. GET drawings/ID reads the package. Media download paths omit /api; use download with `/drawings/ID/file` or `/drawings/ID/preview`. Unknown versions cannot be edited; retaining the original file and a server-validated static preview is allowed. See [Editable drawings](drawing.md).
 
