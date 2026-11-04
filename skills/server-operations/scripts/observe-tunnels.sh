@@ -5,6 +5,7 @@ set -euo pipefail
 usage() {
   echo "Usage: observe-tunnels.sh <nas|vps> <new-output-directory> <seconds> <peer-ip>..." >&2
   echo "NAS peers: ALI then VPS. VPS peer: NAS public source. Maximum duration: 86400 seconds." >&2
+  echo "SSH_PORTS defaults to 22; set SSH_PORTS=22,2222 for an alternate-port comparison." >&2
   exit 2
 }
 
@@ -24,6 +25,14 @@ esac
 for peer in "${peers[@]}"; do
   [[ $peer =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || usage
 done
+port_list=${SSH_PORTS:-22}
+[[ $port_list =~ ^[0-9]+(,[0-9]+)*$ ]] || usage
+IFS=, read -r -a ports <<< "$port_list"
+for port in "${ports[@]}"; do
+  [[ $port =~ ^[1-9][0-9]{0,4}$ ]] && ((port <= 65535)) || usage
+done
+sample_limit=16777216
+[ "${#ports[@]}" -le 1 ] || sample_limit=33554432
 [ ! -e "$output" ] || { echo "Output directory already exists: $output" >&2; exit 1; }
 for command in tcpdump timeout head stdbuf ip ss ping curl; do
   command -v "$command" >/dev/null || { echo "Missing tool: $command" >&2; exit 1; }
@@ -33,13 +42,25 @@ umask 077
 install -d -m 0700 "$output"
 interface=$(ip -4 route get "${peers[0]}" | awk '{for (i=1;i<NF;i++) if ($i=="dev") {print $(i+1); exit}}')
 [ -n "$interface" ] || { echo "Cannot determine capture interface" >&2; exit 1; }
-filter="tcp port 22 and (host ${peers[0]}"
+capture_ports="(port ${ports[0]}"
+nas_ports="( dport = :${ports[0]}"
+vps_ports="( sport = :${ports[0]}"
+for port in "${ports[@]:1}"; do
+  capture_ports+=" or port $port"
+  nas_ports+=" or dport = :$port"
+  vps_ports+=" or sport = :$port"
+done
+capture_ports+=")"
+nas_ports+=" )"
+vps_ports+=" )"
+filter="tcp and $capture_ports and (host ${peers[0]}"
 for peer in "${peers[@]:1}"; do filter+=" or host $peer"; done
 filter+=")"
 
 {
   date -Is
-  printf 'role=%s duration=%s interface=%s peers=%s\n' "$role" "$duration" "$interface" "${peers[*]}"
+  printf 'role=%s duration=%s interface=%s ports=%s peers=%s sample_limit=%s\n' \
+    "$role" "$duration" "$interface" "$port_list" "${peers[*]}" "$sample_limit"
   ip -br address
   ip -4 route
   tcpdump --version
@@ -68,9 +89,9 @@ sample_loop() {
       active_states=$(systemctl is-active reverse-tunnel@ali.service reverse-tunnel@vps.service || true)
       [ "$active_states" = $'active\nactive' ] || state=failed
       cat /proc/net/wireless
-      tcp_info=$(ss -tinop "( dport = :22 and ( dst ${peers[0]} or dst ${peers[1]} ) )")
+      tcp_info=$(ss -tinop "( $nas_ports and ( dst ${peers[0]} or dst ${peers[1]} ) )")
     else
-      tcp_info=$(ss -tinop "( sport = :22 and dst ${peers[0]} )")
+      tcp_info=$(ss -tinop "( $vps_ports and dst ${peers[0]} )")
       listener=$(ss -H -ltnp '( sport = :18085 )')
       printf 'portal_listener=%s\n' "$listener"
       pid=$(printf '%s\n' "$listener" | sed -n 's/.*pid=\([0-9]*\),.*/\1/p')
@@ -110,6 +131,6 @@ sample_loop() {
   done
 }
 
-sample_loop 2>&1 | stdbuf -o0 head -c 16777216 > "$output/samples.txt"
+sample_loop 2>&1 | stdbuf -o0 head -c "$sample_limit" > "$output/samples.txt"
 wait "$control_pid" || true
 printf 'Observation complete: %s\n' "$output"

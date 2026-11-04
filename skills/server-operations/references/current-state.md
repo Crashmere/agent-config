@@ -7,6 +7,8 @@ The cutover stopped ALI writers before final capture and verified all 4,066 tran
 
 NAS application units, Portal collector, Nginx, and certificate/power maintenance are active and enabled. Both reverse-tunnel units are enabled but have recurrent transport failures, including correlated ALI/VPS heartbeat timeouts on 2026-11-03. The VPS client uses fixed 30-second retries; the ALI client retains its base unit, and both gateways now apply restricted-user server heartbeats. [Transport diagnosis](common-issues.md#reverse-ssh-transport-outages-and-retry-storms) owns bounded remote observation, the shared NAS-side investigation priority and unresolved reliability boundary. Each gateway exposes only its approved public entrance; application listeners and NAS management 22022 remain loopback-only. The trusted `nas-via-vps` alias supplements the unchanged LAN `nas` alias after LAN bulk SSH transfers timed out during migration. That transport symptom does not establish another hardware freeze. This inventory records roles and consequential acceptance limits; recheck listeners, units, source markers, and recovery receipts before maintenance.
 
+The user authorized an isolated VPS TCP 2222 comparison and excludes wired comparisons. Production forwarding remains on TCP 22. The optional `sshd-nas-alt` VPS listener and NAS `tunnel-probe-vps-2222` client are transient, heartbeat-only services with 24-hour deadlines; the firewall opening is runtime-only and expires after 24 hours. [Alternate-port comparison](common-issues.md#alternate-ssh-port-comparison) owns launch, evidence interpretation and rollback. Recheck these transient units before claiming a comparison is still running or that the alternative is accepted.
+
 <a id="主机"></a>
 <a id="host"></a>
 ## Hosts
