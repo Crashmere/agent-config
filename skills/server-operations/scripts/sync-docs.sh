@@ -134,7 +134,8 @@ cd \"\$s/root\"
 find . -type f | while read -r f; do
   dest=\${f#.}; mode=0644
   case \$dest in /opt/server-context/scripts/*|/etc/update-motd.d/*|/opt/server-context/assets/30-server-context) mode=0755 ;; esac
-  cmp -s \"\$f\" \"\$dest\" 2>/dev/null && [ \"\$(stat -c %a \"\$dest\")\" = \"\${mode#0}\" ] && continue
+  # Minimal gateways may lack cmp; SHA-256 is already required for manifest verification.
+  [ -f \"\$dest\" ] && [ \"\$(sha256sum < \"\$f\")\" = \"\$(sha256sum < \"\$dest\")\" ] && [ \"\$(stat -c %a \"\$dest\")\" = \"\${mode#0}\" ] && continue
   install -D -o root -g root -m \$mode \"\$f\" \"\$dest.sync-tmp\"
   mv -f \"\$dest.sync-tmp\" \"\$dest\"
   echo \"updated \$dest\"

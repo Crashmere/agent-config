@@ -226,6 +226,10 @@ The initial `SOURCE` read in `sync-docs.sh` used `|| true` to allow first synchr
 
 The remote command now checks whether `SOURCE` exists and reads it only when present. SSH failures and errors reading an existing file abort the local script immediately, including in `--check` mode. A genuinely missing file still permits first synchronization. This applies to shared context and every project's documentation on NAS, VPS, and other explicitly selected targets. Select the trusted `nas-via-vps` alias for authorized NAS maintenance from outside the LAN; do not change host-key verification, authentication, or public exposure to work around a connection timeout.
 
+## Minimal gateway rewrites unchanged documentation
+
+On `vps`, the minimal AlmaLinux image lacks `cmp`. The synchronization script suppressed comparison errors and therefore installed every managed file even when its content and mode were unchanged; the later manifest verification still passed. The skip check now compares file content through the already-required `sha256sum` and retains the mode check, without adding a diffutils package dependency. Verify with a real shared-context synchronization: only changed files should be installed and the complete final manifest must still match the pushed source. This concerns controlled source copies, not application programs, live Nginx/SSH configuration or the tunnel transport.
+
 <a id="本机发布失败"></a>
 ## Local Release Fails
 
