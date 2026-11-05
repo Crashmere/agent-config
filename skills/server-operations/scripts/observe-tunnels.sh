@@ -75,7 +75,7 @@ control_pid=$!
 trap 'kill "$control_pid" 2>/dev/null || true; wait "$control_pid" 2>/dev/null || true' EXIT
 
 sample_loop() {
-  local deadline=$((SECONDS + duration)) previous=unknown last_burst=-60 pending_burst=none state tcp_info health router listener pid actual size remaining active_states
+  local deadline=$((SECONDS + duration)) previous=unknown last_burst=-60 pending_burst=none state tcp_info health router listener pid actual size remaining active_states index peer https_port https_result
   while ((SECONDS < deadline)); do
     date -Is
     state=healthy
@@ -83,7 +83,17 @@ sample_loop() {
     if [ "$role" = nas ]; then
       router=$(ip -4 route show default | awk 'NR==1 {print $3}')
       if [ -n "$router" ]; then ping -n -c 1 -W 1 "$router" || true; fi
-      for peer in "${peers[@]}"; do ping -n -c 1 -W 1 "$peer" || true; done
+      for index in "${!peers[@]}"; do
+        peer=${peers[$index]}
+        ping -n -c 1 -W 1 "$peer" || true
+        https_port=443
+        [ "$index" -eq 0 ] || https_port=8443
+        # Fresh TLS connections distinguish SSH-only stalls from broader TCP failures.
+        https_result=$(curl --noproxy '*' --http1.1 -sS --connect-timeout 2 --max-time 4 \
+          -o /dev/null -w '%{http_code} connect=%{time_connect} tls=%{time_appconnect} total=%{time_total}' \
+          "https://$peer:$https_port/portal/login" 2>&1) || true
+        printf 'gateway_https peer=%s port=%s result=%s\n' "$peer" "$https_port" "$https_result"
+      done
       systemctl show reverse-tunnel@ali.service reverse-tunnel@vps.service \
         -p Id -p MainPID -p ActiveState -p SubState -p NRestarts
       active_states=$(systemctl is-active reverse-tunnel@ali.service reverse-tunnel@vps.service || true)
