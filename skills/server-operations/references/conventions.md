@@ -31,6 +31,10 @@ Each configuration has only one maintained source. Server copies and necessary d
 - Different paths on the same IP still share a browser origin and do not provide security isolation. Business access is protected centrally by ServerPortal device authentication; authorized devices share business data, and applications do not distinguish account roles. Portal's exact public device-setup routes distribute only the public NAS CA and instructions; see [Portal maintenance](portal.md#public-nas-device-setup). New applications must inherit shared authentication and the renewal response headers for valid device cookies. Check inheritance when changing an application's add_header directives; see portal maintenance for the procedure.
 - When changing domains, TLS, shared authentication, or reverse proxies, check every application's build prefix, absolute URLs, Origin/Cookie handling, health checks, deployment, and documentation. Obtain confirmation first if the access method changes.
 
+## Service Navigation
+
+For all personal hosted services, including the current services on `nas` reached through `nas`, `ali`, or `vps`, do not add navigation back to ServerPortal anywhere unless the user explicitly requests it. This default applies to maintenance of existing services and creation of new services, including sidebar/footer buttons, links, menus, clickable branding, shortcuts, and programmatic return actions. Portal registration and shared device authentication remain required; login redirects are authentication behavior, not a service-navigation entry point.
+
 ## Upload Throughput and Request Limits
 
 The shared HTTPS servers on `nas`, `vps` and `ali` use `http2_body_preread_size 4m`. This per-request receive buffer removes the observed 64 KiB HTTP/2 flow-control bottleneck for streaming uploads. It belongs to the host-role templates, `assets/nginx-nas.conf` and `assets/nginx-gateway.conf`, and is inherited by all applications. Application chunk sizes and request-body limits remain in their own repositories. Home-device bulk uploads use the NAS LAN entrance; public routes also include the home uplink and gateway transport.
