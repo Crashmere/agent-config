@@ -331,6 +331,16 @@ Compare `systemctl show aura -p TasksCurrent -p TasksMax -p LimitNPROC -p NResta
 
 Aura's source unit now uses a 1024-task budget, with eight jobs, at most four ExifTool/libvips/CPU video operations and four GPU operations. Upload capture-date extraction shares the CPU bound. Native helper pools have explicit thread settings, and command/request deadlines cancel stalled children and release slots. Install the maintained project unit under the shared maintenance and application deployment locks, reload systemd, and restart only Aura. Validate HEIC/RAW and mixed-media queues under the real runtime identity/cgroup, including interruption recovery and cgroup task events, then retry failed resources through the application's bounded API. Preserve accepted originals. Curio uses two jobs and one GPU slot in its separate 1024-task unit; these are application-level limits, not a host-global semaphore. Future applications using native codec pools should measure their complete process trees rather than copying Aura's task count.
 
+## FFmpeg recompiles CUDA kernels for every short job
+
+On `nas`, FFmpeg's `scale_cuda` repeatedly JIT-compiles CUDA kernels when its runtime user cannot write the driver cache. Aura's home is `/opt/aura`, with a root-owned, read-only service root, so the default `~/.nv/ComputeCache` is unavailable. CUDA/NVENC can still succeed while this startup cost dominates short segment generation.
+
+Check the runtime user's `HOME`, `CUDA_CACHE_PATH`, `CUDA_CACHE_DISABLE`, cache ownership and systemd write restrictions. Repeat one identical synthetic `lavfi` CUDA-scaling/NVENC command under that identity and sandbox, using the same private writable cache for both runs; compare elapsed time and cache-file growth. An isolated NAS one-frame check took about 6.9 seconds cold and 0.4 seconds warm, with about 5.1 MiB of cached kernels. Administrator-run GPU success alone does not check the service's cache access.
+
+Keep the sandbox and select a bounded, application-owned runtime cache. Aura's maintained NAS unit sets `CUDA_CACHE_PATH=/run/aura/playback`, `CUDA_CACHE_MAXSIZE=33554432` and `RuntimeDirectory=aura`. The cache is disposable tmpfs state outside originals, installed models and recovery material. Systemd removes the runtime directory when Aura stops, so the first use after restart can compile again. Install the maintained unit and reload systemd under the shared maintenance/deployment locks, restarting only the affected application; verify the warm-cache result afterward.
+
+Curio uses the same read-only FFmpeg service policy and may encounter this symptom. Diagnose under `curio` and keep any cache directory and unit selection independently owned by Curio.
+
 ## NVIDIA modules cycle after replacing Nouveau live
 
 On NAS, a live switch from Nouveau to Ubuntu's NVIDIA server driver can leave queued udev `remove` events interleaved with new `add` events. The packaged `71-nvidia.rules` runs `modprobe -r` for dependent modules on driver removal; stale events can unload the newly loaded base driver, causing another add/remove cycle. Symptoms include repeated `nvidia-drm` loading/unloading, persistence daemon restarts, intermittent `nvidia-smi` failures, and CUDA initialization errors. Inspect the kernel journal and udev worker commands before treating this as a GPU hardware failure.
