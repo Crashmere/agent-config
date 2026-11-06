@@ -65,7 +65,7 @@ mapping() { # target repo commit
 }
 
 sync_target() {
-  local target=$1 repo app source_file subdir managed junk url commit old dests remove expected actual
+  local target=$1 repo app source_file subdir managed junk url commit old dests remove expected actual pushed_ref
   if [ "$target" = shared ]; then
     repo=$config; source_file=/opt/server-context/SOURCE; subdir=$shared_prefix; managed=$shared_prefix
     junk=/opt/server-context
@@ -73,13 +73,14 @@ sync_target() {
     repo=$projects_dir/$target; app=$(echo "$target" | tr '[:upper:]' '[:lower:]')
     source_file=/opt/$app/docs/SOURCE; subdir=AGENTS.md,docs; managed="AGENTS.md docs"
     junk="/opt/$app/docs"
-    [ -d "$repo/.git" ] || die "checkout for $target not found: $repo"
+    [ -e "$repo/.git" ] || die "checkout for $target not found: $repo"
   fi
   url=$(git -C "$repo" remote get-url origin | sed -e 's#^git@github.com:#https://github.com/#' -e 's#\.git$##')
   git -C "$repo" fetch -q origin
   commit=$(git -C "$repo" rev-parse HEAD)
   local problem=""
-  git -C "$repo" merge-base --is-ancestor "$commit" '@{upstream}' || problem="HEAD has not been pushed"
+  pushed_ref=$(git -C "$repo" rev-parse --symbolic-full-name '@{upstream}' 2>/dev/null) || pushed_ref=refs/remotes/origin/main
+  git -C "$repo" merge-base --is-ancestor "$commit" "$pushed_ref" || problem="HEAD has not been pushed"
   # shellcheck disable=SC2086
   [ -z "$(git -C "$repo" status --porcelain -- $managed)" ] || problem="${problem:+${problem}; }uncommitted documentation changes"
   if [ -n "$problem" ]; then

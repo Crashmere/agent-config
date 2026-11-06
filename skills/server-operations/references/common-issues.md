@@ -305,6 +305,12 @@ Removing Portal backup APIs can leave application-owned status widgets, links, p
 Also check current READMEs, operations and limitation documents for daily native scheduling, Portal-driven backup, internal routine destinations and cache exclusions. NAS agent full packages include stored derivatives, while native historical formats may omit them. Dated verification records and archived design baselines describe their historical scope; do not erase valid evidence or present it as current readiness. Keep native compatibility commands and inactive unit files, but verify that backup services are inactive and timers are neither active nor enabled. FabricWorld and RecipeBox cleanup timers remain separate application writers, not backup jobs. Application-documentation synchronization targets active NAS instances and leaves frozen ALI applications unchanged; shared gateway context follows its separately maintained infrastructure contract. See [Agent backup and recovery](backup-recovery.md) for the maintained capture/restore workflow.
 
 <a id="备份与发布历史持续占用磁盘"></a>
+## Documentation Sync Rejects a Linked Git Worktree
+
+A linked Git worktree has a `.git` file rather than a directory, and detached HEAD has no branch upstream. A directory-only checkout check rejects it as missing; an unconditional `@{upstream}` check rejects a detached commit even when it is already published. These assumptions affect the shared documentation sync for every project on `nas`, `vps` and `ali`.
+
+The maintained `sync-docs.sh` accepts both checkout forms and verifies a detached commit against the fetched `origin/main`; configured branch upstreams retain their existing check. For concurrent development, select a clean worktree named for the project through `PROJECTS_DIR`. Managed documentation must still be clean, and server drift/hash checks remain required. [Documentation synchronization](maintenance.md#文档同步) owns the command and source-selection contract.
+
 ## Backup and Release History Keeps Consuming Disk
 
 First identify the host and actual activation phase. NAS has manual full external backups and temporary upgrade-only local protection; before cutover ALI still has legacy backup/retention tasks. The old daily count or five-upgrade limit does not authorize deleting historical or unresolved materials.
