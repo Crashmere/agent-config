@@ -29,7 +29,7 @@ Trae 与 Codex 通过符号链接共享此文件；Cursor 的 User Rules 要求�
 - [game-novelization](./skills/game-novelization/SKILL.md)：贴合原作风格，以容量受控的批次完整细看视频并保存续接点，忠实改编游戏主线、安排详略，写作、续写与续修已有稿件，让没玩过游戏的读者看懂并减轻攻略感与模板腔，最终只交付小说正文；指定语燕时定位首页“游戏小说”分组下的独立作品知识库。
 - [pdf-to-word](./skills/pdf-to-word/SKILL.md)：以内容质量和可编辑性为优先转换 PDF 为 Word，结合本地 OCR、结构重建与渲染复核，并持续沉淀新经验和通用工具。
 - [translate-pdf](./skills/translate-pdf/SKILL.md)：结合上下文完整翻译 PDF，逐段审校原意、语气与可读性，并验证图文覆盖及排版；基于 wshuyi 的开源技能维护。
-- [comfyui-operations](./skills/comfyui-operations/SKILL.md)：跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖模型部署、工作流、API、缓存和图像异常。
+- [comfyui-operations](./skills/comfyui-operations/SKILL.md)：跨 Windows、macOS 和 Linux 安装、运行、维护与排查 ComfyUI，覆盖本地与云端 CLI、工作流、媒体处理、自定义节点及环境构建部署。
 - [openai-image-cost-report](./skills/openai-image-cost-report/SKILL.md)：使用 OpenAI Image API 生成或编辑图片，并报告每次调用的费用。
 
 ## 远程操作

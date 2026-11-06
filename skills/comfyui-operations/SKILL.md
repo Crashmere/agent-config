@@ -9,7 +9,10 @@ Operate ComfyUI as an application stack: source checkout, accelerator integratio
 
 ## Route by execution context
 
-- When the official `comfy` CLI and `$comfy` skill are available, use them for CLI commands, workflow authoring, submission, job control, and local or cloud execution; use `$comfy-debug` for CLI error envelopes and stuck or failed CLI jobs. Keep installation, environments, models, service lifecycle, host access, and lower-level runtime diagnosis in this skill.
+- When the official `comfy` CLI is installed, read [references/cli.md](references/cli.md) for backend selection, discovery, submission, job recovery, and error envelopes. Do not install the CLI merely to read these references.
+- For workflow creation, conversion, reusable recipes, or concurrent canvas edits, read [references/workflows.md](references/workflows.md). For video, audio, conditioning, or multi-shot production, also read [references/media.md](references/media.md).
+- When the user requests packaging an environment or a Comfy developer-platform endpoint, read [references/cloud-builds.md](references/cloud-builds.md). A build release, a deployment, and a generation job have different retry and cost semantics.
+- For writing, fixing, or reviewing a custom node pack, read [references/custom-nodes.md](references/custom-nodes.md), preserving the installed ComfyUI API and existing workflow identities.
 - For a remote Windows target, use `$windows-ssh` for connection, command transport, file transfer, quoting, and encoding. Use this skill for ComfyUI-specific decisions.
 - For local Windows, macOS, or Linux, run commands directly using the platform's native shell.
 - Use `$software-installation` when installing system-wide prerequisites such as Git, Python, GPU drivers, package managers, or launch services.
