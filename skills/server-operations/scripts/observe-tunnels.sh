@@ -90,7 +90,7 @@ if [ -n "$udp_peer" ]; then
   udp_filter='udp port 51821'
   [ "$role" != nas ] || udp_filter+=" and host ${peers[1]}"
   (timeout --signal=INT --kill-after=5s "$duration" tcpdump -i "$interface" -nn -tttt -p -K -s 96 -l \
-      "$udp_filter" 2>&1 | stdbuf -o0 head -c 8388608 > "$output/udp-control.txt") &
+      "$udp_filter" 2>&1 | stdbuf -o0 head -c 16777216 > "$output/udp-control.txt") &
   udp_pid=$!
 fi
 
