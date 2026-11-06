@@ -1,0 +1,19 @@
+# One additional application listener; existing application and management
+# tunnel instances remain unchanged when a service is added.
+Host gateway
+    HostName __GATEWAY_ADDRESS__
+    Port 22
+    User nas-tunnel
+    IdentityFile /etc/nas-tunnels/__GATEWAY__.key
+    IdentitiesOnly yes
+    UserKnownHostsFile /etc/nas-tunnels/known_hosts
+    HostKeyAlias __GATEWAY__
+    StrictHostKeyChecking yes
+    UpdateHostKeys no
+    BatchMode yes
+    ExitOnForwardFailure yes
+    ConnectTimeout 10
+    ServerAliveInterval 15
+    ServerAliveCountMax 3
+    Compression yes
+    RemoteForward 127.0.0.1:__APP_PORT__ 127.0.0.1:__APP_PORT__

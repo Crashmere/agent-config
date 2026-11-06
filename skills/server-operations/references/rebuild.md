@@ -28,11 +28,15 @@ After writes stop, cold-copy complete databases/files or use verified complete n
 
 Publish each application's own `deploy/portal.json` through the validated protocol, preserving separate program/declaration/documentation provenance. Install application-owned route includes from the same source to every active entrance; do not maintain independent copies of business routing in gateway code. Icons, authentication exceptions, upload/streaming, and Ledger-to-FabricWorld remain existing application contracts.
 
+For a new application, register its ID in `scripts/upgrade-state.py` before its first restricted release and synchronize that helper to NAS. Add it to `assets/nas/server-recovery.json` and append it to the live configuration's `expectedApps` after Portal registration, preserving the existing external-volume and private settings. Recovery discovers complete data from the registry; the expected list prevents an accidentally missing declaration from silently reducing capture scope.
+
 ## HTTPS and Forwarding
 
 [HTTPS](https.md) owns platform-specific certificate issuance/renewal and proxy trust. NAS uses the restored/local CA at `/etc/nas-ca` for LAN 443. ALI uses its own public IPv4 certificate on 443; VPS uses a new certificate on 8443 and HTTP-01 on 80, without taking proxy 443. Each user-facing entrance uses Portal and the exact NAS/ALI/VPS Origin set, preserving the explicit VPS port in `$http_host`.
 
 NAS initiates two dedicated restricted reverse-SSH connections. Gateway loopback 18080-18087 reaches the corresponding NAS apps, and 22022 supplies restricted maintenance SSH. Inspection uses each gateway's loopback HTTP 80 and the same locations; internal ports are not opened publicly. Read host/tunnel sources in [NAS migration](nas-migration.md#host-roles-and-traffic), and keep strict fingerprint verification and forwarding-bind failure checks.
+
+Add later application ports with separate `reverse-tunnel@<app>-{ali,vps}` instances using `assets/nas/application-tunnel.conf.template`. Reuse the existing gateway key and known-host entry, and forward only the new loopback port. Extend both the gateway's `PermitListen` configuration and the existing key's `permitlisten` restrictions for that exact port; validate and reload sshd without terminating established connections. Apply the existing VPS resilience drop-in to the new VPS instance. This avoids restarting the shared eight-application/management tunnels when adding a service. Install the new application's Nginx location and gracefully reload each entrance; do not replace the shared server or open public application ports.
 
 The user deferred DHCP reservation and further freeze investigation. Retain the selected LAN address as an input with coordinated change instructions; do not treat it as guaranteed fixed or claim diagnostic mitigation solved hardware. Configure routing without redirecting heavy LAN work through a public gateway.
 
