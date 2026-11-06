@@ -33,7 +33,7 @@ Each configuration has only one maintained source. Server copies and necessary d
 
 ## Upload Throughput and Request Limits
 
-The shared HTTPS servers on `nas`, `vps` and `ali` use `http2_body_preread_size 4m`. This per-request receive buffer removes the observed 64 KiB HTTP/2 flow-control bottleneck for streaming uploads. It belongs to the host-role templates, `assets/nginx-nas.conf` and `assets/nginx-gateway.conf`, and is inherited by all eight applications. Application chunk sizes and request-body limits remain in their own repositories. Home-device bulk uploads use the NAS LAN entrance; public routes also include the home uplink and gateway transport.
+The shared HTTPS servers on `nas`, `vps` and `ali` use `http2_body_preread_size 4m`. This per-request receive buffer removes the observed 64 KiB HTTP/2 flow-control bottleneck for streaming uploads. It belongs to the host-role templates, `assets/nginx-nas.conf` and `assets/nginx-gateway.conf`, and is inherited by all applications. Application chunk sizes and request-body limits remain in their own repositories. Home-device bulk uploads use the NAS LAN entrance; public routes also include the home uplink and gateway transport.
 
 | Application | Upload contract | Application Nginx request handling |
 | --- | --- | --- |
@@ -45,6 +45,7 @@ The shared HTTPS servers on `nas`, `vps` and `ali` use `http2_body_preread_size 
 | ServerPortal | JSON controls up to 1 MiB; no photo or recovery-archive upload | 1 MiB body limit; default request buffering; response buffering disabled |
 | AICalendar | Archive parts contain 384 KiB of raw gzip bytes encoded as base64 JSON | 1 MiB body limit, including the separate Bearer-authenticated ingest namespace; default request buffering |
 | Aura | Original chunks up to 128 MiB, durable offset acknowledgment, complete-file SHA-256 at commit | 129 MiB body limit; request buffering disabled |
+| Curio | Original chunks up to 128 MiB, durable offset acknowledgment, complete-file SHA-256 at commit; 600-second body deadline and 660-second browser timeout | 129 MiB body limit; request buffering disabled; 660-second upstream idle timeouts |
 
 The table identifies each application's contract; its code, `deploy/nginx-location.conf` and project operations documentation are the maintenance sources for changes. Bounded JSON and photo requests can retain Nginx's default request buffering. Unlimited attachment streams and large resumable original transfers use their existing streaming paths. A receive-window change does not require enlarging other applications' file limits or removing authentication.
 
@@ -79,7 +80,7 @@ Confirmed by the user on 2026-09-28: automatically provide all of the following 
 
 ## Directories, Identities, and Processes
 
-Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, `AICalendar`, and `Aura`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
+Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, `AICalendar`, `Aura`, and `Curio`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
 
 ```text
 /opt/server-context/      Controlled copy of shared context; no credentials or runtime data
@@ -96,7 +97,7 @@ Source repositories and local directories use the application names `Ledger`, `F
 - Give each application a separate runtime user. Root manages programs, scripts, and configuration; the runtime user writes only to explicitly designated directories such as its own data and backups. Default data/backup permissions are 0700, with stricter permissions for sensitive configuration; do not treat 0644 as a general permission for secrets.
 - Use systemd for persistent operation and startup at boot. Keep unit sources in the application's config directory and link them through `/etc/systemd/system/`. Logs go to the journal; locate request logs according to application/shared-entry-point responsibilities.
 - Add restrictions such as `NoNewPrivileges`, `ProtectSystem`, and `ReadWritePaths` as needed, and verify that they do not prevent real operation. Do not copy an unsuitable sandbox.
-- The current business applications and portal are all single-file Go programs built locally. The server needs neither Docker, Go/Node build environments, nor a self-hosted runner; FabricWorld and RecipeBox additionally require the system package libvips; Aura uses libvips, ExifTool, FFmpeg, and a pinned isolated Python/NVIDIA image runtime. Aura also bundles a locally built Swift PhotoKit companion; the Mac release build requires Apple Command Line Tools. Do not install Node on the server: build frontend assets locally and embed them in the program. Obtain user confirmation first for a new application that truly requires a Node runtime. New applications may choose technology according to their dependencies; when introducing shared runtimes/container platforms, record the impact on all applications and the maintenance cost.
+- The current business applications and portal are Go programs built locally with embedded frontend assets. The server needs neither Docker, Go/Node build environments, nor a self-hosted runner; FabricWorld and RecipeBox additionally require the system package libvips. Aura and Curio use libvips, ExifTool, FFmpeg, and the root-owned, read-only pinned Python/NVIDIA image environment at `/opt/aura/bin/image-gpu/bin/python`, with independent workers and application-level concurrency limits. Preserve that shared runtime while either service selects it; reconstruct it from Aura's pinned installation sources rather than installing packages globally. Aura also bundles a locally built Swift PhotoKit companion; the Mac release build requires Apple Command Line Tools. Do not install Node on the server: build frontend assets locally and embed them in the program. Obtain user confirmation first for a new application that truly requires a Node runtime. New applications may choose technology according to their dependencies; when introducing shared runtimes/container platforms, record the impact on all applications and the maintenance cost.
 - Do not remove host tools, cloud-provider agents, scheduled tasks, or user files outside the task. Identify the source of unknown units first.
 
 <a id="数据备份与发布"></a>

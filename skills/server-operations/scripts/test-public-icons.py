@@ -14,6 +14,7 @@ import urllib.request
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--locations', required=True, type=Path, help='directory containing <app>.conf')
 parser.add_argument('--nginx', default='nginx')
+parser.add_argument('--apps', nargs='+', help='check only these applications (default: all cases)')
 args = parser.parse_args()
 cases = {
     'ledger': (18080, ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png',
@@ -24,7 +25,12 @@ cases = {
     'recipebox': (18083, ['favicon.ico', 'recipebox.svg', 'apple-touch-icon.png']),
     'yuyan': (18084, ['static/favicon.svg', 'static/apple-touch-icon.png']),
     'aura': (18087, ['favicon.svg', 'apple-touch-icon.png']),
+    'curio': (18088, ['favicon.svg', 'apple-touch-icon.png']),
 }
+if args.apps:
+    if any(app not in cases for app in args.apps):
+        parser.error('Unknown application in --apps')
+    cases = {app: cases[app] for app in args.apps}
 
 class Upstream(http.server.BaseHTTPRequestHandler):
     def do_GET(self):

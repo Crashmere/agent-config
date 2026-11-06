@@ -1,7 +1,7 @@
 <a id="https-与-ip-证书"></a>
 # HTTPS and IP Certificates
 
-The shared application entrances are NAS LAN HTTPS 443, ALI public HTTPS 443, and VPS public HTTPS 8443. Each gateway routes the existing application paths to the same NAS instances. VPS's existing sing-box REALITY/Vision service retains TCP 443; it is not an HTTPS website or a replacement for a public web certificate. [Current-state](current-state.md) records activation; [NAS migration](nas-migration.md) owns the cross-host contract.
+The shared application entrances are NAS LAN HTTPS 443, ALI public HTTPS 443, and VPS public HTTPS 8443. Each gateway routes the application paths, including `/curio/`, to the same NAS instances. VPS's existing sing-box REALITY/Vision service retains TCP 443; it is not an HTTPS website or a replacement for a public web certificate. [Current-state](current-state.md) records activation; [NAS migration](nas-migration.md) owns the cross-host contract.
 
 ## Server and Certificate Sources
 
@@ -19,7 +19,9 @@ The shared application entrances are NAS LAN HTTPS 443, ALI public HTTPS 443, an
 | `assets/nas/renew-lan-tls.sh`, `nas-lan-tls.service/timer` | NAS CA-signed leaf issuance/renewal at `/etc/nas-ca` |
 | ALI `snap.certbot.renew.timer` | Existing official snap renewal while the ALI public entrance remains active |
 
-Distribution-specific enabled Nginx paths differ: Ubuntu uses its sites configuration, while AlmaLinux uses its installed include layout. Do not copy directory/package/version assumptions between hosts. TLS terminates at the entrance; application ports 18080-18087 remain loopback HTTP. Gateway reverse SSH is encrypted; Ledger-to-FabricWorld traffic remains local.
+Distribution-specific enabled Nginx paths differ: Ubuntu uses its sites configuration, while AlmaLinux uses its installed include layout. Do not copy directory/package/version assumptions between hosts. TLS terminates at the entrance; application ports 18080-18088 remain loopback HTTP. Gateway reverse SSH is encrypted; Ledger-to-FabricWorld traffic remains local.
+
+The original `reverse-tunnel@ali.service` and `reverse-tunnel@vps.service` retain application forwards 18080-18087 and NAS management 22022. Curio's separate `reverse-tunnel@curio-ali.service` and `reverse-tunnel@curio-vps.service` forward only 18088. Its `/curio/` location inherits the existing entrances' Portal authentication and certificates; no additional public application port or TLS certificate is required.
 
 ## Public IPv4 Certificates
 
