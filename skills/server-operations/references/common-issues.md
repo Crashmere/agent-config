@@ -333,13 +333,11 @@ Aura's source unit now uses a 1024-task budget, with eight jobs, at most four Ex
 
 ## FFmpeg recompiles CUDA kernels for every short job
 
-On `nas`, FFmpeg's `scale_cuda` repeatedly JIT-compiles CUDA kernels when its runtime user cannot write the driver cache. Aura's home is `/opt/aura`, with a root-owned, read-only service root, so the default `~/.nv/ComputeCache` is unavailable. CUDA/NVENC can still succeed while this startup cost dominates short segment generation.
+On `nas`, FFmpeg's `scale_cuda` repeatedly JIT-compiles CUDA kernels when its runtime user cannot write the driver cache. Aura and Curio have root-owned, read-only service homes at `/opt/aura` and `/opt/curio`, so the default `~/.nv/ComputeCache` is unavailable. CUDA/NVENC can still succeed while this startup cost dominates short segment generation.
 
-Check the runtime user's `HOME`, `CUDA_CACHE_PATH`, `CUDA_CACHE_DISABLE`, cache ownership and systemd write restrictions. Repeat one identical synthetic `lavfi` CUDA-scaling/NVENC command under that identity and sandbox, using the same private writable cache for both runs; compare elapsed time and cache-file growth. An isolated NAS one-frame check took about 6.9 seconds cold and 0.4 seconds warm, with about 5.1 MiB of cached kernels. Administrator-run GPU success alone does not check the service's cache access.
+Check the runtime user's `HOME`, `CUDA_CACHE_PATH`, `CUDA_CACHE_DISABLE`, cache ownership and systemd write restrictions. Repeat one identical synthetic `lavfi` CUDA-scaling/NVENC command under that identity and sandbox, using the same private writable cache for both runs; compare elapsed time and cache-file growth. An isolated NAS one-frame check under `aura` took about 6.9 seconds cold and 0.4 seconds warm, with about 5.1 MiB of cached kernels. Administrator-run GPU success alone does not check the service's cache access.
 
-Keep the sandbox and select a bounded, application-owned runtime cache. Aura's maintained NAS unit sets `CUDA_CACHE_PATH=/run/aura/playback`, `CUDA_CACHE_MAXSIZE=33554432` and `RuntimeDirectory=aura`. The cache is disposable tmpfs state outside originals, installed models and recovery material. Systemd removes the runtime directory when Aura stops, so the first use after restart can compile again. Install the maintained unit and reload systemd under the shared maintenance/deployment locks, restarting only the affected application; verify the warm-cache result afterward.
-
-Curio uses the same read-only FFmpeg service policy and may encounter this symptom. Diagnose under `curio` and keep any cache directory and unit selection independently owned by Curio.
+Keep the sandbox and select a bounded, application-owned runtime cache. The maintained NAS units set `CUDA_CACHE_PATH=/run/aura/playback` with `RuntimeDirectory=aura`, and `/run/curio/playback` with `RuntimeDirectory=curio`; both set `CUDA_CACHE_MAXSIZE=33554432`. Each cache is independently owned disposable tmpfs state outside originals, installed models and recovery material. Systemd removes it when the corresponding service stops, so the first use after restart can compile again. Install the maintained unit and reload systemd under the shared maintenance/deployment locks, restarting only the affected application; verify the warm-cache result afterward.
 
 ## NVIDIA modules cycle after replacing Nouveau live
 
