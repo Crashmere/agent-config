@@ -48,6 +48,12 @@ The server generates `__Host-portal_device` credentials using Secure/HttpOnly/Sa
 
 NAS configuration uses the explicit `origins` array; legacy `origin` is used only when the list is empty. A browser write must both match the allowed HTTPS set and equal the request's HTTPS Host/port. Preserve `$http_host` upstream so VPS `:8443` is not lost. Each server IP needs its own first login; port differences are Origin boundaries but not cookie isolation. LAN access has the same authentication contract.
 
+### Scheduled Availability
+
+The existing NAS collector checks Portal and every registered local application's fixed loopback `/healthz`, plus ALI/VPS labeled compatibility/primary entrances' fixed anonymous `/portal/api/session`, every ten minutes. Public checks require verified TLS and an expected 401 JSON response; redirects, credentials, business writes, automatic routing and tunnel restarts are excluded. Page reads use the saved result rather than starting more probes.
+
+Private mode-0600 `/opt/serverportal/data/availability.json` retains only the latest seven days, at most 1,009 rounds, and continues across collector restarts. Protected `/portal/api/availability` supplies weekly sampled pass counts and paginated history to connection/security's **可用性记录** tab; `/portal/api/system` shares the latest scheduled gateway result. The file uses the existing Portal data writable/recovery scope, adding no service, timer, public exception or gateway configuration. Sampling can miss brief outages, and NAS/collector downtime leaves a collection gap rather than a successful record. Project Operations owns the API fields, startup schedule, storage failures and stale-display threshold.
+
 ### Public NAS Device Setup
 
 Portal's `/portal/connect` page and its exact `/info`, `/ca.crt`, `/apple.mobileconfig`, and `/qr.png` children accept anonymous GET/HEAD requests. These routes provide installation instructions, public root-certificate metadata, a DER root download, a root-only Apple profile, and a QR code for the configured VPS setup URL. They do not authorize a device or expose business resources; all other Portal APIs and business authentication remain unchanged.
