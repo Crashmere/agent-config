@@ -5,7 +5,7 @@ set -euo pipefail
 usage() {
   echo "Usage: observe-tunnels.sh <nas|vps> <new-output-directory> <seconds> <peer-ip>..." >&2
   echo "NAS peers: ALI then VPS. VPS peer: NAS public source. Maximum duration: 86400 seconds." >&2
-  echo "SSH_PORTS defaults to 22; set SSH_PORTS=22,2222 for an alternate-port comparison." >&2
+  echo "SSH_PORTS defaults to 22. UDP_PEER enables the isolated WireGuard comparison." >&2
   exit 2
 }
 
@@ -33,6 +33,12 @@ for port in "${ports[@]}"; do
 done
 sample_limit=16777216
 [ "${#ports[@]}" -le 1 ] || sample_limit=33554432
+udp_peer=${UDP_PEER:-}
+if [ -n "$udp_peer" ]; then
+  [[ $udp_peer =~ ^10\.77\.250\.[12]$ ]] || usage
+  command -v wg >/dev/null || { echo "Missing tool: wg" >&2; exit 1; }
+  sample_limit=33554432
+fi
 [ ! -e "$output" ] || { echo "Output directory already exists: $output" >&2; exit 1; }
 for command in tcpdump timeout head stdbuf ip ss ping curl; do
   command -v "$command" >/dev/null || { echo "Missing tool: $command" >&2; exit 1; }
@@ -59,8 +65,8 @@ filter+=")"
 
 {
   date -Is
-  printf 'role=%s duration=%s interface=%s ports=%s peers=%s sample_limit=%s\n' \
-    "$role" "$duration" "$interface" "$port_list" "${peers[*]}" "$sample_limit"
+  printf 'role=%s duration=%s interface=%s ports=%s peers=%s sample_limit=%s udp_peer=%s\n' \
+    "$role" "$duration" "$interface" "$port_list" "${peers[*]}" "$sample_limit" "$udp_peer"
   ip -br address
   ip -4 route
   tcpdump --version
@@ -72,10 +78,24 @@ filter+=")"
     "$filter and (tcp[tcpflags] & (tcp-syn|tcp-fin|tcp-rst) != 0)" 2>&1 \
     | stdbuf -o0 head -c 8388608 > "$output/control.txt") &
 control_pid=$!
-trap 'kill "$control_pid" 2>/dev/null || true; wait "$control_pid" 2>/dev/null || true' EXIT
+udp_pid=
+stop_captures() {
+  kill "$control_pid" ${udp_pid:+"$udp_pid"} 2>/dev/null || true
+  wait "$control_pid" 2>/dev/null || true
+  [ -z "$udp_pid" ] || wait "$udp_pid" 2>/dev/null || true
+}
+trap stop_captures EXIT
+if [ -n "$udp_peer" ]; then
+  # The VPS source can roam independently of its SSH connection's public source.
+  udp_filter='udp port 51821'
+  [ "$role" != nas ] || udp_filter+=" and host ${peers[1]}"
+  (timeout --signal=INT --kill-after=5s "$duration" tcpdump -i "$interface" -nn -tttt -p -K -s 96 -l \
+      "$udp_filter" 2>&1 | stdbuf -o0 head -c 8388608 > "$output/udp-control.txt") &
+  udp_pid=$!
+fi
 
 sample_loop() {
-  local deadline=$((SECONDS + duration)) previous=unknown last_burst=-60 pending_burst=none state tcp_info health router listener pid actual size remaining active_states index peer https_port https_result
+  local deadline=$((SECONDS + duration)) previous=unknown last_burst=-60 pending_burst=none state tcp_info health router listener pid actual size remaining active_states index peer https_port https_result udp_result samples=0
   while ((SECONDS < deadline)); do
     date -Is
     state=healthy
@@ -120,6 +140,31 @@ sample_loop() {
     printf 'portal_health=%s\n' "$health"
     [[ $health == 200\ * ]] || state=failed
 
+    if [ -n "$udp_peer" ]; then
+      printf 'udp_interface=%s peer=%s\n' wg-udp-test "$udp_peer"
+      wg show wg-udp-test endpoints 2>&1 || true
+      wg show wg-udp-test latest-handshakes 2>&1 || true
+      wg show wg-udp-test transfer 2>&1 || true
+      udp_result=$(ping -n -c 1 -W 2 -M do -s 1200 "$udp_peer" 2>&1) || true
+      printf 'udp_ping=%s\n' "$udp_result"
+      [[ $udp_result == *'1 received'* ]] || state=failed
+      if [ "$role" = nas ]; then
+        udp_result=$(curl --noproxy '*' -sS --connect-timeout 2 --max-time 4 -o /dev/null \
+          -w '%{http_code} connect=%{time_connect} total=%{time_total} bytes=%{size_download}' \
+          "http://$udp_peer:19090/healthz" 2>&1) || true
+        printf 'udp_health=%s\n' "$udp_result"
+        [[ $udp_result == 200\ * ]] || state=failed
+        if ((samples % 4 == 0)); then
+          udp_result=$(curl --noproxy '*' -sS --connect-timeout 2 --max-time 4 -o /dev/null \
+            -w '%{http_code} total=%{time_total} bytes=%{size_download}' \
+            "http://$udp_peer:19090/payload" 2>&1) || true
+          printf 'udp_payload=%s\n' "$udp_result"
+          [[ $udp_result == 200\ *'bytes=16384' ]] || state=failed
+        fi
+      fi
+      samples=$((samples + 1))
+    fi
+
     if [ "$previous" = unknown ] || { [ "$state" = failed ] && [ "$previous" != failed ]; }; then
       pending_burst=$state
     fi
@@ -143,4 +188,5 @@ sample_loop() {
 
 sample_loop 2>&1 | stdbuf -o0 head -c "$sample_limit" > "$output/samples.txt"
 wait "$control_pid" || true
+[ -z "$udp_pid" ] || wait "$udp_pid" || true
 printf 'Observation complete: %s\n' "$output"
