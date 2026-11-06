@@ -82,6 +82,8 @@ Confirmed by the user on 2026-09-28: automatically provide all of the following 
 
 Source repositories and local directories use the application names `Ledger`, `FeeTable`, `FabricWorld`, `RecipeBox`, `Yuyan`, `ServerPortal`, `AICalendar`, `Aura`, and `Curio`; server application directories, URL prefixes, runtime/deployment users, and systemd units use the corresponding lowercase names. Repository name capitalization does not change runtime paths.
 
+Use these English service names consistently in application branding, browser titles, home-screen metadata, portal declarations, exports, documentation, and agent instructions. Do not introduce Chinese service names or append Chinese aliases to the brands. Chinese page labels, business fields, resource descriptions, and user content retain their own meaning and language.
+
 ```text
 /opt/server-context/      Controlled copy of shared context; no credentials or runtime data
 /opt/<app>/

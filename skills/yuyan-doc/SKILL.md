@@ -1,6 +1,6 @@
 ---
 name: yuyan-doc
-description: "Operate Yuyan (语燕) documents, including reading, editing, formatting, organizing, exporting, and /yuyan/docs/ links."
+description: "Read, edit, organize, and export Yuyan documents, including /yuyan/docs/ links."
 ---
 
 # Yuyan Documents
