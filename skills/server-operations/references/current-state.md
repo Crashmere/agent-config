@@ -55,7 +55,7 @@ Paths, users, and ports below belong to the active NAS instances. The original e
 | [Ledger](https://github.com/Crashmere/Ledger) | `/ledger/` / 18080 | `/opt/ledger`; `ledger`, `ledger-deploy` | `ledger.service`; local FabricWorld integration |
 | [FeeTable](https://github.com/Crashmere/FeeTable) | `/feetable/` / 18081 | `/opt/feetable`; `feetable`, `feetable-deploy` | `feetable.service` |
 | [FabricWorld](https://github.com/Crashmere/FabricWorld) | `/fabricworld/` / 18082 | `/opt/fabricworld`; `fabricworld`, `fabricworld-deploy` | `fabricworld.service`, native `fabricworld-cleanup.service/timer`; libvips; 640 MiB memory limit |
-| [RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` / 18083 | `/opt/recipebox`; `recipebox`, `recipebox-deploy` | `recipebox.service`, native `recipebox-cleanup.service/timer`; libvips; 640 MiB limit; 5 GiB photo quota |
+| [RecipeBox](https://github.com/Crashmere/RecipeBox) | `/recipebox/` / 18083 | `/opt/recipebox`; `recipebox`, `recipebox-deploy` | `recipebox.service`, native `recipebox-cleanup.service/timer`; libvips; 640 MiB and 256-task limits; 5 GiB photo quota |
 | [Yuyan](https://github.com/Crashmere/Yuyan) | `/yuyan/` / 18084 | `/opt/yuyan`; `yuyan`, `yuyan-deploy` | `yuyan.service`; 384 MiB limit, GOMEMLIMIT 320 MiB; gzip deployment |
 | [ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` / 18085 | `/opt/serverportal`; Web user `serverportal`, administrator deployment | `serverportal.service`, root `serverportal-agent.service`; local Unix socket |
 | [AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` / 18086 | `/opt/aicalendar`; `aicalendar`, `aicalendar-deploy` | `aicalendar.service`; 192 MiB limit, GOMEMLIMIT 144 MiB; independent Bearer ingest |
