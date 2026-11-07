@@ -26,6 +26,7 @@ Use this skill as the entry point for shared operations context, without relying
 8. For temporary upgrade protection, retained failed batches, historical ALI cleanup, or maintenance locks, read [Upgrade protection and retained materials](references/retention.md).
    Skip temporary upgrade backups unless the change can delete or overwrite existing database data. Back up only the affected databases; never include non-database files. Manual external recovery packages retain their separate full-data scope. Follow the documented database selection and acceptance flow.
 9. When adding a website or changing icons, build paths, or shared authentication, apply the [Website icon conventions](references/conventions.md#website-icons-and-home-screen-shortcuts) by default and run the shared icon check; do not wait for a separate request for mobile icons.
+10. When developing or maintaining web interactions in any existing or new service, apply [Page continuity](references/conventions.md#page-continuity): avoid operation-driven document reloads and refresh-like flashes, preserve current content/state, and use lightweight transitions for necessary replacements.
 
 <a id="authorization"></a>
 <a id="授权改完告知还是先确认"></a>

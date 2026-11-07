@@ -5,6 +5,10 @@ This file records issues that may affect multiple applications and their shared 
 
 For each issue, document the symptoms and decision criteria, affected applications, handling steps, cleanup and acceptance checks, and improvements that have not yet been implemented. Rewrite an entry when its solution is superseded; Git preserves the history.
 
+## A data refresh flashes or resets the page
+
+A page can appear to reload without a document request: replacing loaded content with a skeleton or clearing a gallery before fetching shortens the page, clamps scroll position and remounts images, editors or players. Observed paths include Ledger's filters and pagination, FeeTable's location saves and export filters, FabricWorld's material saves and detail retries, Aura's gallery filters, Curio's collection refreshes and ServerPortal's section navigation. AICalendar's former homepage anchor instead requested a new document. Apply [Page continuity](conventions.md#page-continuity) to every service on `nas`, whether reached through `nas`, `ali` or `vps`: keep valid content mounted while updating, use the client router for same-service navigation, and show bounded progress or transitions. Inspect loading conditionals and state-reset calls as well as `location.reload`, ordinary anchors and native form submission. Verify the affected delayed request with synthetic data; no server runtime, proxy, database or backup change is needed for this frontend correction.
+
 ## Distribution-specific inspection and login notices
 
 The `vps` image is AlmaLinux, whereas `ali` and `nas` use Ubuntu. An absent UFW executable or Ubuntu Nginx directory does not establish a host failure. The shared `inspect.sh` selects the installed firewall tool and inspects Nginx directories only when present. Verify both active firewall rules and cloud-side access separately.
