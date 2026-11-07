@@ -137,7 +137,7 @@ Each application owns deploy/portal.json, describing directory purposes, databas
 
 ## Page Continuity
 
-For all existing and future personal web services on `nas`, reached through `nas`, `ali` or `vps`, avoid operation-driven full-page reloads and refresh-like flashes. Apply this during new development and maintenance, including saves, deletion, import, filtering, pagination, dialog closure, retry, background polling, and internal navigation.
+For all existing and future personal web services, including the current services on `nas` reached through `nas`, `ali` or `vps`, avoid operation-driven full-page reloads and refresh-like flashes. Apply this during new development and maintenance, including saves, deletion, import, filtering, pagination, dialog closure, retry, background polling, and internal navigation.
 
 - Use the existing client router for internal navigation and update affected state or data in place. Ordinary forms must prevent native submission; homepage links and action buttons must not accidentally reload the document. Keep explicit cross-service/Origin navigation, authentication redirects, and user-requested reloads when their semantics require a new document.
 - Retain the last valid content while refreshing an already loaded view. Do not replace it with a page-wide skeleton, clear lists before requesting replacements, or remount an editor, gallery, player or page shell because a loading flag changed. Preserve stable item identities, scroll position, drafts, text input, selection and expanded panels when the operation does not intentionally change them. Use skeletons for initial loading or a genuinely different data scope; do not present one scope's results as another's.
