@@ -60,7 +60,7 @@ Paths, users, and ports below belong to the active NAS instances. The original e
 | [ServerPortal](https://github.com/Crashmere/ServerPortal) | `/portal/` / 18085 | `/opt/serverportal`; Web user `serverportal`, administrator deployment | `serverportal.service`, root `serverportal-agent.service`; local Unix socket |
 | [AICalendar](https://github.com/Crashmere/AICalendar) | `/aicalendar/` / 18086 | `/opt/aicalendar`; `aicalendar`, `aicalendar-deploy` | `aicalendar.service`; 192 MiB limit, GOMEMLIMIT 144 MiB; independent Bearer ingest |
 | [Aura](https://github.com/Crashmere/Aura) | `/aura/` / 18087 | `/opt/aura`; `aura`, `aura-deploy` | `aura.service`; libvips, ExifTool, FFmpeg, isolated NVIDIA image runtime; PhotoKit clients |
-| [Curio](https://github.com/Crashmere/Curio) | `/curio/` / 18088 | `/opt/curio`; `curio`, `curio-deploy` | `curio.service`; libvips, ExifTool, FFmpeg; independent worker using Aura's pinned NVIDIA image environment; two processing jobs and one GPU slot |
+| [Curio](https://github.com/Crashmere/Curio) | `/curio/` / 18088 | `/opt/curio`; `curio`, `curio-deploy` | `curio.service`; libvips, ExifTool, FFmpeg; independent worker using Aura's pinned NVIDIA image environment; eight processing jobs, four CPU/GPU operations each, one foreground reservation in each budget |
 
 Every project owns `AGENTS.md`, `docs/README.md`, operational/API/restore details, `deploy/nginx-location.conf`, and `deploy/portal.json`. The latter records complete data roots, units, ports, APIs, and resource purposes. Inspect direct `/healthz`, prefixed health/routes, actual media/API paths, and declaration receipts rather than inferring activation from integration files.
 

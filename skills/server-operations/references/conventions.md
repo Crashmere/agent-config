@@ -48,7 +48,7 @@ The shared HTTPS servers on `nas`, `vps` and `ali` use `http2_body_preread_size 
 | Yuyan | Images up to 25 MiB; attachment files stream without an application-size ceiling | 26 MiB ordinary limit; only the exact attachment-upload route has no body limit and disables request buffering |
 | ServerPortal | JSON controls up to 1 MiB; no photo or recovery-archive upload | 1 MiB body limit; default request buffering; response buffering disabled |
 | AICalendar | Archive parts contain 384 KiB of raw gzip bytes encoded as base64 JSON | 1 MiB body limit, including the separate Bearer-authenticated ingest namespace; default request buffering |
-| Aura | Original chunks up to 128 MiB, durable offset acknowledgment, complete-file SHA-256 at commit | 129 MiB body limit; request buffering disabled |
+| Aura | Original chunks up to 128 MiB, durable offset acknowledgment, complete-file SHA-256 at commit; 600-second body deadline and 660-second browser timeout | 129 MiB body limit; request buffering disabled; 660-second upstream idle timeouts |
 | Curio | Original chunks up to 128 MiB, durable offset acknowledgment, complete-file SHA-256 at commit; 600-second body deadline and 660-second browser timeout | 129 MiB body limit; request buffering disabled; 660-second upstream idle timeouts |
 
 The table identifies each application's contract; its code, `deploy/nginx-location.conf` and project operations documentation are the maintenance sources for changes. Bounded JSON and photo requests can retain Nginx's default request buffering. Unlimited attachment streams and large resumable original transfers use their existing streaming paths. A receive-window change does not require enlarging other applications' file limits or removing authentication.
