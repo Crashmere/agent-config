@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import {realpathSync} from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {execFile} from 'node:child_process';
@@ -11,7 +12,11 @@ export const readJSON = async file => JSON.parse(await fs.readFile(file,'utf8'))
 export const exists = async file => {try {return (await fs.stat(file)).isFile();} catch {return false;}};
 export const digest = data => createHash('sha256').update(data).digest('hex');
 export const errorText = e => String(e.stderr || e.message || e).replace(/https?:\/\/\S+/g,'[URL]').slice(0,1200);
-export const isMain = url => process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(url);
+export function isMain(url) {
+  if(!process.argv[1])return false;
+  try{return realpathSync(path.resolve(process.argv[1]))===realpathSync(fileURLToPath(url));}
+  catch{return false;}
+}
 export async function writeJSON(file, data) {
   await fs.mkdir(path.dirname(file),{recursive:true});
   await fs.writeFile(file+'.tmp',JSON.stringify(data,null,2)+'\n');

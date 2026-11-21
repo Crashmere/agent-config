@@ -8,7 +8,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {run,writeJSON,readJSON,safeName,inside,httpsURL,digest} from './common.mjs';
 import {makePlan,overlap} from './library.mjs';
-import {replacementFor,validatePlan} from './download.mjs';
+import {lyricPayload,replacementFor,validatePlan} from './download.mjs';
 import {checkDuration,tagAudio,verify,packetsHash,probe,tagsOf} from './audio.mjs';
 
 const scripts=path.dirname(fileURLToPath(import.meta.url));
@@ -106,6 +106,18 @@ test('query CLI paginates created/collected playlists and preserves metadata/cou
   const users=await query('search-users','样例昵称');assert.equal(users.users[0].uid,'101');
   const playlists=await query('user-playlists','101');assert.deepEqual(playlists.playlists.map(p=>p.createdByUser),[true,false]);assert.equal(playlists.more,false);
   const p=await query('playlist','201');assert.equal(p.declaredCount,4);assert.equal(p.returnedIds.length,3);assert.equal(p.tracks.length,2);assert.equal(p.countGap,1);assert.deepEqual(p.unresolvedIds,['3']);
+});
+test('CLI entry points work through client skill symlinks',async()=>{
+  const linked=path.join(temp,'linked-scripts');await fs.symlink(scripts,linked,'dir');
+  for(const file of ['library.mjs','download.mjs']){
+    const result=await run(process.execPath,[path.join(linked,file),'--help']);
+    assert.match(result.stdout,/Usage:/);
+  }
+});
+test('Meting missing-lyrics placeholder is not embedded or treated as instrumental',()=>{
+  const lyric=lyricPayload({lrc:{lyric:'[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！'}});
+  assert.equal(lyric.status,'unavailable');assert.equal(lyric.text,'');
+  assert.equal(lyricPayload({nolyric:true}).status,'instrumental');
 });
 test('audit preserves the original download failure for a missing file',async()=>{
   const plan=makePlan([snapshot('301',[mkSong('2')])]);

@@ -45,6 +45,7 @@ Define overlap by song ID by default. A song in another album with the same titl
 - Use Vorbis `LYRICS` and picture blocks for FLAC. For MP3, write ID3v2.3 UTF-16 `USLT`; ffmpeg's `-metadata lyrics=...` alone may produce custom TXXX that players do not recognize. The script rebuilds USLT and verifies the lyric hash by reading it back.
 - Store translated and word-level lyrics in `LYRICS_TRANSLATION` and `LYRICS_YRC`; support for these extra tags and timestamps inside USLT varies by player. Do not promise word-by-word scrolling in every player.
 - Record `nolyric` or “纯音乐，请欣赏” as instrumental. Do not conflate request failures, missing lyrics, and instrumental tracks; ordinary resuming does not refetch missing lyrics for completed files.
+- Meting's “这似乎是一首纯音乐呢，请尽情欣赏它吧！” is a missing-lyrics placeholder even for vocal songs. Record it as unavailable and do not embed it as lyrics or use it to establish that a recording is instrumental.
 - To add missing lyrics/covers, first obtain trustworthy data again, then use `tagAudio` from `audio.mjs` to stream-copy the original into a new temporary file. After verification, update the corresponding record's hash, size, and lyric status. Retain the original until replacement completes, then audit and aggregate again. Do not merely edit the report or default to deleting and redownloading the entire song.
 
 ## Resuming and file failures

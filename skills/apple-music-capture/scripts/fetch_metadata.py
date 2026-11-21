@@ -43,6 +43,9 @@ async def fetch(args):
                 lyrics = await song.get_lyrics(syllable=enhanced, language=args.language)
                 if lyrics and lyrics.source_ttml:
                     result["lyrics"][mode] = write_bundle(lyrics.source_ttml, args.output_dir, enhanced)
+                else:
+                    result["issues"].append({"operation": mode + "_lyrics", "error_type": "UnavailableLyrics",
+                                             "status": None})
             except Exception as exc:
                 result["issues"].append({"operation": mode + "_lyrics", "error_type": type(exc).__name__,
                                          "status": getattr(exc, "status_code", None)})

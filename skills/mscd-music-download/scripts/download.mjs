@@ -46,8 +46,10 @@ async function audioSource(song,b,work,allowMp3){
   if(allowMp3&&mp3.length)return mp3.sort((a,b)=>b.info.bitRate-a.info.bitRate)[0];
   throw new Error((mp3.length?'No FLAC available; MP3 fallback '+(allowMp3?'failed':'not enabled')+'. ':'')+issues.join('; '));
 }
-function lyricPayload(d){
+export function lyricPayload(d){
   const text=d.lrc?.lyric?.trim()||'';
+  // Meting uses this placeholder when it has no lyrics, including vocal songs.
+  if(/这似乎是一首纯音乐呢/.test(text)&&/请尽情欣赏它吧/.test(text))return {text:'',translation:'',yrc:'',status:'unavailable'};
   return {text,translation:d.tlyric?.lyric?.trim()||'',yrc:d.yrc?.lyric?.trim()||'',status:d.nolyric||/纯音乐[，,]?请欣赏/.test(text)?'instrumental':text?'embedded':'unavailable'};
 }
 async function companions(song,b,work){
