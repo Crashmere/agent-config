@@ -1,4 +1,0 @@
-interface:
-  display_name: "Apple Music Capture"
-  short_description: "Record Apple Music and build a fully tagged FLAC"
-  default_prompt: "Use $apple-music-capture to package an Apple Music recording as FLAC with matching metadata, artwork and lyrics."

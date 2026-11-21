@@ -5,6 +5,8 @@ import {parseArgs} from 'node:util';
 import {apiURL,bases,csv,digest,errorText,exists,fetchFile,fetchJSON,httpsURL,id,inside,isMain,readJSON,safeName,writeJSON} from './common.mjs';
 import {audioInfo,checkDuration,packetsHash,probe,tagAudio,verify} from './audio.mjs';
 import {validateSong,versionKey} from './library.mjs';
+import {lyricPayload as materialPayload, neteaseLyrics} from '../materials.mjs';
+import {coverSize, fetchCover} from '../image.mjs';
 
 export function replacementFor(item,overrides){
   const rule=overrides[item.song.id];if(!rule)return {song:item.song,note:''};
@@ -47,39 +49,35 @@ async function audioSource(song,b,work,allowMp3){
   throw new Error((mp3.length?'No FLAC available; MP3 fallback '+(allowMp3?'failed':'not enabled')+'. ':'')+issues.join('; '));
 }
 export function lyricPayload(d){
-  const text=d.lrc?.lyric?.trim()||'';
-  // Meting uses this placeholder when it has no lyrics, including vocal songs.
-  if(/这似乎是一首纯音乐呢/.test(text)&&/请尽情欣赏它吧/.test(text))return {text:'',translation:'',yrc:'',status:'unavailable'};
-  return {text,translation:d.tlyric?.lyric?.trim()||'',yrc:d.yrc?.lyric?.trim()||'',status:d.nolyric||/纯音乐[，,]?请欣赏/.test(text)?'instrumental':text?'embedded':'unavailable'};
+  const result=materialPayload(d);return {...result,status:result.status==='available'?'embedded':result.status};
 }
-async function companions(song,b,work){
+async function companions(song,b,work,options){
   const jobs=await Promise.allSettled([
     (async()=>{
       if(!song.album.cover)throw new Error('No cover URL in song metadata');
-      const file=path.join(work,'cover.image');
-      try{await fetchFile(song.album.cover,file);}catch{const u=new URL(song.album.cover);u.searchParams.set('param','1000y1000');await fetchFile(u.href,file);}
-      if(!(await probe(file)).streams.some(s=>['mjpeg','png'].includes(s.codec_name)))throw new Error('Cover is not a supported JPEG/PNG image');return file;
+      return fetchCover(song.album.cover,work,{size:coverSize(options['cover-size']||'1600'),provider:'netease'});
     })(),
     (async()=>{
-      try{const d=await fetchJSON(apiURL(b.netease,'lyric/new',{id:song.id}));if(d.code===200){const l=lyricPayload(d);if(l.text||l.status==='instrumental')return l;}}catch{}
-      const file=path.join(work,'lyric.txt');
-      try{await fetchFile(apiURL(b.meting,'',{server:'netease',type:'lrc',id:song.id}),file);const text=(await fs.readFile(file,'utf8')).trim();if(text&&!/^[<{]/.test(text)&&/\[\d+:\d+/.test(text))return lyricPayload({lrc:{lyric:text}});}catch{}
-      return {text:'',translation:'',yrc:'',status:'unavailable'};
+      const result=await neteaseLyrics(song,work,{...options,'netease-base':b.netease,'meting-base':b.meting,'lrclib-fallback':!options['no-lrclib']});
+      return {text:result.lrc||result.text||'',translation:result.translation||'',yrc:result.yrc||'',
+        status:result.status==='available'?'embedded':result.status==='instrumental'?'instrumental':'unavailable',
+        source:{provider:result.provider,origin:result.origin,id:result.sourceId,alignment:result.alignment,status:result.status,issues:result.issues}};
     })(),
   ]);
   if(jobs[0].status==='rejected')throw jobs[0].reason;
   if(jobs[1].status==='rejected')throw jobs[1].reason;
-  return {cover:jobs[0].value,lyric:jobs[1].value};
+  return {cover:jobs[0].value.file,coverDetails:jobs[0].value,lyric:jobs[1].value};
 }
 export function validatePlan(plan){
   if(plan.schema!==1||!Array.isArray(plan.items)||!Array.isArray(plan.playlists)||!Array.isArray(plan.excludedIds)||!Array.isArray(plan.skipped)||!Array.isArray(plan.exclusions))throw new Error('Invalid plan schema');
   const seen=new Set(),playlists=new Set(plan.playlists.map(p=>id(p.id)));
   if(playlists.size!==plan.playlists.length||new Set(plan.playlists.map(p=>p.directory)).size!==plan.playlists.length)throw new Error('Duplicate playlist or directory');
   for(const p of plan.playlists)if(p.directory!==safeName(p.directory,200)||p.directory==='.mscd')throw new Error('Unsafe playlist directory');
-  for(const item of plan.items){validateSong(item.song);if(seen.has(item.song.id)||plan.excludedIds.includes(item.song.id))throw new Error('Duplicate or excluded ID in plan');seen.add(item.song.id);if(!item.memberships?.length)throw new Error('Missing membership');for(const m of item.memberships)if(!playlists.has(m.playlistId)||!Number.isInteger(m.position)||m.position<1)throw new Error('Invalid playlist membership');}
+  if(plan.kind==='single'&&(plan.items.length!==1||plan.playlists.length))throw new Error('Invalid single-song plan');
+  for(const item of plan.items){validateSong(item.song);if(seen.has(item.song.id)||plan.excludedIds.includes(item.song.id))throw new Error('Duplicate or excluded ID in plan');seen.add(item.song.id);if(!Array.isArray(item.memberships)||(!item.memberships.length&&plan.kind!=='single'))throw new Error('Missing membership');for(const m of item.memberships)if(!playlists.has(m.playlistId)||!Number.isInteger(m.position)||m.position<1)throw new Error('Invalid playlist membership');}
 }
 async function processItem(item,context){
-  const {out,state,b,allowMp3,overrides,plan,audit}=context,original=item.song,recordFile=path.join(state,'records',original.id+'.json');
+  const {out,state,b,allowMp3,overrides,plan,audit,options}=context,original=item.song,recordFile=path.join(state,'records',original.id+'.json');
   const replacement=replacementFor(item,overrides),s=replacement.song;
   if(plan.excludedIds.includes(s.id))throw new Error('Replacement source is already excluded');
   const sourceKey=digest(JSON.stringify({song:s,note:replacement.note}));
@@ -94,15 +92,16 @@ async function processItem(item,context){
   if(audit)throw new Error('Missing completed file');
   const work=await fs.mkdtemp(path.join(state,'work',original.id+'-'));
   try{
-    const [audioResult,companionResult]=await Promise.allSettled([audioSource(s,b,work,allowMp3),companions(s,b,work)]);
+    const [audioResult,companionResult]=await Promise.allSettled([audioSource(s,b,work,allowMp3),companions(s,b,work,options)]);
     if(audioResult.status==='rejected')throw audioResult.reason;if(companionResult.status==='rejected')throw companionResult.reason;
-    const source=audioResult.value,{cover,lyric}=companionResult.value;
+    const source=audioResult.value,{cover,coverDetails,lyric}=companionResult.value;
     const target=path.join(work,'tagged.'+source.info.codec);
     const checked=await tagAudio(source.file,target,s,{cover,lyrics:lyric.text,translation:lyric.translation,yrc:lyric.yrc,originalId:original.id});
-    const member=item.memberships[0],p=plan.playlists.find(p=>p.id===member.playlistId);
-    const filename=String(member.position).padStart(3,'0')+' - '+safeName(s.title+' - '+s.artists.map(a=>a.name).join(', '))+` [${original.id}].${checked.audio.codec}`;
-    const relative=path.join(p.directory,filename),destination=inside(out,relative);await fs.mkdir(path.dirname(destination),{recursive:true});
-    const result={id:original.id,originalSong:original,song:s,replacementNote:replacement.note,sourceKey,status:'ok',path:relative,bytes:(await fs.stat(target)).size,...checked,lyrics:lyric.status,translatedLyrics:Boolean(lyric.translation),memberships:item.memberships,source:source.source,checkedAt:new Date().toISOString()};
+    const member=item.memberships[0],p=member?plan.playlists.find(p=>p.id===member.playlistId):null;
+    const filename=(member?String(member.position).padStart(3,'0')+' - ':'')+safeName(s.title+' - '+s.artists.map(a=>a.name).join(', '))+` [${original.id}].${checked.audio.codec}`;
+    const relative=p?path.join(p.directory,filename):filename,destination=inside(out,relative);await fs.mkdir(path.dirname(destination),{recursive:true});
+    const result={id:original.id,originalSong:original,song:s,replacementNote:replacement.note,sourceKey,status:'ok',path:relative,bytes:(await fs.stat(target)).size,...checked,lyrics:lyric.status,lyricSource:lyric.source,
+      coverSize:{width:coverDetails.width,height:coverDetails.height,targetLongEdge:coverDetails.targetLongEdge,belowTarget:coverDetails.belowTarget},translatedLyrics:Boolean(lyric.translation),memberships:item.memberships,source:source.source,checkedAt:new Date().toISOString()};
     // Commit the journal first: a crash before linking is safely redownloadable.
     // link() fails atomically if an unrelated file already has this destination.
     if(await exists(destination))throw new Error('Untracked destination exists; preserve it and inspect before retrying');
@@ -120,8 +119,9 @@ async function reports(plan,out,state){
   await writeJSON(path.join(state,'summary.json'),summary);return summary;
 }
 async function main(){
-  const {values:v}=parseArgs({options:{plan:{type:'string'},out:{type:'string'},replacements:{type:'string'},'allow-mp3':{type:'boolean'},jobs:{type:'string',default:'3'},audit:{type:'boolean'},'netease-base':{type:'string'},'meting-base':{type:'string'},help:{type:'boolean'}}});
-  if(v.help||!v.plan||!v.out){console.log('Usage: node download.mjs --plan plan.json --out /absolute/library [--allow-mp3] [--jobs 3] [--replacements replacements.json] [--audit]\nOptional: --netease-base URL --meting-base URL. Resume by rerunning the same command.');if(!v.help)process.exitCode=1;return;}
+  const {values:v}=parseArgs({options:{plan:{type:'string'},out:{type:'string'},replacements:{type:'string'},'allow-mp3':{type:'boolean'},jobs:{type:'string',default:'3'},audit:{type:'boolean'},'netease-base':{type:'string'},'meting-base':{type:'string'},'lrclib-base':{type:'string'},'no-lrclib':{type:'boolean'},'cover-size':{type:'string',default:'1600'},help:{type:'boolean'}}});
+  if(v.help||!v.plan||!v.out){console.log('Usage: node download.mjs --plan plan.json --out /absolute/library [--allow-mp3] [--jobs 3] [--replacements replacements.json] [--audit]\nOptional: --cover-size 1600|max --no-lrclib --netease-base URL --meting-base URL --lrclib-base URL. Resume by rerunning the same command.');if(!v.help)process.exitCode=1;return;}
+  coverSize(v['cover-size']);
   const jobs=Number(v.jobs);if(!Number.isInteger(jobs)||jobs<1||jobs>4)throw new Error('--jobs must be 1..4');
   const plan=await readJSON(v.plan);validatePlan(plan);
   const overrides=v.replacements?await readJSON(v.replacements):{};
@@ -132,7 +132,7 @@ async function main(){
   try{
     const saved=path.join(state,'plan.json');if(await exists(saved)){if(digest(JSON.stringify(await readJSON(saved)))!==digest(JSON.stringify(plan)))throw new Error('Output belongs to another plan; use a new output directory');}else await writeJSON(saved,plan);
     for(const d of ['records','work'])await fs.mkdir(path.join(state,d),{recursive:true});
-    const context={out,state,plan,overrides,b:bases(v),allowMp3:Boolean(v['allow-mp3']),audit:Boolean(v.audit)};
+    const context={out,state,plan,overrides,b:bases(v),allowMp3:Boolean(v['allow-mp3']),audit:Boolean(v.audit),options:v};
     let cursor=0,complete=0,failures=0;
     const timer=setInterval(()=>console.log(JSON.stringify({processed:complete+failures,total:plan.items.length,complete,failures})),15000);
     try{

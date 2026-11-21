@@ -1,4 +1,0 @@
-interface:
-  display_name: "NetEase Music Download and Deduplication"
-  short_description: "Download and deduplicate music with lyrics and cover art"
-  default_prompt: "Use $mscd-music-download to download the specified NetEase Cloud Music playlists, exclude existing songs, prefer lossless audio, and embed lyrics and cover art."

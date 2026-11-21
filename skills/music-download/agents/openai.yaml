@@ -1,0 +1,4 @@
+interface:
+  display_name: "Music Download"
+  short_description: "Acquire music, lyrics and album covers"
+  default_prompt: "Use $music-download to acquire the requested music, lyrics or album cover with matching versions, source provenance and verified outputs."

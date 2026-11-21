@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {run,writeJSON,readJSON,safeName,inside,httpsURL,digest} from './common.mjs';
-import {makePlan,overlap} from './library.mjs';
+import {makePlan,makeSinglePlan,overlap} from './library.mjs';
 import {lyricPayload,replacementFor,validatePlan} from './download.mjs';
 import {checkDuration,tagAudio,verify,packetsHash,probe,tagsOf} from './audio.mjs';
 
@@ -46,7 +46,7 @@ else if(p==='/meting/'){
 }else if(p==='/song/url/v1')put({data:[{url:'https://fixture.invalid/mp3-192.mp3'}]});
 else if(p==='/song/url')put({data:[{url:'https://fixture.invalid/mp3-320.mp3',freeTrialInfo:{start:0,end:1}}]});
 else if(p==='/lyric/new')put(sid==='4'?{code:200,nolyric:true}:{code:200,lrc:{lyric:'[00:00.00]中文歌词\n[00:02.00]第二句'},tlyric:{lyric:'[00:00.00]Translation'}});
-else if(p==='/protected.png'&&url.searchParams.get('param')==='1000y1000')fs.copyFileSync(path.join(root,'cover.png'),out);
+else if(p==='/protected.png'&&url.searchParams.get('param')==='1600y1600')fs.copyFileSync(path.join(root,'cover.png'),out);
 else if(['/flac.flac','/mp3-128.mp3','/mp3-192.mp3','/mp3-320.mp3','/cover.png'].includes(p))fs.copyFileSync(path.join(root,p.slice(1)),out);
 else throw new Error('Unknown fixture route '+p);
 `;
@@ -133,6 +133,17 @@ test('audit preserves the original download failure for a missing file',async()=
   await run(process.execPath,[...args,'--allow-mp3']);
   const recovered=(await readJSON(path.join(out,'manifest.json'))).records[0];
   assert.equal(recovered.status,'ok');assert.equal(recovered.error,undefined);assert.equal(recovered.auditError,undefined);
+});
+test('single-song CLI publishes without a synthetic playlist and resumes its journal',async()=>{
+  const plan=makeSinglePlan(mkSong('1')),planFile=path.join(temp,'single-plan.json'),out=path.join(temp,'single-output');
+  await writeJSON(planFile,plan);
+  const args=[path.join(scripts,'download.mjs'),'--plan',planFile,'--out',out,'--netease-base','https://fixture.invalid/','--meting-base','https://fixture.invalid/meting/'];
+  await run(process.execPath,args);
+  const record=(await readJSON(path.join(out,'manifest.json'))).records[0];
+  assert.equal(record.status,'ok');assert.deepEqual(record.memberships,[]);assert.equal(path.dirname(record.path),'.');
+  assert.equal(record.lyricSource.provider,'netease');assert.equal(record.coverSize.targetLongEdge,1600);
+  process.env.MSCD_FORBID_FETCH='1';
+  try{await run(process.execPath,args);}finally{delete process.env.MSCD_FORBID_FETCH;}
 });
 test('download CLI selects available bitrate, resumes offline, audits, and preserves failures',async()=>{
   const a=mkSong('1'),b=mkSong('2'),c=mkSong('3'),release={...c,id:'4',album:{...c.album,cover:'https://fixture.invalid/protected.png'}};

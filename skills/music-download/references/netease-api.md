@@ -1,4 +1,4 @@
-# APIs and Troubleshooting
+# NetEase APIs and Troubleshooting
 
 ## Configuration sources
 
@@ -40,7 +40,7 @@ Define overlap by song ID by default. A song in another album with the same titl
 
 ## Cover art and lyrics
 
-- If the original cover URL returns 403, use the URL API to set `param=1000y1000` and retry, retaining other query parameters instead of manually appending a second `?`. Confirm JPEG/PNG content; do not embed HTML error pages. Scripts treat missing covers as failure to avoid falsely reporting complete tags.
+- Request a 1600-pixel cover by default using the URL API's `param=1600y1600`, retaining other query parameters. If the size-specific request fails, try the original public image; a reviewed smaller size is also acceptable when the provider cannot supply the target. Verify actual pixels and preserve smaller art without upscaling. Confirm JPEG/PNG content; do not embed HTML error pages. Missing covers remain a download failure.
 - Use the title, artists, album, cover, track number, and date of the actually downloaded release. Convert NetEase `publishTime` to a release date in `Asia/Shanghai`; directly taking the UTC ISO date moves midnight in China to the previous day. Missing album names may remain empty; do not use album ID 0 as a shared cache key. The script uses per-song scratch to prevent cover mix-ups through caching.
 - Use Vorbis `LYRICS` and picture blocks for FLAC. For MP3, write ID3v2.3 UTF-16 `USLT`; ffmpeg's `-metadata lyrics=...` alone may produce custom TXXX that players do not recognize. The script rebuilds USLT and verifies the lyric hash by reading it back.
 - Store translated and word-level lyrics in `LYRICS_TRANSLATION` and `LYRICS_YRC`; support for these extra tags and timestamps inside USLT varies by player. Do not promise word-by-word scrolling in every player.
@@ -60,4 +60,4 @@ Define overlap by song ID by default. A song in another album with the same titl
 - Filenames containing quotes, backticks, `$()`, or `**`: use argument arrays with `execFile`; do not interpolate filenames into shell command strings. Do not expose signed download parameters by printing full commands.
 - Concurrency: use at most four workers in one process, keep separate records per song, and generate one consolidated summary from disk after all tasks finish. Do not let multiple processes overwrite the manifest from their own stale in-memory state.
 
-After revising scripts, run `node --test scripts/selftest.mjs` to cover offline synthetic audio, actual bitrates, preview rejection, shared playlists, version exclusions, and resumed audits. Passing mock APIs does not prove remote availability; actual tasks also require small connectivity and first-track checks.
+After revising scripts, run `node --test scripts/netease/selftest.mjs scripts/selftest.mjs` to cover offline synthetic audio, actual bitrates, preview rejection, shared playlists, version exclusions, resumed audits and standalone materials. Passing mock APIs does not prove remote availability; actual tasks also require small connectivity and first-track checks.

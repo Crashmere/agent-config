@@ -59,12 +59,18 @@ export function overlap(snapshots) {
   const matrix=snapshots.map(a=>snapshots.map(b=>{const ids=new Set(b.tracks.map(t=>t.id));return a.tracks.filter(t=>ids.has(t.id)).map(t=>t.id);}));
   return {schema:1,playlists:snapshots.map(p=>({id:p.id,name:p.name,declared:p.declaredCount,returned:p.tracks.length,countGap:p.countGap,unresolvedIds:p.unresolvedIds})),unique:memberships.size,records:snapshots.reduce((n,p)=>n+p.tracks.length,0),shared:[...memberships].filter(([,ps])=>ps.length>1).map(([id,playlistIds])=>({id,playlistIds})),matrix};
 }
+export function makeSinglePlan(track) {
+  validateSong(track);
+  return {schema:1,kind:'single',createdAt:new Date().toISOString(),dedupeVersions:false,playlists:[],exclusions:[],
+    excludedIds:[],items:[{song:track,memberships:[]}],skipped:[],versionCandidates:[]};
+}
 async function main(){
   const {values:v,positionals:p}=parseArgs({allowPositionals:true,options:{out:{type:'string'},snapshot:{type:'string',multiple:true},exclude:{type:'string',multiple:true},'dedupe-versions':{type:'boolean'},'allow-partial':{type:'boolean'},'netease-base':{type:'string'},help:{type:'boolean'}}});
   if(v.help||!p.length){console.log(`Usage: node library.mjs <command> [argument] [options]
   search-users <nickname> | search-songs <keywords> | user-playlists <uid>
   playlist <id> --out snapshot.json
   song <id> --out song.json
+  plan-song <id> --out plan.json
   plan --snapshot a.json [--snapshot b.json] [--exclude liked.json]
        [--dedupe-versions] [--allow-partial] --out plan.json
   overlap --snapshot a.json --snapshot b.json --out overlap.json
@@ -83,7 +89,7 @@ All network commands accept --netease-base URL. No audio is downloaded.`);return
     }
     if(more)throw new Error('Pagination safety limit reached');result={uid,playlists:rows,more:false};
   }else if(p[0]==='playlist')result=await playlistSnapshot(p[1],base);
-  else if(p[0]==='song'){const d=await fetchJSON(apiURL(base,'song/detail',{ids:id(p[1])}));if(d.code!==200||!d.songs?.[0])throw new Error('Song not found');result=song(d.songs[0]);}
+  else if(p[0]==='song'||p[0]==='plan-song'){const d=await fetchJSON(apiURL(base,'song/detail',{ids:id(p[1])}));if(d.code!==200||!d.songs?.[0])throw new Error('Song not found');result=p[0]==='plan-song'?makeSinglePlan(song(d.songs[0])):song(d.songs[0]);}
   else if(p[0]==='plan'||p[0]==='overlap'){
     if(!v.snapshot?.length)throw new Error('--snapshot required');const snaps=await Promise.all(v.snapshot.map(readJSON));
     result=p[0]==='plan'?makePlan(snaps,await Promise.all((v.exclude||[]).map(readJSON)),{dedupeVersions:v['dedupe-versions'],allowPartial:v['allow-partial']}):overlap(snaps);

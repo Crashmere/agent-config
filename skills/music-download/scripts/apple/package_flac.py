@@ -179,10 +179,19 @@ def tag(candidate, args, alignment):
                 put(key, path.read_text(encoding="utf-8"))
 
     if args.cover:
-        cover = args.cover.read_bytes()
         stream = probe(args.cover)["streams"][0]
         if stream["codec_name"] not in ("mjpeg", "png"):
             raise ValueError("Use JPEG or PNG artwork")
+        cover_path = args.cover
+        edge = max(stream["width"], stream["height"])
+        if args.cover_size != "max" and edge > int(args.cover_size):
+            scale = int(args.cover_size) / edge
+            width, height = max(1, round(stream["width"] * scale)), max(1, round(stream["height"] * scale))
+            cover_path = candidate.parent / ("cover.jpg" if stream["codec_name"] == "mjpeg" else "cover.png")
+            run(["ffmpeg", "-v", "error", "-nostdin", "-n", "-i", str(args.cover),
+                 "-vf", f"scale={width}:{height}", "-frames:v", "1", "-q:v", "2", str(cover_path)])
+            stream = probe(cover_path)["streams"][0]
+        cover = cover_path.read_bytes()
         picture = Picture()
         picture.type, picture.desc = 3, "Front cover"
         picture.mime = "image/jpeg" if stream["codec_name"] == "mjpeg" else "image/png"
@@ -216,12 +225,15 @@ def main():
     parser.add_argument("--lyrics-dir", type=Path)
     parser.add_argument("--lyrics-language", default="zh-Hans")
     parser.add_argument("--cover", type=Path)
+    parser.add_argument("--cover-size", default="1600", help="Maximum artwork long edge in pixels, or max; never upscale")
     parser.add_argument("--audio-source", default="User-supplied recording")
     parser.add_argument("--output", type=Path, required=True)
     offsets = parser.add_mutually_exclusive_group()
     offsets.add_argument("--alignment", type=Path)
     offsets.add_argument("--offset", type=float)
     args = parser.parse_args()
+    if args.cover_size != "max" and (not args.cover_size.isdecimal() or not 1 <= int(args.cover_size) <= 20000):
+        parser.error("Cover size must be 1..20000 or max")
     if args.output.exists() or args.output.is_symlink() or args.output.suffix.lower() != ".flac":
         parser.error("Use a new FLAC output path")
     if not args.song_id.isdecimal() or not (args.donor or args.catalog):

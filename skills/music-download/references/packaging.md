@@ -18,7 +18,7 @@ the following scopes downloads and avoids changes to its media index:
 ```sh
 gamdl rip "$SONG_URL" --auth-mode cookies --cookies-path "$COOKIES" \
   --song-codec aac-web --output-dir "$WORK/donor" --temp-path "$WORK/download" \
-  --save-cover --file-cover-size max --embedded-cover-size max \
+  --save-cover --file-cover-size 1600 --embedded-cover-size 1600 \
   --lyrics-file-format lrc --no-database --no-overwrite --no-tracebacks
 ```
 
@@ -34,7 +34,7 @@ The fetch helper requires an empty/new output directory and prints only a
 bounded summary or sanitized exception type/status:
 
 ```sh
-"$GAMDL_PYTHON" "$SKILL/scripts/fetch_metadata.py" \
+"$GAMDL_PYTHON" "$SKILL/scripts/apple/fetch_metadata.py" \
   --song-id "$SONG_ID" --cookies "$COOKIES" --storefront cn --language zh-CN \
   --output-dir "$WORK/metadata"
 ```
@@ -44,7 +44,7 @@ account requirements. Authentication/network errors stop the attempt. Do not
 dump exception objects, debug headers, cookies or token-bearing URLs. Standard
 and enhanced lyrics can fail independently; the summary records missing modes.
 
-For supplied TTML, render it separately with `lyrics.py INPUT OUTPUT_DIR`,
+For supplied TTML, render it separately with `scripts/apple/lyrics.py INPUT OUTPUT_DIR`,
 adding `--enhanced` for syllable-timed input. The helper writes original and
 complete official language variants, preserving TTML for details LRC cannot
 represent. It does not convert Traditional Chinese by guessing a translation.
@@ -52,7 +52,7 @@ represent. It does not convert Traditional Chinese by guessing a translation.
 ## Align the recording
 
 ```sh
-"$WORK/env/bin/python" "$SKILL/scripts/align_audio.py" \
+"$WORK/env/bin/python" "$SKILL/scripts/apple/align_audio.py" \
   --recording "$RECORDING" --reference "$DONOR_M4A" \
   --output "$WORK/alignment.json"
 ```
@@ -67,7 +67,7 @@ alignment input and report unaligned lyrics; do not treat zero as measured.
 ## Build and validate
 
 ```sh
-"$WORK/env/bin/python" "$SKILL/scripts/package_flac.py" \
+"$WORK/env/bin/python" "$SKILL/scripts/apple/package_flac.py" \
   --source "$RECORDING" --donor "$DONOR_M4A" --song-id "$SONG_ID" \
   --catalog "$WORK/metadata/catalog.json" --lyrics-dir "$WORK/metadata" \
   --cover "$COVER" --alignment "$WORK/alignment.json" \
@@ -79,6 +79,22 @@ For metadata-only acquisition, omit `--donor`; `--catalog` then establishes the
 catalog identity and supplies available common tags. Omit optional cover or
 lyrics inputs only when unavailable. `--lyrics-language zh-Hans` is preferred
 when a complete official variant exists; otherwise the original is used.
+
+Fetch separate artwork through [covers](covers.md). The default embedded cover
+long edge is 1600 pixels, keeping aspect ratio and smaller source dimensions;
+`--cover-size max` or a requested pixel size overrides it. Catalog maximum art
+is an optional user choice, not the default. Preserve original cover/source
+files when downsizing. A no-audio, no-lyrics catalog request can use
+`fetch_metadata.py --metadata-only` without cookies.
+
+Keep `ARTIST` separate from `ALBUMARTIST`: compilation/soundtrack album credits
+can correctly differ from track singers. Preserve album release dates, label,
+copyright, track/disc totals, compilation flags and catalog IDs. Do not invent
+missing composer credits. TTML `songwriter` stays `SONGWRITER`, not automatically
+`COMPOSER` or `LYRICIST`. The package retains donor non-picture MP4 tags in a
+reversible JSON representation and source-key aliases, plus cleaned catalog
+JSON. Its Gamdl integration targets the inspected 4.1.1 API; inspect a changed
+installed interface before use rather than modifying a healthy environment.
 
 The script stages beside the destination, accepts 16/24-bit integer sources,
 checks PCM SHA-256 before publication, and refuses an existing destination.

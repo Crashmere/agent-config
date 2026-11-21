@@ -13,7 +13,7 @@ BlackHole installation and microphone/automation access need authorization.
 Read the native helper's `--help` before changing any device.
 
 ```sh
-swiftc "$SKILL/scripts/coreaudio.swift" -o "$WORK/coreaudio"
+swiftc "$SKILL/scripts/apple/coreaudio.swift" -o "$WORK/coreaudio"
 "$WORK/coreaudio" list
 "$WORK/coreaudio" save "$WORK/audio-state.json"
 ```
@@ -86,6 +86,6 @@ restore its prior track/position, and clarify whether to resume audible playback
 when the user did not explicitly request it. Do not delete restoration state
 until recovery has been checked.
 
-Proceed to [Packaging](packaging.md). A consumer showing `群星` on this
-soundtrack's album card may be displaying album-artist credits; verify `ARTIST`
+Proceed to [Packaging](packaging.md). A consumer showing album-artist credits
+such as `群星` may still read the track singer correctly; verify `ARTIST`
 separately before treating it as a capture/tagging failure.

@@ -1,4 +1,4 @@
-# Queries, Planning, and Downloads
+# NetEase Queries, Planning, and Downloads
 
 Navigation: [Prepare the directory](#1-prepare-the-task-directory) · [Query](#2-find-users-and-complete-track-lists) · [Set difference](#3-analyze-overlap-and-build-the-set-difference) · [Download and substitute](#4-download-and-controlled-substitution) · [Resume and deliver](#5-resuming-output-and-delivery)
 
@@ -7,11 +7,11 @@ Navigation: [Prepare the directory](#1-prepare-the-task-directory) · [Query](#2
 Use existing Node.js 20+, curl, ffmpeg, and ffprobe. Examples use a POSIX shell; invoke scripts with `node`, without installing the upstream repository or starting a web service.
 
 ```bash
-mscd_skill="$HOME/agent-config/skills/mscd-music-download"
+mscd_skill="$HOME/agent-config/skills/music-download"
 mscd_work="$(mktemp -d "${TMPDIR:-/tmp}/mscd-task.XXXXXX")"
 command -v node curl ffmpeg ffprobe
-node "$mscd_skill/scripts/library.mjs" --help
-node "$mscd_skill/scripts/download.mjs" --help
+node "$mscd_skill/scripts/netease/library.mjs" --help
+node "$mscd_skill/scripts/netease/download.mjs" --help
 ```
 
 Choose the music output directory for this task, preferring the location explicitly specified by the user. The work directory stores query snapshots, plans, and substitution rules; `.mscd` inside the final output stores the state needed to resume. Retain snapshots and reports the user needs at completion, without committing them to the skill repository.
@@ -21,10 +21,10 @@ Choose the music output directory for this task, preferring the location explici
 Fill the variables below with values verified for this task; do not write personal accounts into the skill:
 
 ```bash
-node "$mscd_skill/scripts/library.mjs" search-users "$mscd_nickname" --out "$mscd_work/users.json"
-node "$mscd_skill/scripts/library.mjs" user-playlists "$mscd_uid" --out "$mscd_work/playlists.json"
-node "$mscd_skill/scripts/library.mjs" playlist "$mscd_playlist_id" --out "$mscd_work/target.json"
-node "$mscd_skill/scripts/library.mjs" playlist "$mscd_liked_id" --out "$mscd_work/liked.json"
+node "$mscd_skill/scripts/netease/library.mjs" search-users "$mscd_nickname" --out "$mscd_work/users.json"
+node "$mscd_skill/scripts/netease/library.mjs" user-playlists "$mscd_uid" --out "$mscd_work/playlists.json"
+node "$mscd_skill/scripts/netease/library.mjs" playlist "$mscd_playlist_id" --out "$mscd_work/target.json"
+node "$mscd_skill/scripts/netease/library.mjs" playlist "$mscd_liked_id" --out "$mscd_work/liked.json"
 ```
 
 Select the matching numeric UID from `users.json`; do not use a nickname as a UID. `createdByUser` distinguishes created and saved playlists. Liked-playlist names vary by user; do not choose one based on a fixed name or historical count. When the user specifies playlists named with a few characters, retrieve their IDs individually and save snapshots.
@@ -34,10 +34,10 @@ Select the matching numeric UID from `users.json`; do not use a nickname as a UI
 ## 3. Analyze overlap and build the set difference
 
 ```bash
-node "$mscd_skill/scripts/library.mjs" overlap \
+node "$mscd_skill/scripts/netease/library.mjs" overlap \
   --snapshot "$mscd_work/target-a.json" --snapshot "$mscd_work/target-b.json" \
   --snapshot "$mscd_work/liked.json" --out "$mscd_work/overlap.json"
-node "$mscd_skill/scripts/library.mjs" plan \
+node "$mscd_skill/scripts/netease/library.mjs" plan \
   --snapshot "$mscd_work/target-a.json" --snapshot "$mscd_work/target-b.json" \
   --exclude "$mscd_work/liked.json" --out "$mscd_work/plan.json"
 ```
@@ -52,17 +52,31 @@ node "$mscd_skill/scripts/library.mjs" plan \
 ## 4. Download and controlled substitution
 
 ```bash
-node "$mscd_skill/scripts/download.mjs" \
+node "$mscd_skill/scripts/netease/download.mjs" \
   --plan "$mscd_work/plan.json" --out "$mscd_output" --jobs 3
 ```
 
 Add `--allow-mp3` when the user permits lossy fallback. The script first tries Meting lossless, then NetEase-compatible lossless/legacy URLs and Meting 320; the first valid FLAC takes priority. Without FLAC, compare actual MP3 bitrates, which may be only 192 or 128 kbps and must not be reported as 320. This workflow does not search every platform or guarantee the highest sample rate among multiple FLACs.
 
+For a single song, use `library.mjs plan-song "$SONG_ID" --out "$mscd_work/plan.json"`
+and the same download command. It makes a single-song plan without an invented
+playlist and publishes at the output root. Existing playlist plan schema and
+`.mscd` state remain unchanged. Read [API details](netease-api.md) when routes,
+counts or source quality fail; treat ENA-QWQ/Mscd as upstream configuration, not
+as an upstream CLI. Verify current `config.js` before changing service bases.
+
+Fresh companions use a 1600-pixel cover long edge by default (`--cover-size max`
+or an explicit pixel size overrides it). Matching LRCLIB lyrics supplement empty
+NetEase/Meting responses unless `--no-lrclib` is specified. The record preserves
+`lyricSource` and actual `coverSize`; old successful files are not silently
+changed by these defaults. Ambiguous fallback candidates remain unavailable in
+the audio journal and need a separate reviewed [lyric task](lyrics.md).
+
 When failed entries need another release, search first, then retrieve normalized candidate details:
 
 ```bash
-node "$mscd_skill/scripts/library.mjs" search-songs "$mscd_search_text" --out "$mscd_work/candidates.json"
-node "$mscd_skill/scripts/library.mjs" song "$mscd_candidate_id" --out "$mscd_work/candidate.json"
+node "$mscd_skill/scripts/netease/library.mjs" search-songs "$mscd_search_text" --out "$mscd_work/candidates.json"
+node "$mscd_skill/scripts/netease/library.mjs" song "$mscd_candidate_id" --out "$mscd_work/candidate.json"
 ```
 
 In this task's `replacements.json`, use the original ID as the key, put the complete candidate object in `song`, and describe verified differences and the substitution reason in `note`:
