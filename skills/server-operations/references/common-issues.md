@@ -386,7 +386,7 @@ Unexpected local data protection usually means failed/interrupted acceptance or 
 
 Measure actual disk blocks and file counts by directory, not only logical file sizes. Historical media snapshots may share inodes with live files; separate `du` totals can double-count them and removing one link does not free the whole logical size. Old backups can retain media removed from production. Portal's registered cleanup previews are not an automatic scheduler and must not include unresolved upgrade protection or unregistered root/private archives.
 
-Cloud backup retention is independent of application/source-directory cleanup. [ALI HBR](current-state.md#cloud-backup) is stopped during migration without deleting historical cloud recovery points; stopping a client does not prove a provider-side billing/schedule item was canceled. Real backup deletion or restoration still follows the shared authorization table.
+Cloud backup retention is independent of application/source-directory cleanup. [ALI HBR](current-state.md#cloud-backup) records the live vendor-client state independently of disabled native backup units; migration and stopping a client do not delete historical cloud recovery points or prove a provider-side billing/schedule item was canceled. Real backup deletion or restoration still follows the shared authorization table.
 
 ## Native media processing exhausts a service task limit
 

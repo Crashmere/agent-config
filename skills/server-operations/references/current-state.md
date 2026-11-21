@@ -15,7 +15,7 @@ All transient NAS/VPS TCP/UDP comparisons were stopped and their diagnostic logs
 
 | Host | Current role | State and recovery boundary |
 | --- | --- | --- |
-| `ali` | Compatibility public HTTPS 443 gateway to NAS | Original eight applications' programs/configuration/data/history remain frozen; retired application, backup, retention, and HBR units are inactive and disabled at boot; neither Curio nor Lilt has a frozen ALI installation |
+| `ali` | Compatibility public HTTPS 443 gateway to NAS | Original eight applications' programs/configuration/data/history remain frozen; retired application, native backup and retention units are inactive and disabled at boot; vendor HBR clients are active and enabled; neither Curio nor Lilt has a frozen ALI installation |
 | `nas` | Only active application host, authoritative data, LAN local-CA HTTPS 443, Portal Web/collector | Both gateways reach this state; October 31 external package covers the original eight applications, not Curio or Lilt; T7 safely unmounted after that job |
 | `vps` | Primary public web HTTPS 8443 gateway and independent sing-box REALITY/Vision TCP 443 proxy | Application/management forwarding stays loopback-only; October 31 package includes that capture's gateway/proxy state, not later Curio or Lilt routing/tunnels |
 
@@ -25,7 +25,7 @@ Use the trusted SSH aliases `ali`, `nas`, and `vps`; retrieve real addresses and
 
 Ubuntu 26.04.1 LTS / amd64 on Alibaba Cloud ECS/KVM; 2 vCPU, approximately 1.7 GiB visible RAM, 40 GiB ext4 root, no swap or separate application-data mount. Nginx 1.28.3 and Certbot's official snap provide trusted public-IP HTTPS on 443, HTTP-01/redirects on 80, and loopback inspection. Chrony uses Asia/Shanghai; signed Ubuntu security updates do not automatically reboot.
 
-Root SSH is key-only. UFW was inactive when checked; complete cloud security-group/netfilter rules are not audited. Aliyun Assist/security components remain host/provider tools. HBR is stopped and disabled, as described below. Preserve frozen ALI application materials without upgrades, backup additions, application-documentation synchronization or cleanup; original unit definitions remain linked but inactive. Forwarding and public certificate renewal continue, and shared gateway context is synchronized when its operational contract changes. The frozen state excludes subsequent NAS writes and is not an automatic failover target.
+Root SSH is key-only. UFW was inactive when checked; complete cloud security-group/netfilter rules are not audited. Aliyun Assist/security components remain host/provider tools. HBR's live client state is described below, separately from retired native backup units. Preserve frozen ALI application materials without upgrades, backup additions, application-documentation synchronization or cleanup; original unit definitions remain linked but inactive. Forwarding and public certificate renewal continue, and shared gateway context is synchronized when its operational contract changes. The frozen state excludes subsequent NAS writes and is not an automatic failover target.
 
 ### NAS Platform
 
@@ -112,7 +112,7 @@ NAS keeps no retained routine internal backup. Manual NAS/VPS jobs temporarily s
 <a id="云备份"></a>
 ## Cloud Backup
 
-ALI's `hbrclient.service` and `hbrclientupdater.service` at `/opt/alibabacloud/hbrclient` are inactive and disabled. They were independent of application timers and Portal exports. Their historical file-backup scan included application `/opt` state and local snapshots; direct live SQLite/WAL scans were not equivalent to consistent native snapshots. Job records showed 30-day retention; console scheduling, storage usage, billing, and actual expiration were not audited.
+ALI's `hbrclient.service` and `hbrclientupdater.service` at `/opt/alibabacloud/hbrclient` were verified active and enabled on 2026-11-21, with activation timestamps of 2026-10-30. Their activation cause and current provider jobs remain unaudited. These vendor clients are independent of retired application backup timers and Portal exports; recheck their live state before attributing traffic to them. Their historical file-backup scan included application `/opt` state and local snapshots; direct live SQLite/WAL scans were not equivalent to consistent native snapshots. Job records showed 30-day retention; console scheduling, storage usage, billing, and actual expiration were not audited.
 
 Cutover preserved vendor files and historical cloud recovery points. Stopping local clients does not delete cloud backups or establish that a provider-side schedule/billing item was canceled. Further cloud account, retention, or subscription cleanup requires its own review and confirmation. No Alibaba backup/security agent is copied to VPS.
 
@@ -121,7 +121,7 @@ Cutover preserved vendor files and historical cloud recovery points. Stopping lo
 
 - Applications are locally built static Go amd64 programs with embedded frontend assets. NAS uses signed Ubuntu runtime packages for libvips/HEIF, ExifTool, and FFmpeg where needed; VPS runs only gateway/proxy dependencies. Do not add Node/Go build environments, Docker, database services, or CI deploy keys.
 - NAS diagnostic/power, chrony, security updates, SSD TRIM, and active public certificate renewal remain enabled. Manual backup policy does not stop unrelated system maintenance. Host reboot and changes outside the authorized migration use the shared authorization table.
-- NAS routine backup and backup/release-pruning schedules are disabled. FabricWorld and RecipeBox native cleanup timers are active and enabled for their existing expired-record/media rules, coordinated with full backups and deployments through shared locks; they create no snapshots or backup-pruning work. Retired ALI application/backup/retention/HBR tasks remain inactive and disabled with frozen material preserved. [Retention](retention.md) describes temporary upgrade protection and historical ALI materials.
+- NAS routine backup and backup/release-pruning schedules are disabled. FabricWorld and RecipeBox native cleanup timers are active and enabled for their existing expired-record/media rules, coordinated with full backups and deployments through shared locks; they create no snapshots or backup-pruning work. Retired ALI application/native-backup/retention tasks remain inactive and disabled with frozen material preserved; vendor HBR clients retain the separately recorded live state above. [Retention](retention.md) describes temporary upgrade protection and historical ALI materials.
 - The ASUS laptop's freeze cause, full-power-loss restart behavior, DHCP permanence, gateway provider limits, external-drive readiness, and other device/browser acceptance remain explicit constraints. There is no automatic old-ALI data failover or external availability alert.
 - Yuyan 833 does not contain the VPS server private key. A complete external gateway recovery package must capture current private proxy state, Nginx, certificates, and access configuration; client links and historical pre-change archives do not establish this coverage.
 
