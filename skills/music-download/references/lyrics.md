@@ -51,6 +51,13 @@ and overrides. This route needs no account credentials. `--lrclib-fallback`
 enables a metadata-matched public fallback; it does not replace the audio release.
 For official-only requests do not enable a community fallback.
 
+NetEase may prepend timed JSON credit records to its LRC. The helper renders
+their text as normal LRC lines using the original millisecond timestamps,
+retains the original in `lyrics.json` as `sourceLrc`, and writes `lyrics.raw.lrc`
+when source output is selected. Download journals retain the raw credit source
+as well. These labels are provider-reported credits, not independently verified
+songwriting attribution.
+
 `nolyric` and the known instrumental marker are separate from actual lyrics.
 Meting's “这似乎是一首纯音乐呢，请尽情欣赏它吧！” indicates missing lyrics even
 for vocal songs. Do not embed it or report the track as instrumental.

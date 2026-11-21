@@ -61,7 +61,8 @@ async function companions(song,b,work,options){
       const result=await neteaseLyrics(song,work,{...options,'netease-base':b.netease,'meting-base':b.meting,'lrclib-fallback':!options['no-lrclib']});
       return {text:result.lrc||result.text||'',translation:result.translation||'',yrc:result.yrc||'',
         status:result.status==='available'?'embedded':result.status==='instrumental'?'instrumental':'unavailable',
-        source:{provider:result.provider,origin:result.origin,id:result.sourceId,alignment:result.alignment,status:result.status,issues:result.issues}};
+        source:{provider:result.provider,origin:result.origin,id:result.sourceId,alignment:result.alignment,status:result.status,issues:result.issues,
+          sourceLrc:result.sourceLrc,sourceCredits:result.sourceCredits}};
     })(),
   ]);
   if(jobs[0].status==='rejected')throw jobs[0].reason;

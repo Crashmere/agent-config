@@ -29,17 +29,37 @@ export function matchesTrack(expected, candidate) {
   if (expected.durationMs && (!candidate.durationMs || Math.abs(expected.durationMs - candidate.durationMs) > 2000)) return false;
   return true;
 }
-export const lrcPlain = text => text.split(/\r?\n/).filter(line => !/^\[(?:ar|al|ti|by|offset|re|ve|length):/i.test(line))
+function neteaseLrc(raw) {
+  const credits = [];
+  const text = raw.split(/\r?\n/).map(line => {
+    if (!line.trimStart().startsWith('{')) return line;
+    try {
+      const record = JSON.parse(line);
+      if (!Number.isFinite(record.t) || record.t < 0 || !Array.isArray(record.c) ||
+          !record.c.length || record.c.some(part => typeof part.tx !== 'string')) return line;
+      const value = record.c.map(part => part.tx).join('');
+      credits.push({timeMs: record.t, text: value});
+      const minute = String(Math.floor(record.t / 60000)).padStart(2, '0');
+      const second = (record.t % 60000 / 1000).toFixed(3).padStart(6, '0');
+      return `[${minute}:${second}]${value}`;
+    } catch {return line;}
+  }).join('\n');
+  return {text, credits};
+}
+export const lrcPlain = text => neteaseLrc(text).text.split(/\r?\n/).filter(line => !/^\[(?:ar|al|ti|by|offset|re|ve|length):/i.test(line))
   .map(line => line.replace(/\[\d+:\d+(?:\.\d+)?\]/g, '').trim()).join('\n').trim();
 
 export function lyricPayload(data) {
-  const text = data.lrc?.lyric?.trim() || '';
+  const raw = data.lrc?.lyric?.trim() || '';
+  const rendered = neteaseLrc(raw);
+  const text = rendered.text;
   if (/这似乎是一首纯音乐呢/.test(text) && /请尽情欣赏它吧/.test(text)) {
     return {text: '', translation: '', yrc: '', status: 'unavailable'};
   }
   const instrumental = data.nolyric || /纯音乐[，,]?请欣赏/.test(text);
   return {text: instrumental ? '' : text, translation: data.tlyric?.lyric?.trim() || '', yrc: data.yrc?.lyric?.trim() || '',
-    status: instrumental ? 'instrumental' : text ? 'available' : 'unavailable'};
+    status: instrumental ? 'instrumental' : text ? 'available' : 'unavailable',
+    ...(text !== raw ? {sourceLrc: raw, sourceCredits: rendered.credits} : {})};
 }
 
 export async function neteaseTrack(songId, options = {}) {
@@ -69,7 +89,8 @@ export async function neteaseLyrics(track, work, options = {}) {
   const status = payload?.status || 'request_failed';
   const result = {status, provider, origin, sourceId: track.id, track, text: payload?.text ? lrcPlain(payload.text) : '',
     lrc: payload?.text && /\[\d+:\d+/.test(payload.text) ? payload.text : '', translation: payload?.translation || '',
-    yrc: payload?.yrc || '', language: null, alignment: 'source_timestamps_unmeasured', issues};
+    yrc: payload?.yrc || '', sourceLrc: payload?.sourceLrc, sourceCredits: payload?.sourceCredits,
+    language: null, alignment: 'source_timestamps_unmeasured', issues};
   if (status === 'available' && !result.text) result.status = 'unavailable';
   if (options['lrclib-fallback'] && ['unavailable', 'request_failed'].includes(result.status)) {
     try {
@@ -118,7 +139,8 @@ export async function writeLyrics(result, output, formats = ['txt', 'lrc', 'tran
   const files = [];
   if (result.status === 'available') {
     for (const [format, name, text] of [['txt', 'lyrics.txt', result.text], ['lrc', 'lyrics.lrc', result.lrc],
-      ['translation', 'lyrics-translation.lrc', result.translation], ['yrc', 'lyrics.yrc', result.yrc], ['source', 'lyrics.source.yaml', result.lyricsfile]]) {
+      ['translation', 'lyrics-translation.lrc', result.translation], ['yrc', 'lyrics.yrc', result.yrc],
+      ['source', 'lyrics.source.yaml', result.lyricsfile], ['source', 'lyrics.raw.lrc', result.sourceLrc]]) {
       if (!text || !formats.includes(format)) continue;
       await fs.writeFile(path.join(output, name), text + '\n', {flag: 'wx'}); files.push(name);
     }

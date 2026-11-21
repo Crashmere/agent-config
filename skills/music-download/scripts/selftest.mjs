@@ -30,7 +30,9 @@ if(url.pathname==='/api/search'){const list=[record(10),{...record(20),trackName
  if(process.env.MUSIC_FIXTURE_AMBIGUOUS)list.push(record(11));put(list);}
 else if(url.pathname==='/api/get/10')put(record(10));
 else if(url.pathname==='/song/detail')put({code:200,songs:[{id:1,name:'Signal',ar:[{id:2,name:'Lead'},{id:3,name:'Guest'}],al:{id:4,name:'Demo',picUrl:'https://fixture.invalid/cover.png'},dt:4000}]});
-else if(url.pathname==='/lyric/new')put({code:200,lrc:{lyric:''}});
+else if(url.pathname==='/lyric/new')put({code:200,lrc:{lyric:process.env.MUSIC_FIXTURE_CREDITS?
+ JSON.stringify({t:0,c:[{tx:'作词: '},{tx:'Writer'}]})+'\n'+JSON.stringify({t:1000,c:[{tx:'作曲: '},{tx:'Composer'}]})+
+ '\n[00:02.00]First line\n[00:03.00]Last line':''}});
 else if(url.pathname==='/meting/')put('[00:00.00]这似乎是一首纯音乐呢，请尽情欣赏它吧！');
 else throw new Error('Unexpected request '+url.pathname);
 `;
@@ -71,6 +73,19 @@ test('ambiguous records and explicit-ID wrong versions never publish lyrics', as
   await assert.rejects(() => cli('lyrics.mjs', '--id', '10', '--title', 'Signal (Clean)', '--artist', 'Lead',
     '--lrclib-base', 'https://fixture.invalid/', '--out', wrong));
   await assert.rejects(() => fs.stat(path.join(wrong, 'lyrics.txt')));
+});
+
+test('NetEase JSON credit headers become timed text while their raw source is retained', async () => {
+  process.env.MUSIC_FIXTURE_CREDITS = '1';
+  const out = path.join(temp, 'credit-lyrics');
+  try {await cli('lyrics.mjs', '--provider', 'netease', '--id', '1', '--netease-base', 'https://fixture.invalid/', '--out', out);}
+  finally {delete process.env.MUSIC_FIXTURE_CREDITS;}
+  const report = await readJSON(path.join(out, 'lyrics.json'));
+  assert.equal(await fs.readFile(path.join(out, 'lyrics.txt'), 'utf8'), '作词: Writer\n作曲: Composer\nFirst line\nLast line\n');
+  assert.equal(await fs.readFile(path.join(out, 'lyrics.lrc'), 'utf8'), '[00:00.000]作词: Writer\n[00:01.000]作曲: Composer\n[00:02.00]First line\n[00:03.00]Last line\n');
+  assert.equal(await fs.readFile(path.join(out, 'lyrics.raw.lrc'), 'utf8'), report.sourceLrc + '\n');
+  assert.deepEqual(report.sourceCredits, [{timeMs: 0, text: '作词: Writer'}, {timeMs: 1000, text: '作曲: Composer'}]);
+  assert.equal(report.timingCheck.ordered, true);
 });
 
 test('covers preserve aspect ratio, default to 1600, and never enlarge small art', async () => {
