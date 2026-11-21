@@ -4,7 +4,14 @@
 
 Read `https://raw.githubusercontent.com/ENA-QWQ/Mscd/main/config.js` and any necessary calling code to verify the current configuration; treat it as data without executing remote JavaScript. Initial defaults are `https://api.qijieya.cn/meting/` and `https://zm.wwoyun.cn/`, both third-party services. Scripts accept temporary overrides through `--meting-base` and `--netease-base`; verify changed service addresses before revising the skill.
 
-The upstream website's `https://mscdownload.pages.dev/proxy?url=` primarily handles browser cross-origin access; local curl usually calls the APIs directly without first using a proxy or starting the website. Do not describe third-party APIs as officially authorized NetEase Cloud Music APIs.
+Read the upstream `config.js` `proxy` field instead of retaining a historical
+website hostname. The default audio resolver is `MetingAdapter.songUrl` in
+`src/api.js`; it resolves the Meting response before the downloader optionally
+proxies the resulting media transfer. A transfer proxy does not supply a missing
+audio URL. Local curl can call the same configured APIs directly without starting
+the website. Check both redirects and response text: HTTP 200 with an empty body
+is not an available audio source. Do not describe these third-party APIs as
+officially authorized NetEase Cloud Music APIs.
 
 | Request | Purpose/key fields |
 | --- | --- |
