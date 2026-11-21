@@ -4,7 +4,7 @@
   "uuid": "",
   "exports": "/mnt/nas-backup/agent",
   "registryDir": "/opt/serverportal/registry.d",
-  "expectedApps": ["ledger", "feetable", "fabricworld", "recipebox", "yuyan", "aicalendar", "aura", "curio"],
+  "expectedApps": ["ledger", "feetable", "fabricworld", "recipebox", "yuyan", "aicalendar", "aura", "curio", "lilt"],
   "hostUnits": ["nas-lan-tls.timer", "nas-lan-tls.service"],
   "shared": [
     "/opt/server-context",

@@ -17,7 +17,7 @@ import sys
 
 
 APPLICATIONS = {"ledger", "feetable", "fabricworld", "recipebox", "yuyan",
-                "aicalendar", "aura", "curio", "serverportal"}
+                "aicalendar", "aura", "curio", "lilt", "serverportal"}
 SNAPSHOTS = Path("/var/lib/server-upgrades")
 
 
