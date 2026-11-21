@@ -90,7 +90,11 @@ files when downsizing. A no-audio, no-lyrics catalog request can use
 Keep `ARTIST` separate from `ALBUMARTIST`: compilation/soundtrack album credits
 can correctly differ from track singers. Preserve album release dates, label,
 copyright, track/disc totals, compilation flags and catalog IDs. Do not invent
-missing composer credits. TTML `songwriter` stays `SONGWRITER`, not automatically
+missing composer credits. Catalog-only packaging takes track totals from the
+album's `trackCount`; disc totals use `discCount` or a complete, unpaginated track
+relationship with known disc numbers. A partial track list cannot establish a
+disc total. Keep the song's `DATE` distinct from `ALBUM_RELEASE_DATE`.
+TTML `songwriter` stays `SONGWRITER`, not automatically
 `COMPOSER` or `LYRICIST`. The package retains donor non-picture MP4 tags in a
 reversible JSON representation and source-key aliases, plus cleaned catalog
 JSON. Its Gamdl integration targets the inspected 4.1.1 API; inspect a changed

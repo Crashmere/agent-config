@@ -63,6 +63,16 @@ the WAV; do not kill it with SIGKILL. A readiness timeout, Music failure or
 early input error stops the workflow and triggers restoration rather than
 starting a silent full-length recording.
 
+Music 1.7.2 can continue to another song despite AppleScript's `once true`.
+Snapshot and disable Autoplay (`自动连播`) separately from shuffle and repeat;
+verify the UI control by its `AXIdentifier` (`autoplay`) instead of assuming a
+fixed checkbox position on another version. A task-owned temporary playlist
+containing exactly one verified library track prevents ordinary queue advance.
+Before changing its contents, verify the playlist ID, count and previous track
+ID so user-added items are not removed. Retain that playlist after capture unless
+cleanup is authorized. Monitor the actual player state and track ID throughout
+capture; elapsed time alone does not establish that the expected song played.
+
 First capture a short sample. Check codec, sample rate, channels, duration,
 nonzero signal and peak level with FFprobe/FFmpeg (`astats` or `volumedetect`),
 and listen when possible. macOS microphone privacy may block AudioQueue until
@@ -85,6 +95,15 @@ substituting another device. Restore Music volume and processing preferences;
 restore its prior track/position, and clarify whether to resume audible playback
 when the user did not explicitly request it. Do not delete restoration state
 until recovery has been checked.
+
+Restoring a prior track is asynchronous: playing it can finish after an immediate
+pause and seek. Keep volume at zero, wait with a bounded deadline for the saved
+track ID and advancing position, then seek and pause. Reread the final player
+state after a short settling delay and verify track ID, position, volume,
+shuffle/repeat, EQ, processing preferences and Autoplay against the snapshots.
+Keep playback paused unless audible resumption was explicitly requested. Retain
+the recovery snapshots and report any mismatch rather than marking restoration
+successful from command exit codes alone.
 
 Proceed to [Packaging](packaging.md). A consumer showing album-artist credits
 such as `群星` may still read the track singer correctly; verify `ARTIST`

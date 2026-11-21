@@ -122,13 +122,25 @@ def tag(candidate, args, alignment):
         if catalog["song"]["id"] != args.song_id:
             raise ValueError("Catalog does not match the expected song ID")
         song = catalog["song"].get("attributes", {})
-        album = catalog.get("album", {}).get("attributes", {})
+        album_resource = catalog.get("album", {})
+        album = album_resource.get("attributes", {})
+        track_total = album.get("trackCount")
+        disc_total = album.get("discCount")
+        tracks = album_resource.get("relationships", {}).get("tracks", {})
+        if disc_total is None and track_total and len(tracks.get("data", [])) == track_total and not tracks.get("next"):
+            numbers = [track.get("attributes", {}).get("discNumber") for track in tracks["data"]]
+            if all(isinstance(number, int) and number > 0 for number in numbers):
+                disc_total = max(numbers)
         put("APPLE_MUSIC_CATALOG_METADATA_JSON", json.dumps(catalog, ensure_ascii=False, sort_keys=True))
         common = {"TITLE": song.get("name"), "ARTIST": song.get("artistName"),
                   "ALBUM": song.get("albumName"), "ALBUMARTIST": album.get("artistName"),
                   "GENRE": song.get("genreNames"), "DATE": song.get("releaseDate"),
                   "COMPOSER": song.get("composerName"), "COPYRIGHT": album.get("copyright"),
-                  "TRACKNUMBER": song.get("trackNumber"), "DISCNUMBER": song.get("discNumber")}
+                  "TRACKNUMBER": song.get("trackNumber"), "DISCNUMBER": song.get("discNumber"),
+                  "TRACKTOTAL": track_total, "TOTALTRACKS": track_total,
+                  "DISCTOTAL": disc_total, "TOTALDISCS": disc_total,
+                  "COMPILATION": album.get("isCompilation"),
+                  "ALBUM_RELEASE_DATE": album.get("releaseDate")}
         for key, value in common.items():
             if key not in audio:
                 put(key, value)
