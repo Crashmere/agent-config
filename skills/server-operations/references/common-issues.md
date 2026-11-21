@@ -326,6 +326,13 @@ If the log already says `Deployed` and a later public HTTPS check times out, the
 
 If new SSH connections from the maintenance workstation occasionally time out, first use a short `ConnectTimeout` for a read-only connectivity check. Documentation synchronization may temporarily use OpenSSH ControlMaster to reuse an established connection, while retaining the original SSH alias, identity, and host-key verification; close the temporary connection afterward. A connection timeout alone does not prove an application or server failure and does not justify restarting a service or changing authentication.
 
+<a id="shutdown-timeout-blocks-release"></a>
+## Shutdown Timeout Blocks Release
+
+On `nas`, a Lilt release stopped the old process, but its bounded HTTP shutdown returned `context deadline exceeded` and exited with status 1. Systemd retained `ActiveState=failed`; the shared upgrade helper requires exactly `inactive`, so it rejected publication and the fixed release script restored the healthy old program. No database protection was selected and no data rollback occurred. The shutdown deadline identifies unfinished HTTP shutdown, not the request responsible. Source inspection found the same returned-shutdown-error pattern in Ledger, FeeTable and Yuyan; their deployments were not implicated in this incident.
+
+After confirming the old program is healthy, inspect the shutdown journal and current connections before retrying. If this failure repeats, stop only the affected service under the shared maintenance and application deployment locks. Verify `MainPID=0`, an empty service cgroup and no application listener. A confirmed shutdown-deadline `exit-code` result may be cleared with `systemctl reset-failed <app>.service` after those checks; investigate other exit causes instead. Release the locks and promptly retry the existing restricted publication with its verified artifact. Restart the previous program if publication cannot proceed. Lilt's separately verified stop returned `inactive` normally and the next restricted release succeeded. Keep the helper's stopped-state check and root-managed publication scripts unchanged.
+
 ## Recovery Capture Rejects Escaped Systemd Names
 
 On VPS, a full gateway capture failed with `invalid entry` before emitting its manifest because a systemd directory name contained the literal escape `\x2d`. POSIX filenames may contain backslashes; treating every backslash as a path separator rejects valid systemd configuration. This affects the shared recovery tool on NAS and VPS, including all applications captured by the combined workflow.
