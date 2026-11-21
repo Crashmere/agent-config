@@ -185,8 +185,9 @@ Diagnosis: the HTTPS resource URLs and existing PNGs were valid, but icons for a
 | AICalendar | `favicon.svg` and `apple-touch-icon.png`, with exact GET/HEAD exceptions; ingest retains its separate Bearer boundary |
 | Aura | `favicon.svg` and `apple-touch-icon.png`, with exact GET/HEAD exceptions |
 | Curio | `favicon.svg` and `apple-touch-icon.png`, with exact GET/HEAD exceptions |
+| Lilt | `favicon.svg`, 180 px touch icon, 192/512 px manifest icons and public manifest, with exact GET/HEAD exceptions |
 
-Resolution: each business project's own `nginx-location.conf` disables auth_request only for its named brand icons (and Ledger's public manifest), restricted to GET/HEAD. FeeTable matches only the three icon names and their build hashes. Do not expose whole `assets` or `static` trees, user-uploaded media, or APIs. Yuyan and the portal generate opaque 180×180 PNGs from existing SVGs and declare apple-touch-icon in every page head; this does not change their login, cookie, or business-data behavior.
+Resolution: each business project's own `nginx-location.conf` disables auth_request only for its named brand icons and any declared public manifest, restricted to GET/HEAD. FeeTable matches only the three icon names and their build hashes. Do not expose whole `assets` or `static` trees, user-uploaded media, or APIs. Yuyan and the portal generate opaque 180×180 PNGs from existing SVGs and declare apple-touch-icon in every page head; this does not change their login, cookie, or business-data behavior.
 
 When adding or changing icons, verify the actual HTML href, built path, PNG dimensions, Content-Type, anonymous requests, and version query parameters. Before deployment, run `scripts/test-public-icons.py` (see `--help` for arguments) with an isolated loopback Nginx and synthetic upstream to verify the rules. Keep its registered service-icon cases aligned with the affected routes. The portal web layer serves its own static files, so also confirm that unauthenticated `/portal/api/overview` still returns 401. The final result of adding the site to an iPhone home screen still requires user confirmation and cannot be inferred from server checks.
 
@@ -195,6 +196,22 @@ Each active website deploys its icons and HTML head with its program and maintai
 Every new website must include this configuration in its initial delivery. See the complete [website icon conventions](conventions.md#website-icons-and-home-screen-shortcuts). The general `scripts/check-site-icons.py` discovers icons and manifests from real HTML and verifies anonymous GET/HEAD, media types, file signatures, and PNG dimensions; central lists do not need updates when build hashes change.
 
 For mobile acceptance, first authenticate in the browser and return to the corresponding application page before adding it to the home screen; do not create an application shortcut from the shared login page. Existing shortcuts may retain old icons and need to be added again. If a home-screen application asks for device authorization again, follow the normal login flow without weakening cookie security attributes. See Apple's [Configuring Web Applications](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html) for PNG and page-icon rules.
+
+<a id="web-manifest-returns-a-non-json-content-type"></a>
+## Web Manifest Returns a Non-JSON Content Type
+
+Lilt's initial icon acceptance on `nas` returned a valid manifest with HTTP 200 but failed `check-site-icons.py` with `manifest did not return JSON Content-Type`. Without an explicit header, Go's `http.ServeContent` determines the type from extension tables or content sniffing; a `.webmanifest` filename alone does not guarantee the manifest MIME type.
+
+Set the response type in the application's static handler before calling `http.ServeContent`:
+
+```go
+if name == "manifest.webmanifest" {
+    w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
+}
+http.ServeContent(w, r, name, modTime, content)
+```
+
+Lilt was the affected application; Ledger already explicitly maps `.webmanifest` to `application/manifest+json` in its static handler. Verify GET and HEAD return 200 with the declared type on the actual `nas` runtime, then run the shared icon checker through the `ali` and `vps` entrances. Keep the manifest's exact public GET/HEAD exception and inherited business authentication unchanged.
 
 <a id="root-采集进程无法切换应用用户"></a>
 ## Root Collector Cannot Switch to the Application User
@@ -255,6 +272,21 @@ Cause: Go's `http.FileServer` returns `.js` as `text/javascript; charset=utf-8` 
 Resolution: include both `text/javascript` and `application/javascript` in `gzip_types` inside the application's own location. Update and push the project's `deploy/nginx-location.conf`, install it to `/opt/<app>/config/nginx-location.conf`, run `nginx -t`, and then run `systemctl reload nginx`; the shared server does not need a change.
 
 Acceptance: request a `.js` resource from the application with `curl -sI -H 'Accept-Encoding: gzip'` and confirm `Content-Encoding: gzip`. After reloading, verify direct and proxied health checks and deep links for all five applications. Yuyan was fixed and verified this way on 2026-09-26.
+
+<a id="nginx-location-regex-quantifiers-require-quoting"></a>
+## Nginx Location Regex Quantifiers Require Quoting
+
+On `nas`, Lilt's initial route validation failed with PCRE2 `missing closing parenthesis` because two `location ~` patterns contained unquoted `{32}`. Nginx parses configuration braces before compiling the regular expression. Quote the entire pattern while preserving its regex escapes and quantifier semantics:
+
+```nginx
+location ~ "^/lilt/api/tracks/t_[0-9a-f]{32}/(?:stream|download)$" {
+    proxy_pass http://127.0.0.1:18089;
+}
+```
+
+This applies to quantified regex locations in application-owned includes on `nas`, `ali` and `vps`. Lilt uses quoted 32-hex-ID patterns for upload/cover and stream/download routes. Correct the project's route source, validate the candidate in isolated Nginx, then run `nginx -t` on each target before a graceful reload. Retain inherited authentication, cookie renewal and the existing request/media settings.
+
+For Lilt, `scripts/test-public-icons.py --apps lilt --locations <candidate-directory> --auth <shared-auth-file>` checks the quoted routes, exact public brand exceptions, protected uploads/media and page/library cookie renewal with synthetic devices. It starts only private temporary listeners and does not weaken production authentication.
 
 <a id="发布后旧标签页的动态模块加载失败"></a>
 ## Dynamic Module Loading Fails in a Stale Tab After Deployment
