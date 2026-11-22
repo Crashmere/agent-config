@@ -32,6 +32,10 @@ trap '"$WORK/coreaudio" restore "$WORK/audio-state.json"' EXIT INT TERM
 "$WORK/coreaudio" select "$BLACKHOLE_DEVICE_ID" "$SAMPLE_RATE"
 ```
 
+Wait with a bounded deadline for the actual settings controls before reading or
+clicking them. A fixed delay after opening Music settings can expire before its
+Playback window is ready, even when the same UI worked during preparation.
+
 Use the source sample rate where known and supported, usually 44100 or 48000;
 do not force a high rate to imply higher source quality. The helper routes the
 default playback output and input to the selected device, leaving system-alert
@@ -91,7 +95,11 @@ whole untrimmed source.
 Pause Music and stop recording before restoring CoreAudio. Restore every saved
 device and nominal rate, reread defaults and compare them to the snapshot. If a
 saved device is missing, report it and retain the snapshot rather than silently
-substituting another device. Restore Music volume and processing preferences;
+substituting another device. Silence Music and restore CoreAudio before UI-based
+preference recovery. Attempt independent recovery steps even if another fails,
+collect their errors, and mark recovery verified only after every required step
+passes. A settings-window error must not leave default devices on BlackHole.
+Restore Music volume and processing preferences;
 restore its prior track/position, and clarify whether to resume audible playback
 when the user did not explicitly request it. Do not delete restoration state
 until recovery has been checked.
