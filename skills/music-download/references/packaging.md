@@ -3,14 +3,22 @@
 Use task-local paths in these commands. `SKILL` is the absolute skill folder;
 `WORK` is a private staging folder outside Git. Do not alter the installed
 Gamdl environment to add tagging dependencies. Through `python-environment`,
-select/create a task environment with `mutagen` and, for alignment, `numpy`.
+reuse a healthy environment with `mutagen` and, for alignment, `numpy`. Create
+a task environment only when no suitable environment exists:
 
 ```sh
 uv venv --python 3.12 "$WORK/env"
 uv pip install --python "$WORK/env/bin/python" mutagen numpy
 ```
 
-## Obtain a matching donor
+## Obtain materials and an optional matching donor
+
+For recording packaging, prefer the metadata/TTML helper below when no donor
+audio is needed. An accessible matching donor is useful for measured alignment;
+it is not required to obtain catalog tags, official lyrics or a catalog cover.
+Fetch several songs with `--song-ids` to reuse one API session and album data;
+see [Apple batch workflow](apple-batch.md). Do not retry a known unavailable
+donor path for every song in an album.
 
 Inspect `gamdl --version` and `gamdl rip --help`. With the inspected 4.1.1 CLI,
 the following scopes downloads and avoids changes to its media index:
@@ -79,6 +87,11 @@ For metadata-only acquisition, omit `--donor`; `--catalog` then establishes the
 catalog identity and supplies available common tags. Omit optional cover or
 lyrics inputs only when unavailable. `--lyrics-language zh-Hans` is preferred
 when a complete official variant exists; otherwise the original is used.
+The helper selects a nonempty timed variant before a plain one, including
+enhanced-only lyrics when the standard response is plain or unavailable. A
+`.lrc` extension alone does not establish timing. It reports `lyrics_timed_lines`,
+omits `SYNCEDLYRICS` for plain text, and writes `LYRICS_ALIGNMENT_STATUS`; a
+zero offset without measured alignment remains `source_timestamps_unmeasured`.
 
 Fetch separate artwork through [covers](covers.md). The default embedded cover
 long edge is 1600 pixels, keeping aspect ratio and smaller source dimensions;
@@ -108,7 +121,10 @@ contains standard tags, a native cover, display LRC, plain lyrics and preserved
 source TTML. Word-synced lyrics are retained even if a consumer only supports
 line-level lyrics. Raw TTML remains on the original source timeline.
 
-After delivery, distinguish encoding specs from source/master quality. Cleanup
-must list only known task outputs, then await confirmation. Keep the final FLAC,
-the agreed recording backup and official `.movpkg` downloads. Do not delete
-shared package caches or other music as part of this workflow.
+After delivery, distinguish encoding specs from source/master quality. By
+default keep final FLACs, recording backups and official `.movpkg` downloads.
+If cleanup is requested, inventory only known task paths and await confirmation
+of the exact scope, distinguishing intermediates, final music and Apple offline
+downloads. Use Music's Remove Download action for authorized offline removal,
+not Delete from Library. Preserve shared tools, credentials, package caches,
+unrelated music and the remote library unless explicitly included.

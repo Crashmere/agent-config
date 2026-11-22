@@ -5,11 +5,38 @@ from copy import deepcopy
 from decimal import Decimal, ROUND_HALF_UP
 import json
 from pathlib import Path
+import re
 from xml.etree import ElementTree as ET
 
 XML = "{http://www.w3.org/XML/1998/namespace}"
 APPLE = "{http://music.apple.com/lyric-ttml-internal}"
 TTML = "{http://www.w3.org/ns/ttml}"
+
+
+def timed_lines(text):
+    return len(re.findall(r"^\[\d+:\d{2}(?:\.\d+)?\].*\S", text, re.MULTILINE))
+
+
+def select_bundle(output, language="zh-Hans"):
+    output = Path(output)
+    names = ["lyrics-" + language, "lyrics-" + language + "-enhanced",
+             "lyrics", "lyrics-enhanced"]
+    candidates = []
+    for name in names:
+        lrc_path, text_path = output / (name + ".lrc"), output / (name + ".txt")
+        if not lrc_path.exists() or not text_path.exists():
+            continue
+        text, lrc = text_path.read_text(encoding="utf-8"), lrc_path.read_text(encoding="utf-8")
+        if not text.strip():
+            continue
+        summary_name = "lyrics-enhanced" if name.endswith("-enhanced") else "lyrics"
+        summary_path = output / (summary_name + ".summary.json")
+        summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
+        candidates.append({"name": name, "text": text, "lrc": lrc,
+                           "timed_lines": timed_lines(lrc), "summary": summary,
+                           "language": language if name.startswith("lyrics-" + language) else summary.get("language")})
+    # A file extension does not establish timing; an original timed variant beats plain translation.
+    return next((item for item in candidates if item["timed_lines"]), candidates[0] if candidates else None)
 
 
 def local(tag):
@@ -123,6 +150,7 @@ def write_bundle(xml, output, enhanced=False):
                       for p in body_lines(tree) for e in p.iter())
     summary = {"language": tree.get(XML + "lang"), "lines": len(body_lines(tree)),
                "enhanced": enhanced, "syllable_synced": word_timing,
+               "timed_lines": timed_lines(render(tree, enhanced)[1]),
                "official_translations": languages,
                "songwriters": writers, "issues": issues}
     with (output / f"{prefix}.summary.json").open("x", encoding="utf-8") as handle:

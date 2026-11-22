@@ -14,6 +14,8 @@ import tempfile
 from mutagen.flac import FLAC, Picture
 from mutagen.mp4 import MP4
 
+from lyrics import select_bundle, timed_lines
+
 
 def run(command):
     return subprocess.run(command, capture_output=True, text=True, check=True, timeout=600)
@@ -156,35 +158,37 @@ def tag(candidate, args, alignment):
         if match:
             put("ISRC", match.group())
 
-    lyric_lines = 0
+    lyric_lines, lyric_timed_lines = 0, 0
     if args.lyrics_dir:
         root = args.lyrics_dir
-        selected = "lyrics-" + args.lyrics_language
-        if not (root / (selected + ".lrc")).exists():
-            selected = "lyrics"
-        summary_path = root / "lyrics.summary.json"
-        summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
-        put("SONGWRITER", summary.get("songwriters"))
-        lrc_path = root / (selected + ".lrc")
-        if lrc_path.exists():
-            lrc = lrc_path.read_text(encoding="utf-8")
-            lyric_lines = len(lrc.splitlines())
-            put("LYRICS", shift_lrc(lrc, alignment["offset_seconds"]))
-            put("SYNCEDLYRICS", shift_lrc(lrc, alignment["offset_seconds"]))
-            put("UNSYNCEDLYRICS", (root / (selected + ".txt")).read_text(encoding="utf-8"))
-            put("LYRICS_LANGUAGE", args.lyrics_language if selected != "lyrics" else summary.get("language"))
-            enhanced = root / (selected + "-enhanced.lrc")
-            enhanced_language = args.lyrics_language if selected != "lyrics" else summary.get("language")
+        bundle = select_bundle(root, args.lyrics_language)
+        if bundle:
+            selected, lrc = bundle["name"], bundle["lrc"]
+            put("SONGWRITER", bundle["summary"].get("songwriters"))
+            lyric_lines, lyric_timed_lines = len(bundle["text"].splitlines()), bundle["timed_lines"]
+            put("LYRICS", shift_lrc(lrc, alignment["offset_seconds"]) if lyric_timed_lines else bundle["text"])
+            if lyric_timed_lines:
+                put("SYNCEDLYRICS", shift_lrc(lrc, alignment["offset_seconds"]))
+            put("UNSYNCEDLYRICS", bundle["text"])
+            put("LYRICS_LANGUAGE", bundle["language"])
+            enhanced = root / ((selected if selected.endswith("-enhanced") else selected + "-enhanced") + ".lrc")
+            enhanced_language = bundle["language"]
             if not enhanced.exists():
                 enhanced = root / "lyrics-enhanced.lrc"
                 enhanced_summary = root / "lyrics-enhanced.summary.json"
                 if enhanced_summary.exists():
                     enhanced_language = json.loads(enhanced_summary.read_text(encoding="utf-8")).get("language")
             if enhanced.exists():
-                put("ENHANCED_LYRICS", shift_lrc(enhanced.read_text(encoding="utf-8"), alignment["offset_seconds"]))
-                put("ENHANCED_LYRICS_LANGUAGE", enhanced_language)
+                enhanced_text = enhanced.read_text(encoding="utf-8")
+                if timed_lines(enhanced_text):
+                    put("ENHANCED_LYRICS", shift_lrc(enhanced_text, alignment["offset_seconds"]))
+                    put("ENHANCED_LYRICS_LANGUAGE", enhanced_language)
             put("LYRICS_TIME_OFFSET_MS", round(alignment["offset_seconds"] * 1000))
             put("LYRICS_ALIGNMENT_JSON", json.dumps(alignment, sort_keys=True))
+            put("LYRICS_SOURCE", "Apple Music official TTML")
+            put("LYRICS_TIMING", "line_synced" if lyric_timed_lines else "plain")
+            put("LYRICS_ALIGNMENT_STATUS", "source_timestamps_unmeasured" if alignment.get("method") == "unaligned"
+                else "manual_offset" if alignment.get("method") == "manual" else "measured")
         for path in root.iterdir():
             if path.name.startswith("lyrics") and path.suffix in (".ttml", ".txt", ".lrc"):
                 key = "SOURCE_" + path.name.upper().replace("-", "_").replace(".", "_")
@@ -222,6 +226,8 @@ def tag(candidate, args, alignment):
     if [p.data for p in check.pictures] != [p.data for p in audio.pictures]:
         raise ValueError("Cover round-trip mismatch")
     return {"tags": len(check.tags), "lyrics_lines": lyric_lines,
+            "lyrics_timed_lines": lyric_timed_lines, "title": check.get("TITLE", [""])[0],
+            "album": check.get("ALBUM", [""])[0],
             "cover": [{"width": p.width, "height": p.height} for p in check.pictures],
             "duration": check.info.length, "artist": check.get("ARTIST"),
             "album_artist": check.get("ALBUMARTIST"), "bits": check.info.bits_per_sample,

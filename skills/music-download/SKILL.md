@@ -17,6 +17,7 @@ neither is an automatic fallback for the other.
 | Only lyrics, TXT/LRC, translations or word timing | [Lyrics](references/lyrics.md); `scripts/lyrics.mjs` or `scripts/apple/fetch_metadata.py` |
 | Only an album/single cover | [Covers](references/covers.md); `scripts/covers.mjs` |
 | New authorized Apple Music playback recording on macOS | [Recording](references/recording.md), then [Packaging](references/packaging.md) |
+| Albums/new Apple downloads, resume, or per-song Lilt upload | [Apple batch workflow](references/apple-batch.md), then Recording/Packaging as needed |
 | An existing WAV/ALAC/FLAC recording | [Packaging](references/packaging.md); do not record again |
 | Add lyrics/artwork to an existing FLAC/MP3 | [Material enrichment](references/enrichment.md); `scripts/retag.mjs` |
 
@@ -93,8 +94,8 @@ Successful audio with missing lyrics needs explicit enrichment rather than a
 redownload; see [enrichment](references/enrichment.md).
 
 Read helper `--help` before use. After code changes, run
-`node --test scripts/netease/selftest.mjs scripts/selftest.mjs`; use targeted
-Apple packaging checks when that path changes. These use synthetic fixtures,
-not live playback. The native helper still needs a short sample and restoration
+`node --test scripts/netease/selftest.mjs scripts/selftest.mjs`; for Apple changes
+also use the focused checks in [Apple batch workflow](references/apple-batch.md).
+These use synthetic fixtures, not live playback. The native helper still needs a short sample and restoration
 check before its first actual recording. Use `personal-skill-management` for
 real-use corrections and repository/client synchronization.

@@ -4,6 +4,8 @@ Use official Music playback with BlackHole 2ch as the loopback device. Confirm
 the requested song/version and available source quality in Music. Do not parse
 encrypted offline packages into playable audio. Capture inherits Music's
 decoder, mixer, volume and system processing; it is not a bit-exact extraction.
+For albums, newly downloaded songs, interrupted batches or per-song delivery,
+start with [Apple batch workflow](apple-batch.md) to reuse verified work.
 
 ## Preparation and recovery
 
@@ -76,6 +78,16 @@ Before changing its contents, verify the playlist ID, count and previous track
 ID so user-added items are not removed. Retain that playlist after capture unless
 cleanup is authorized. Monitor the actual player state and track ID throughout
 capture; elapsed time alone does not establish that the expected song played.
+
+Reuse `scripts/apple/playback.mjs` in the controller instead of recreating the
+end-of-song checks. Feed one Music state snapshot and elapsed seconds to
+one retained `PlaybackMonitor({trackId, duration})` instance's `update(snapshot, elapsed)`, with
+`snapshot = {state, track: {id, position}}`; omit `track` when unavailable.
+It accepts a cleared current-track identity only after playback was observed
+on the expected ID and the last verified position was near its natural end.
+An early stop, another ID, unidentified playing state or exceeded bound fails.
+The controller still owns recorder readiness, interrupts, WAV validation and
+restoration; this monitor does not control devices or authorize accepting a WAV.
 
 First capture a short sample. Check codec, sample rate, channels, duration,
 nonzero signal and peak level with FFprobe/FFmpeg (`astats` or `volumedetect`),
