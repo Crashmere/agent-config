@@ -9,6 +9,19 @@ For each issue, document the symptoms and decision criteria, affected applicatio
 
 A page can appear to reload without a document request: replacing loaded content with a skeleton or clearing a gallery before fetching shortens the page, clamps scroll position and remounts images, editors or players. Observed paths include Ledger's filters and pagination, FeeTable's location saves and export filters, FabricWorld's material saves and detail retries, Aura's gallery filters, Curio's collection refreshes and ServerPortal's section navigation. AICalendar's former homepage anchor instead requested a new document. Apply [Page continuity](conventions.md#page-continuity) to every service on `nas`, whether reached through `nas`, `ali` or `vps`: keep valid content mounted while updating, use the client router for same-service navigation, and show bounded progress or transitions. Inspect loading conditionals and state-reset calls as well as `location.reload`, ordinary anchors and native form submission. Verify the affected delayed request with synthetic data; no server runtime, proxy, database or backup change is needed for this frontend correction.
 
+## Persistent SQLite snapshot locks with healthy reads
+
+On `nas`, Lilt returned HTTP 500 for playlist creation while library reads and `/healthz` still succeeded. Its main-service journal already contained repeated `database is locked (517)` failures before the attempted write, and the lyrics-worker heartbeat was unavailable. SQLite error 517 is `SQLITE_BUSY_SNAPSHOT`; a successful read or connection ping does not establish that the application's connection can write. Restarting only Lilt restored playlist creation, uploads, membership appends and the worker heartbeat with the same program, configuration and data paths. The transaction or cursor responsible for the stale snapshot has not been identified; this is a recovery procedure, not a root-cause fix. Other SQLite applications on `nas` are potential diagnostic users, not confirmed affected instances; `ali` and `vps` remain gateways.
+
+Capture the affected service's journal and inspect incomplete uploads and active processing before recovery. Apply the shared authorization table, then hold the shared maintenance lock and the application's deployment lock while restarting only that service. For Lilt on `nas`:
+
+```sh
+flock -s -n /run/lock/server-maintenance.lock \
+  flock -n /run/lock/lilt-deploy.lock systemctl restart lilt.service
+```
+
+Lilt's linked lyrics worker restarts with it. Preserve acknowledged uploads and resume the original batch; do not delete SQLite WAL/SHM files, restore a database, redirect data paths or retry an uncertain create without first checking whether it succeeded. Verify main health, the worker heartbeat and the originally requested write, then check the journal for recurrence. If the error returns, investigate transaction and cursor lifetime in both processes rather than repeatedly restarting them or increasing `busy_timeout`.
+
 ## Distribution-specific inspection and login notices
 
 The `vps` image is AlmaLinux, whereas `ali` and `nas` use Ubuntu. An absent UFW executable or Ubuntu Nginx directory does not establish a host failure. The shared `inspect.sh` selects the installed firewall tool and inspects Nginx directories only when present. Verify both active firewall rules and cloud-side access separately.
