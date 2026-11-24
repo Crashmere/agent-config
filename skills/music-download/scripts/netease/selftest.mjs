@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {run,writeJSON,readJSON,safeName,inside,httpsURL,digest} from './common.mjs';
-import {makePlan,makeSinglePlan,overlap} from './library.mjs';
+import {makePlan,makeSinglePlan,overlap,song,validateSong} from './library.mjs';
 import {lyricPayload,replacementFor,validatePlan} from './download.mjs';
 import {checkDuration,tagAudio,verify,packetsHash,probe,tagsOf} from './audio.mjs';
 
@@ -77,6 +77,14 @@ test('incomplete snapshots stay visible and unresolved excluded IDs remain exclu
   const partial=makePlan([snapshot('102',[mkSong('1')])],[missing],{allowPartial:true});
   assert.equal(partial.items.length,0);assert.deepEqual(partial.excludedIds,['1']);
 });
+test('album-level credits stay separate from featured track artists',()=>{
+  const raw={id:1,name:'Collaboration',artists:[{id:10,name:'Main Artist'},{id:11,name:'Guest Artist'}],album:{id:20,name:'Album',picUrl:'https://fixture.invalid/cover.png',artist:{id:10,name:'Main Artist'}},duration:4000};
+  const track=song(raw);validateSong(track);
+  assert.equal(track.albumArtist,'Main Artist');
+  assert.deepEqual(track.artists.map(a=>a.name),['Main Artist','Guest Artist']);
+  const unknown=song({...raw,album:{...raw.album,artist:undefined}});
+  assert.equal(Object.hasOwn(unknown,'albumArtist'),false);
+});
 test('replacement review, output paths, and full-duration guards',()=>{
   const original=mkSong('1'),release={...original,id:'4'};
   assert.equal(replacementFor({song:original},{1:{song:release,note:'专辑版'}}).song.id,'4');
@@ -89,12 +97,15 @@ test('replacement review, output paths, and full-duration guards',()=>{
   assert.equal(safeName('a/b:曲名'), 'a_b_曲名');
 });
 test('native FLAC and MP3 keep audio packets and embed Unicode lyrics/cover',async()=>{
-  const s=mkSong('1',{title:'中文 $() `标题` \' ☀',album:{id:'0',name:'',cover:''}}),lyrics='[00:00.00]中文歌词\n[00:02.00]English';
+  const s=mkSong('1',{title:'中文 $() `标题` \' ☀',album:{id:'0',name:'',cover:''},albumArtist:'Main Album Artist',artists:[{id:'10',name:'Main Artist'},{id:'11',name:'Guest Artist'}]}),lyrics='[00:00.00]中文歌词\n[00:02.00]English';
   for(const [codec,source] of [['flac','flac.flac'],['mp3','mp3-320.mp3']]){
     const input=path.join(temp,source),output=path.join(temp,'写入 元数据.'+codec);
     s.publishTime=Date.parse('2026-06-16T00:00:00+08:00');
     const result=await tagAudio(input,output,s,{cover:path.join(temp,'cover.png'),lyrics});
-    assert.equal(tagsOf(await probe(output)).date,'2026-06-16');
+    const tags=tagsOf(await probe(output));
+    assert.equal(tags.date,'2026-06-16');
+    assert.equal(tags.artist,'Main Artist / Guest Artist');
+    assert.equal(tags.album_artist||tags.albumartist,s.albumArtist);
     assert.equal(result.audio.codec,codec);assert.equal(result.lyricHash,digest(lyrics));assert.equal(result.cover,true);
     assert.equal(await packetsHash(input),await packetsHash(output));
     if(codec==='mp3')assert.ok((await fs.readFile(output)).includes(Buffer.from('USLT')));

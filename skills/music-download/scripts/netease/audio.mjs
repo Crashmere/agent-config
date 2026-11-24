@@ -37,6 +37,7 @@ export async function verify(file,song,{lyricHash,requireCover=true,fullDecode=t
   if(!['flac','mp3'].includes(info.codec))throw new Error('Unsupported actual codec: '+info.codec);
   checkDuration(info,song.durationMs);
   if(tags.title!==song.title||tags.artist!==song.artists.map(a=>a.name).join(' / ')||(song.album.name&&tags.album!==song.album.name)||tags.netease_song_id!==song.id)throw new Error('Embedded metadata mismatch');
+  if(song.albumArtist&&(tags.album_artist||tags.albumartist||tags['album artist'])!==song.albumArtist)throw new Error('Embedded album artist mismatch');
   const text=tags.lyrics||tags['lyrics-und']||'';
   if(lyricHash!==undefined&&digest(text)!==lyricHash)throw new Error('Embedded lyrics mismatch');
   const cover=p.streams.some(s=>s.disposition?.attached_pic===1);
@@ -48,7 +49,7 @@ export async function tagAudio(source,target,song,{cover,lyrics='',translation='
   const before=audioInfo(await probe(source));
   if(!['flac','mp3'].includes(before.codec))throw new Error('Only native FLAC or MP3 is supported');checkDuration(before,song.durationMs);
   const releaseDate=song.publishTime>0?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(song.publishTime)):'';
-  const metadata={title:song.title,artist:song.artists.map(a=>a.name).join(' / '),album:song.album.name,track:song.track?String(song.track):'',disc:song.disc||'',date:releaseDate,NETEASE_SONG_ID:song.id,NETEASE_PLAYLIST_SONG_ID:originalId,NETEASE_ALBUM_ID:song.album.id,lyrics:before.codec==='flac'?lyrics:'',LYRICS_TRANSLATION:translation,LYRICS_YRC:yrc};
+  const metadata={title:song.title,artist:song.artists.map(a=>a.name).join(' / '),album:song.album.name,album_artist:song.albumArtist||'',track:song.track?String(song.track):'',disc:song.disc||'',date:releaseDate,NETEASE_SONG_ID:song.id,NETEASE_PLAYLIST_SONG_ID:originalId,NETEASE_ALBUM_ID:song.album.id,lyrics:before.codec==='flac'?lyrics:'',LYRICS_TRANSLATION:translation,LYRICS_YRC:yrc};
   const args=['-hide_banner','-loglevel','error','-nostdin','-n','-i',source];if(cover)args.push('-i',cover);
   args.push('-map','0:a:0');if(cover)args.push('-map','1:v:0');args.push('-map_metadata','-1','-c','copy');
   if(before.codec==='mp3')args.push('-id3v2_version','3');

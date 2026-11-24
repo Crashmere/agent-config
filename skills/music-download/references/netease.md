@@ -29,6 +29,8 @@ node "$mscd_skill/scripts/netease/library.mjs" playlist "$mscd_liked_id" --out "
 
 Select the matching numeric UID from `users.json`; do not use a nickname as a UID. `createdByUser` distinguishes created and saved playlists. Liked-playlist names vary by user; do not choose one based on a fixed name or historical count. When the user specifies playlists named with a few characters, retrieve their IDs individually and save snapshots.
 
+For album requests, fetch `/album?id=...` and compare `album.size` with the returned songs before assembling the download plan. Apply that release's name, cover, date and album-level artist credits to each normalized track. Set the optional `albumArtist` string from `album.artists` (or `album.artist` when that list is absent), joining multiple credited names with ` / `; keep `artists` as the individual track's credits. Do not infer album artists from featured-track artists. The tagger preserves and verifies `albumArtist` separately; omitting it can split one release into multiple album groups in players such as Lilt on `nas`. Annotate reused collection containers with `sourceType: "album"` and preserve album order. Before reporting album delivery, verify the remote release groups and counts as well as playlist membership.
+
 `playlist` fills in `/song/detail` in `trackIds` order and preserves `declaredCount`, `returnedIds`, `unresolvedIds`, and `countGap`. It does not automatically use every cross-check API; when gaps appear, read the API troubleshooting reference and investigate. `--out` in all query commands refuses to overwrite existing files; use a new filename to refresh.
 
 ## 3. Analyze overlap and build the set difference

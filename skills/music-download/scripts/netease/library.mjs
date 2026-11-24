@@ -4,7 +4,8 @@ import {parseArgs} from 'node:util';
 import {apiURL,bases,fetchJSON,id,isMain,readJSON,safeName} from './common.mjs';
 
 export function song(raw) {
-  return {id:id(raw.id),title:raw.name||'',artists:(raw.ar||raw.artists||[]).map(a=>({id:String(a.id||''),name:a.name||''})),album:{id:String((raw.al||raw.album)?.id||''),name:(raw.al||raw.album)?.name||'',cover:(raw.al||raw.album)?.picUrl||''},durationMs:Number(raw.dt??raw.duration),track:raw.no||null,disc:raw.cd||'',publishTime:raw.publishTime||0};
+  const album=raw.al||raw.album||{},albumArtist=raw.albumArtist||(album.artists||[album.artist]).filter(a=>a?.name).map(a=>a.name).join(' / ');
+  return {id:id(raw.id),title:raw.name||'',artists:(raw.ar||raw.artists||[]).map(a=>({id:String(a.id||''),name:a.name||''})),album:{id:String(album.id||''),name:album.name||'',cover:album.picUrl||''},...(albumArtist?{albumArtist}:{}),durationMs:Number(raw.dt??raw.duration),track:raw.no||null,disc:raw.cd||'',publishTime:raw.publishTime||0};
 }
 export function versionKey(s) {
   const norm=x=>String(x).normalize('NFKC').trim().toLowerCase();
@@ -13,6 +14,7 @@ export function versionKey(s) {
 export function validateSong(s) {
   id(s.id);
   if(typeof s.id!=='string'||typeof s.title!=='string'||!s.title||!Array.isArray(s.artists)||!s.artists.length||s.artists.some(a=>typeof a.id!=='string'||typeof a.name!=='string'||!a.name)||!Number.isFinite(s.durationMs)||s.durationMs<=0||!s.album||['id','name','cover'].some(k=>typeof s.album[k]!=='string'))throw new Error('Incomplete song metadata: '+s.id);
+  if(s.albumArtist!==undefined&&(typeof s.albumArtist!=='string'||!s.albumArtist.trim()))throw new Error('Invalid album artist: '+s.id);
 }
 export async function playlistSnapshot(playlistId,base) {
   const data=await fetchJSON(apiURL(base,'playlist/detail',{id:id(playlistId)}));
