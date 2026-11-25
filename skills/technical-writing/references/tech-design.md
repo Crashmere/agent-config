@@ -53,3 +53,15 @@
 - **严格极简原语**：只用基础几何框、菱形判断、圆柱存储、分区容器与连线箭头；**禁用装饰性图标、角标及过度拆碎的独立文本框/多层叠加卡片**，保证高信噪比与低改图成本。
 - **图形表达语义、节点只留短词**：用分区、流向、实虚线（如实线主流程 vs 虚线异步/回调、虚线框=复用基建）和少量色彩直接表达因果与边界；禁止在画板上放长段文字解释或大块说明气泡，完整参数与规则留给正文和表格。
 - **防止排版挤压**：控制单图节点数量，避免窄框文字多行拥挤或连线穿越文字/分区标题。
+
+## 飞书参考文档（按子类型按需查阅）
+
+需要对齐具体章节组织、版式与技术细节颗粒度时，使用 `lark-doc` 按需读取对应参考文档（无需每次全量拉取）：
+
+| 子类型 | 参考文档 | 重点参考内容 |
+|-|-|-|
+| 新能力接入（同步链路） | [【Lemon8评论】Vine模型上线-技术方案](https://bytedance.larkoffice.com/wiki/XF7qwSF4RiMkBQkfNyjchxjan7b) | 链路插入位置、Dolphin 处置、TCC 放量、AB 实验、QPS 存量回扫估算与 Checklist |
+| 新能力接入（跨端异步回调） | [【Lemon8评论】AIM接入-技术方案](https://bytedance.larkoffice.com/wiki/TfMtwHaqIiHBRbkHcEmcIBwLnDh) | 上下游异步解耦、MQ/IDL 协议、分阶段写入字段对照表、强弱依赖错误处理与上线顺序 |
+| 大型架构重构 | [评论画风审核链路配置化改造-技术方案](https://bytedance.larkoffice.com/wiki/Kkg7w0YB0irsh6kl4LBcEOBOn9e) | 现状问题 → 总体结构与核心数据流 → 分阶段执行 → 灰度双跑 Diff 与 PPE 验收 → 配置字段分层说明 |
+| 线上故障排查与修复 | [CommentReview接口降低失败率](https://bytedance.larkoffice.com/wiki/T4cAwmR3OiSxZLkbvNqcCJiHnbb) | 假设验证与排除 → 日志/调用链根因定位 → 方案演进与最终实现 → 上线观测验证 |
+| 技术调研与方案选型 | [CommentReview接口-下载缓存方案调研](https://bytedance.larkoffice.com/wiki/DSUdwepnGicukIkndnycf4aln6e) | 前置观测 → 备选方案对比 → 日志/成本数据测算 → 预计收益 |
