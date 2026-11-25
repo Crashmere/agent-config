@@ -10,7 +10,7 @@ Read this reference when a change requires repository documentation, validation,
 
 ## Validate proportionately
 
-1. Validate only changed skills and directly affected behavior. Prefer the smallest risk-proportionate combination of the `skill-creator` validator, focused script invocations, `git diff --check`, and targeted placeholder or secret scans.
+1. Run `python3 scripts/audit-repo.py` (standard-library only) to check frontmatter validity, description metadata budget, `agents/openai.yaml`, `README.md` inventory alignment, broken local Markdown links, unindexed `references/*.md`, orphan directories under `skills/`, and client symlinks in one pass. Combine with `skill-creator`'s validator, focused script invocations, and `git diff --check` as needed.
 2. Expand validation only for shared infrastructure, cross-skill behavior, high-risk changes, or when focused checks cannot establish confidence. Do not rerun unrelated end-to-end workflows by default.
 3. Do not install missing dependencies, recreate unavailable environments, or change the repository solely for optional broad validation. Use an available focused check and disclose meaningful unverified areas.
 
@@ -25,7 +25,7 @@ Read this reference when a change requires repository documentation, validation,
 ## Make the skill discoverable
 
 1. After adding, renaming, or removing a skill, run `scripts/sync-skill-links.sh` from the skill directory. Its default mode reports missing, conflicting, and stale links without changing them.
-2. Review the report, then run `scripts/sync-skill-links.sh --apply` to create missing links for the supported clients. The script may create their `skills` directories, but never overwrites an existing path. Resolve conflicts explicitly and review stale links manually.
+2. Review the report, then run `scripts/sync-skill-links.sh --apply` to create missing links for the supported clients (add `--prune-stale` after reviewing stale links from renamed or removed skills). The script may create client `skills` directories, never overwrites an existing path, and only prunes stale symlinks pointing into this repository. Resolve conflicts explicitly.
 3. Re-run report-only mode and verify that at least Trae and Codex resolve the repository-owned `SKILL.md`.
 
 ## Keep global instructions connected

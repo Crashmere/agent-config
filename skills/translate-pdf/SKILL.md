@@ -1,6 +1,6 @@
 ---
 name: translate-pdf
-description: "Translate or review complete PDFs with faithful meaning, natural prose, consistent terminology, preserved structure, and verified text and image coverage."
+description: "Translate or review complete PDFs with faithful meaning, natural prose, consistent terms, and verified coverage."
 ---
 
 # PDF Translation
@@ -24,7 +24,7 @@ Produce a complete translation that readers can understand without reconstructin
 
 Use `python-environment` to select an existing isolated environment with PyMuPDF. Run all Python commands with that interpreter. Save output to new paths.
 
-Inspect representative pages to identify selectable text, columns, tables, figures, recurring headers, and cross-page continuations. The bundled tools do not perform OCR; if requested body text is image-only, obtain text through an available OCR workflow and verify it, or report the unresolved coverage. Do not silently omit it.
+Inspect representative pages to identify selectable text, columns, tables, figures, recurring headers, and cross-page continuations. The bundled tools do not perform OCR; if requested body text is image-only or the final deliverable must be an editable DOCX, coordinate with `pdf-to-word` for OCR/editable structure extraction and final DOCX assembly while keeping translation and semantic review here. Do not silently omit untranslated text.
 
 Record the origin of any existing translation used as a draft, including its path and which content is reused or revised. Reuse can help revision tasks, but must be disclosed. For an independent translation or skill comparison, keep previous translations and evaluation answers outside the translator's context unless the user explicitly includes them; otherwise describe the result as revision of an existing draft.
 

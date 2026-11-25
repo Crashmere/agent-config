@@ -1,6 +1,6 @@
 ---
 name: comfyui-operations
-description: "Install, operate, maintain, and troubleshoot ComfyUI on local or authorized remote Windows, macOS, or Linux systems."
+description: "Install, operate, maintain, and troubleshoot ComfyUI on local or remote Windows, macOS, or Linux systems."
 ---
 
 # ComfyUI Operations

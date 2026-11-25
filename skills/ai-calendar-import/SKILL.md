@@ -1,6 +1,6 @@
 ---
 name: ai-calendar-import
-description: "Import or backfill AI usage history into the personal AICalendar service, including TraeX history, user exports, previews, and verification."
+description: "Import or backfill AI usage history into AICalendar, including TraeX logs, user exports, previews, and verification."
 ---
 
 # AI Calendar Import

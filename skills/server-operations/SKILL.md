@@ -1,6 +1,6 @@
 ---
 name: server-operations
-description: "Maintain the user's personal Linux servers and hosted projects, including SSH host ali, shared infrastructure, deployments, inventory, and server documentation."
+description: "Maintain personal Linux servers (ali, nas, vps) and hosted apps: shared infra, deployments, backups, and server docs."
 ---
 
 <a id="服务器与多应用维护"></a>
@@ -13,11 +13,11 @@ Use this skill as the entry point for shared operations context, without relying
 
 1. Always start with [Shared conventions](references/conventions.md) and [Current server and application inventory](references/current-state.md).
    For SSH host `nas`, also read [NAS laptop operations](references/nas-host.md); it is a separate host from `ali`.
-   For SSH host `vps`, also read [VPS operations](references/vps-host.md); it is an AlmaLinux VM, not an Ubuntu application host.
+   For SSH host `vps`, also read [VPS operations](references/vps-host.md) (AlmaLinux VM, not an Ubuntu application host) and [VPS proxy operations](references/vps-proxy.md) for proxy runtime or client configuration.
 2. Read the target project's `AGENTS.md`, `docs/README.md`, and `docs/OPERATIONS.md`, then read architecture/API/release documentation as the task requires. The inventory lists repository and server documentation locations.
 3. For release, build, or testing strategy, first read [Local releases and on-demand validation](references/release.md). For changes, deployments, or documentation updates, you must read [Completing changes and documentation](references/maintenance.md); for new applications, migrations, or server replacement, also read [Rebuilding and adding applications](references/rebuild.md).
    For the NAS application host, ALI/VPS public gateways, manual external backups, or their cutover/recovery, read [NAS migration and recovery](references/nas-migration.md). For any backup, package verification or restoration request, also read [Agent backup and recovery](references/backup-recovery.md) and use its standalone tools, not Portal.
-4. For release failures or troubleshooting, first consult [Common issues and shared solutions](references/common-issues.md) and directly follow any existing solution.
+4. For release failures or troubleshooting, first consult the [Common issues symptom index](references/common-issues.md) and open only the matching topic file ([host/OS](references/issues-host-os.md), [network/proxy](references/issues-network-proxy.md), [web/portal](references/issues-web-portal.md), or [release/backup/media](references/issues-release-backup-media.md)).
    For upload-speed diagnosis or request-limit changes, read [Upload throughput and request limits](references/conventions.md#upload-throughput-and-request-limits) and inspect the complete client, gateway and application path.
 5. Use `personal-skill-management` for the skill itself or the personal instruction repository structure; `software-installation` for software installation/updates; and `python-environment` for Python environment operations. Do not duplicate their full workflows.
 6. For public HTTPS, IP certificates, automatic renewal, or origin validation, read [Shared HTTPS](references/https.md) and handle all applications consistently.
@@ -57,7 +57,7 @@ If the applicable column is unclear, use the left column when the action is reve
 <a id="实施与收尾"></a>
 ## Implementation and completion
 
-- Unless the user explicitly requests another language, write agent-authored specifications and maintenance documents in English, including `AGENTS.md`, project and server documentation, technical plans, operational runbooks, decision records, and handoff documents. Preserve exact source-language names, UI labels, quotations, matching literals, fixtures, and required user-facing content when translation would change meaning or behavior. This default does not determine the language of conversation, product copy, creative work, or other user-requested deliverables.
+- Follow the global `AGENTS.md` authoring-language policy: write personal skill documentation and shared agent instructions in English by default, while general project documentation, technical design documents, and user-facing deliverables follow the user's or project's language unless explicitly specified. Preserve exact source-language names, UI labels, quotations, matching literals, and fixtures when translation would change meaning or behavior.
 - Keep application-internal changes in that project. Before changing a shared layer, inspect every application in the inventory and list the affected configuration, code, data, releases, documentation, validation, and rollback points. Improve the design within the task's scope as needed.
 - When any project encounters a common issue that may affect other applications (host, network, shared Nginx, common release/backup patterns, runtime dependencies, etc.), always document the solution in [common-issues](references/common-issues.md), covering every affected application. Project docs should retain only their own parameters and links, without maintaining separate copies.
 - Complete the applicable criteria in [maintenance](references/maintenance.md). Update project or shared documentation only when the change alters a durable contract that those documents own; do not turn routine visual fixes or releases into operations, verification, or current-state logs. Replace outdated content and leave history to Git. Run `scripts/sync-docs.sh` after pushing only when managed documentation changed. For staged migrations, describe the actual coexistence of old and new components. If required synchronization is blocked, state what remains unfinished rather than reporting full completion.

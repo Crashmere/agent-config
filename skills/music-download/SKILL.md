@@ -1,6 +1,6 @@
 ---
 name: music-download
-description: "Download music, lyrics or album covers via NetEase, Apple Music and LRCLIB, including authorized Apple Music playback capture."
+description: "Download music, lyrics, or covers via NetEase, Apple Music, and LRCLIB, including authorized Apple playback capture."
 ---
 
 # Music Download
@@ -13,7 +13,7 @@ neither is an automatic fallback for the other.
 
 | Request | Read and run |
 | --- | --- |
-| A NetEase song, playlists, exclusions, lossless download or resume | [NetEase download](references/netease.md); `scripts/netease/library.mjs` and `download.mjs` |
+| A NetEase song, playlists, exclusions, lossless download or resume | [NetEase download](references/netease.md) (and [NetEase API details](references/netease-api.md) when inspecting routes/endpoints); `scripts/netease/library.mjs` and `download.mjs` |
 | Only lyrics, TXT/LRC, translations or word timing | [Lyrics](references/lyrics.md); `scripts/lyrics.mjs` or `scripts/apple/fetch_metadata.py` |
 | Only an album/single cover | [Covers](references/covers.md); `scripts/covers.mjs` |
 | New authorized Apple Music playback recording on macOS | [Recording](references/recording.md), then [Packaging](references/packaging.md) |

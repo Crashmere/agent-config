@@ -1,6 +1,6 @@
 ---
 name: pdf-to-word
-description: "Convert PDFs to accurate, usable DOCX files with editable content where reliable and verified rendering, including batch, scanned, or broken-text PDFs."
+description: "Convert PDFs—including batch, scanned, or broken-text files—to accurate editable DOCX with verified rendering."
 ---
 
 # PDF to Word
@@ -11,7 +11,7 @@ Prioritize accurate, complete, editable content. Choose methods for the actual d
 
 - Use this skill to orchestrate PDF-to-Word conversion and quality checks. Reuse the installed official pdf and docx skills for general file operations and OOXML validation; do not copy their installation directories or third-party scripts into this repository.
 - Use python-environment for third-party Python dependencies and environment selection; use software-installation to install or troubleshoot software such as LibreOffice.
-- Use translate-pdf for meaning, terminology, and translation review when translation is needed. Format conversion must not independently rewrite, translate, or correct facts in the source.
+- Use `translate-pdf` for meaning, terminology, and translation review when translation is needed. Format conversion must not independently rewrite, translate, or correct facts in the source. For compound "translate a PDF into editable Word" requests, extract/OCR clean source structure here first, then run `translate-pdf`'s contextual translation and review passes before final DOCX assembly so OCR and layout work are not duplicated.
 - Use personal-skill-management when improving this skill or its scripts, following its repository workflow for validation, discovery-link synchronization, commits, and pushes.
 
 ## Core workflow

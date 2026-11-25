@@ -1,6 +1,6 @@
 ---
 name: openai-image-cost-report
-description: "Generate or edit images through the OpenAI Image API, save local outputs, and report per-call cost when direct API access is explicitly requested."
+description: "Generate or edit images via OpenAI Image API, save outputs, and report per-call cost when explicitly requested."
 ---
 
 # OpenAI Image Cost Report

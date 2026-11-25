@@ -1,6 +1,6 @@
 ---
 name: windows-ssh
-description: "Operate authorized remote Windows computers over OpenSSH for setup, connectivity, remote CMD or PowerShell, file transfer, encoding, and persistence."
+description: "Operate authorized remote Windows PCs over OpenSSH: setup, CMD/PowerShell, file transfer, encoding, and logs."
 ---
 
 # Windows SSH

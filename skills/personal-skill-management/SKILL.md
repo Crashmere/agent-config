@@ -1,6 +1,6 @@
 ---
 name: personal-skill-management
-description: "Manage, review, deploy, and improve the user's personal skills and agent-config repository, including instruction placement, overlaps, and real-use corrections."
+description: "Manage, review, sync, and improve personal skills and agent-config, including instruction placement and conflicts."
 ---
 
 # Personal Skill Management
@@ -11,7 +11,7 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 
 - Use `~/agent-config` as the expected checkout when it exists; otherwise locate or clone `Crashmere/agent-config`.
 - Store personal skills at `skills/<skill-name>/` and treat those directories as the source of truth.
-- Follow the English authoring policy in the global `AGENTS.md` when maintaining personal skill content, `AGENTS.md`, and supporting skill-repository documents; retain exact source-language literals when correctness requires them, and do not extend that default to general technical plans, project documents, conversations, or other user-facing deliverables.
+- Follow the English authoring policy in the global `AGENTS.md` when maintaining personal skill content, `AGENTS.md`, and supporting skill-repository documents (unless a skill explicitly declares another language via frontmatter `metadata.authoring-language`, such as `doc-writing`); retain exact source-language literals when correctness requires them, and do not extend that default to general technical plans, project documents, conversations, or other user-facing deliverables.
 - Keep the repository limited to the user's instructions and skills. Exclude credentials, runtime state, caches, third-party installed copies, and speculative management files.
 - Keep `README.md` in Chinese with a concise inventory linking each skill directly to its `SKILL.md`.
 - Preserve unrelated files and user changes.
@@ -47,7 +47,7 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 
 ## Complete the applicable workflow
 
-- Read [references/repository-workflow.md](references/repository-workflow.md) when updating global instructions or README, validating changes, synchronizing client links, committing, pushing, or reporting repository work. Run `scripts/sync-skill-links.sh` from that workflow instead of recreating client links manually.
+- Read [references/repository-workflow.md](references/repository-workflow.md) when updating global instructions or README, validating changes, synchronizing client links, committing, pushing, or reporting repository work. Run `scripts/audit-repo.py` for repository-wide validation (frontmatter, budget, links, README sync, and client links) and `scripts/sync-skill-links.sh` instead of recreating client links manually.
 - Read [references/maintenance.md](references/maintenance.md) when a personal skill or bundled script fails in real use, or when a required skill cannot be found or loaded.
 
 ## Boundaries

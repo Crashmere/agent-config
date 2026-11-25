@@ -24,6 +24,8 @@ argv.json
 
 # Local tooling
 .DS_Store
+.local/
 .venv/
+node_modules/
 __pycache__/
 *.pyc

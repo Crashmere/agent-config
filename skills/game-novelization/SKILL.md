@@ -1,6 +1,6 @@
 ---
 name: game-novelization
-description: "Adapt a game's verified main story into a standalone Chinese novel, including outlines, chapters, continuations, revisions, and manuscript review."
+description: "Adapt a game's verified main story into a standalone Chinese novel: outlines, chapters, revisions, and review."
 ---
 
 # Game Story Novelization

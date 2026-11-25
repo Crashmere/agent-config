@@ -4,20 +4,24 @@ set -eu
 
 usage() {
   cat <<'EOF'
-Usage: sync-skill-links.sh [--apply] [--instructions-only]
+Usage: sync-skill-links.sh [--apply] [--prune-stale] [--instructions-only]
 
 Check links from supported agent clients to skills and global instructions.
 The default mode only reports changes. --apply creates missing links and
 client directories, but never overwrites an existing path.
+--prune-stale removes stale symlinks pointing into this repository's skills
+directory whose SKILL.md no longer exists.
 --instructions-only checks global instruction links without touching skills.
 EOF
 }
 
 apply=false
+prune_stale=false
 instructions_only=false
 for option in "$@"; do
   case "$option" in
     --apply) apply=true ;;
+    --prune-stale) prune_stale=true ;;
     --instructions-only) instructions_only=true ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 64 ;;
@@ -42,6 +46,7 @@ created=0
 missing=0
 conflicts=0
 stale=0
+pruned=0
 
 resolve_link() {
   link_path=$1
@@ -89,8 +94,12 @@ sync_link() {
 
 printf '%s\n' "Repository skills: $skills_dir"
 printf '%s\n' "Global instructions: $repository_root/AGENTS.md"
-if [ "$apply" = true ]; then
+if [ "$apply" = true ] && [ "$prune_stale" = true ]; then
+  printf '%s\n' "Mode: apply + prune stale"
+elif [ "$apply" = true ]; then
   printf '%s\n' "Mode: apply"
+elif [ "$prune_stale" = true ]; then
+  printf '%s\n' "Mode: prune stale only"
 else
   printf '%s\n' "Mode: report only (use --apply to create missing links)"
 fi
@@ -117,8 +126,14 @@ EOF
       case "$resolved" in
         "$skills_dir"/*)
           if [ ! -f "$resolved/SKILL.md" ]; then
-            printf 'STALE    %s -> %s (review manually)\n' "$target" "$(readlink "$target")"
-            stale=$((stale + 1))
+            if [ "$prune_stale" = true ]; then
+              rm -f "$target"
+              printf 'PRUNED   %s -> %s\n' "$target" "$resolved"
+              pruned=$((pruned + 1))
+            else
+              printf 'STALE    %s -> %s (review manually or run --prune-stale)\n' "$target" "$(readlink "$target")"
+              stale=$((stale + 1))
+            fi
           fi
           ;;
       esac
@@ -132,8 +147,8 @@ for client in .trae .codex; do
   sync_link "$repository_root/AGENTS.md" "${SKILL_LINK_HOME:-$HOME}/$client/AGENTS.md"
 done
 
-printf 'Summary: checked=%s created=%s missing=%s conflicts=%s stale=%s\n' \
-  "$checked" "$created" "$missing" "$conflicts" "$stale"
+printf 'Summary: checked=%s created=%s missing=%s conflicts=%s stale=%s pruned=%s\n' \
+  "$checked" "$created" "$missing" "$conflicts" "$stale" "$pruned"
 
 if [ "$conflicts" -gt 0 ]; then
   exit 2

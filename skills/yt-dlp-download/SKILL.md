@@ -1,6 +1,6 @@
 ---
 name: yt-dlp-download
-description: "Search for and download complete YouTube videos or collections with yt-dlp, preserving selected media, metadata, subtitles, chapters, and resumability."
+description: "Search and download complete YouTube videos or playlists with yt-dlp, preserving media, subtitles, and resume."
 ---
 
 # YouTube Video Download

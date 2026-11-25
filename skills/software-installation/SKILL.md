@@ -1,6 +1,6 @@
 ---
 name: software-installation
-description: "Install, upgrade, remove, and troubleshoot software from trusted sources, including applications, CLIs, runtimes, package managers, and storage cleanup."
+description: "Install, upgrade, uninstall, and troubleshoot apps, CLIs, runtimes, package managers, and macOS disk cleanup."
 ---
 
 # Software Installation

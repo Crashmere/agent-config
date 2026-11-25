@@ -1,6 +1,6 @@
 ---
 name: game-guide
-description: "Collect multilingual game guides, organize them in Chinese, and save them to the game's Yuyan knowledge base for comprehensive walkthrough libraries."
+description: "Collect multilingual game guides, organize them in Chinese, and save them to a game's Yuyan knowledge base."
 ---
 
 # Game Guide Collection

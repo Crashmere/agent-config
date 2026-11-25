@@ -7,8 +7,8 @@
 
 ## Instruction management
 
-- Write all personal skills in English, including `SKILL.md`, reference documents, agent metadata, template instructions, and script comments/help. Preserve exact non-English names, UI labels, quotations, matching literals, fixtures, and requested output content when translation would change their meaning or behavior. The skill's authoring language does not determine the user's response or deliverable language.
-- Apply the default-English authoring rule only when maintaining personal skill-related documents and shared agent instructions (such as `AGENTS.md` and supporting documentation in `agent-config`, excluding `README.md`, which stays in Chinese) unless the user explicitly requests another language. Do not extend this default to general project documentation, technical design documents, conversations, or other user-facing deliverables, which should follow the user's or project's language.
+- Write personal skills in English by default, including `SKILL.md`, reference documents, agent metadata, template instructions, and script comments/help. Preserve exact non-English names, UI labels, quotations, matching literals, fixtures, and requested output content when translation would change their meaning or behavior. If a skill explicitly declares another authoring language in its frontmatter `metadata.authoring-language` (such as `doc-writing` in `zh-CN`), follow that declared language for that skill. The skill's authoring language does not determine the user's response or deliverable language.
+- Apply the default-English authoring rule only when maintaining personal skill-related documents and shared agent instructions (such as `AGENTS.md` and supporting documentation in `agent-config`, excluding `README.md`, which stays in Chinese) unless the user explicitly requests another language or the skill declares `metadata.authoring-language`. Do not extend this default to general project documentation, technical design documents, conversations, or other user-facing deliverables, which should follow the user's or project's language.
 - Use the `personal-skill-management` skill when organizing agent instructions or creating and maintaining the user's own skills and their `agent-config` GitHub repository.
 - Keep `~/agent-config/AGENTS.md` as the shared global instruction source. After maintaining it, synchronize client instruction links through the `personal-skill-management` workflow.
 - When a personally maintained skill or its scripts prove incorrect during real use, fix the immediate task, then use `personal-skill-management` to reassess and update the skill so the repository remains accurate.
@@ -20,7 +20,7 @@
 
 - Prefer official or first-party software sources.
 - Use the `software-installation` skill for software installation, upgrade, removal, or installation troubleshooting.
-- On macOS, assess each software removal individually: prefer a complete official uninstall process when available and use the `mole` skill as a supplement; otherwise use Mole when appropriate. Use Mole for storage cleanup, except for straightforward deletion of explicitly identified files or directories.
+- On macOS, assess each software removal individually: prefer a complete official uninstall process when available and use the `mole` skill as a supplement when it is available in the active client; otherwise use Mole when appropriate. Use Mole for storage cleanup, except for straightforward deletion of explicitly identified files or directories. If `mole` is not installed in the current client (for example, outside Trae), proceed with official uninstallers or standard macOS commands and report that `mole` was unavailable rather than blocking unrelated work.
 - When the user explicitly requests installation, complete it and verify the result unless a material risk or unresolved choice requires confirmation.
 
 ## General workflow

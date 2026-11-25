@@ -1,6 +1,6 @@
 ---
 name: python-environment
-description: "Manage Python environments and dependencies for third-party packages, environment selection or creation, dependency changes, and Python troubleshooting."
+description: "Manage isolated Python environments, third-party packages, interpreter selection, and dependency troubleshooting."
 ---
 
 # Python Environment
