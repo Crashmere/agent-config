@@ -1,6 +1,9 @@
 ---
 name: technical-writing
 description: "用于设计技术方案、评估复用与架构权衡，以及编写、修订或审校技术方案文档、项目概览、复盘、技术回复、代码解释、注释和维护文档。"
+metadata:
+  authoring-language: zh-CN
+  authoring-note: "User explicitly requested maintaining this skill (SKILL.md and references) in Chinese."
 ---
 
 # 技术方案与叙述汇报编写
