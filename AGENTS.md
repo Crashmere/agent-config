@@ -30,7 +30,7 @@
 
 ## Technical design and documentation
 
-- Use the `technical-writing` skill when designing technical solutions, evaluating design reuse or architectural tradeoffs, or writing, revising, and reviewing design documents, technical replies, code explanations, comments, and maintenance documentation.
+- Use the `doc-writing` skill when designing technical solutions, evaluating design reuse or architectural tradeoffs, or writing, revising, and reviewing design documents, technical replies, code explanations, comments, and maintenance documentation.
 
 ## Testing and investigation discipline
 

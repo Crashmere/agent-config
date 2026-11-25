@@ -1,5 +1,5 @@
 ---
-name: technical-writing
+name: doc-writing
 description: "用于设计技术方案、评估复用与架构权衡，以及编写、修订或审校技术方案文档、项目概览、复盘、技术回复、代码解释、注释和维护文档。"
 metadata:
   authoring-language: zh-CN

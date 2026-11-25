@@ -1,4 +1,4 @@
 interface:
   display_name: "技术方案与文档编写"
   short_description: "指导技术方案设计权衡、设计文档、技术回复及维护文档的编写与修订"
-  default_prompt: "使用 $technical-writing 设计技术方案或编写、修订技术文档与技术说明。"
+  default_prompt: "使用 $doc-writing 设计技术方案或编写、修订技术文档与技术说明。"

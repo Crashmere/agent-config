@@ -16,7 +16,7 @@ Trae 与 Codex 通过符号链接共享此文件；Cursor 的 User Rules 要求�
 
 ## 技术设计与文档
 
-- [technical-writing](./skills/technical-writing/SKILL.md)：指导技术方案设计权衡，以及技术方案文档、项目概览、复盘、技术回复、代码解释、注释与维护文档的编写和修订（中文）。
+- [doc-writing](./skills/doc-writing/SKILL.md)：指导技术方案设计权衡，以及技术方案文档、项目概览、复盘、技术回复、代码解释、注释与维护文档的编写和修订（中文）。
 
 ## 开发环境与软件管理
 
