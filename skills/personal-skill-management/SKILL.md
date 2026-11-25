@@ -22,7 +22,7 @@ Treat `https://github.com/Crashmere/agent-config` as the source-controlled home 
 2. Put always-on behavior, safety boundaries, broad workflow preferences, and stable environment constraints in `AGENTS.md`. Put project-specific guidance in the project layer.
 3. Extend an existing skill when the behavior belongs to its primary responsibility. Reference an existing skill when it already owns a reusable capability. Create a new skill only for a distinct trigger and responsibility.
 4. Keep each skill's primary responsibility explicit. Name cross-skill dependencies when they affect invocation or execution, and do not duplicate commands, workflows, or policy maintained elsewhere.
-5. Merge overlapping guidance and remove obsolete wording. If a genuine conflict cannot be resolved from context, ask the user.
+5. When integrating new user requirements or suggestions into an existing skill, read its current instructions (`SKILL.md` and relevant references) first, assuming the user may not recall all existing rules. Analyze each point for net-new value: do not restate what is already covered, fuse only genuine additions cleanly with existing guidance, remove obsolete wording, and stop to report to the user if there is an obvious conflict.
 6. Explain the placement and reuse decision briefly before material structural changes.
 
 ## Create or restructure a skill
