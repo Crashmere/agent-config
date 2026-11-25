@@ -14,6 +14,10 @@ Trae 与 Codex 通过符号链接共享此文件；Cursor 的 User Rules 要求�
 
 - [personal-skill-management](./skills/personal-skill-management/SKILL.md)：整理 Agent 指令，创建和维护个人 Skill，并同步更新本仓库、README、本机接入和 GitHub 版本。
 
+## 技术设计与文档
+
+- [technical-writing](./skills/technical-writing/SKILL.md)：指导技术方案设计权衡，以及技术方案文档、项目概览、复盘、技术回复、代码解释、注释与维护文档的编写和修订（中文）。
+
 ## 开发环境与软件管理
 
 - [python-environment](./skills/python-environment/SKILL.md)：管理项目级 Python 环境与依赖，并排查解释器、包导入及 Windows 原生模块或 DLL 问题。
