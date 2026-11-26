@@ -39,6 +39,7 @@ ${SKILL_LINK_HOME:-$HOME}/.trae/skills
 ${SKILL_LINK_HOME:-$HOME}/.trae-cn/skills
 ${SKILL_LINK_HOME:-$HOME}/.codex/skills
 ${SKILL_LINK_HOME:-$HOME}/.claude/skills
+${SKILL_LINK_HOME:-$HOME}/.gemini/config/skills
 "
 
 checked=0

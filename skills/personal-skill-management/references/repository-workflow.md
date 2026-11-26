@@ -28,6 +28,18 @@ Read this reference when a change requires repository documentation, validation,
 2. Review the report, then run `scripts/sync-skill-links.sh --apply` to create missing links for the supported clients (add `--prune-stale` after reviewing stale links from renamed or removed skills). The script may create client `skills` directories, never overwrites an existing path, and only prunes stale symlinks pointing into this repository. Resolve conflicts explicitly.
 3. Re-run report-only mode and verify that at least Trae and Codex resolve the repository-owned `SKILL.md`.
 
+Antigravity App's global skill directory is `~/.gemini/config/skills/`, which
+the sync script also manages. The App discovers `.agents/skills/` only within
+the workspace ancestry up to its repository root; `~/.agents/skills/` alone
+does not provide global discovery for projects elsewhere. Keep the repository
+as the source of truth and link each personal skill into the App's global
+directory. Confirm the loaded names through the App's **Customizations >
+Installed** view or its `/` command menu. The App rereads skills before each
+turn and refreshes the customization list when that view opens. When checking a different
+Antigravity surface or version, verify its discovery paths against the
+[official discovery documentation](https://antigravity.google/docs/customization-discovery/)
+before changing links; legacy IDE paths can differ from the App's paths.
+
 ## Keep global instructions connected
 
 1. After maintaining the repository-root `AGENTS.md`, run `scripts/sync-skill-links.sh --instructions-only` and then `scripts/sync-skill-links.sh --instructions-only --apply` to create missing instruction links. These links point Trae's `~/.trae/AGENTS.md` and Codex's `~/.codex/AGENTS.md` to the shared repository file, so subsequent source edits propagate without copying.
